@@ -1,0 +1,192 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý Kho Hàng";
+}
+
+<div class="page-title-box">
+  <h1 class="page-title">Quản Lý Kho Hàng</h1>
+  <div class="page-breadcrumb">Thống kê số lượng hàng còn tồn kho và các mặt hàng đã hết</div>
+</div>
+
+<!-- 2 THẺ THỐNG KÊ TỒN KHO -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="stat-card border-success">
+      <div>
+        <div class="stat-card-title text-success">Danh Sách Hàng Tồn (Số lượng > 0)</div>
+        <div class="stat-card-value text-success" id="inv-in-stock-count">0 món</div>
+        <small class="text-muted">Đang sẵn sàng mở bán trên sàn</small>
+      </div>
+      <div class="stat-card-icon icon-revenue">
+        <i class="fas fa-check-circle"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="stat-card border-danger">
+      <div>
+        <div class="stat-card-title text-danger">Danh Sách Cần Nhập (Số lượng = 0)</div>
+        <div class="stat-card-value text-danger" id="inv-out-stock-count">0 món</div>
+        <small class="text-muted">Đã bán hết hoặc cần liên hệ ký gửi thêm</small>
+      </div>
+      <div class="stat-card-icon icon-pending">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS CHUYỂN ĐỔI TRẠNG THÁI TỒN KHO -->
+<ul class="nav nav-tabs mb-4 font-weight-bold" id="inventory-tabs">
+  <li class="nav-item">
+    <a class="nav-link active text-success" href="javascript:void(0)" onclick="switchInventoryTab('in-stock', this)">
+      <i class="fas fa-boxes mr-1"></i>Hàng Còn Tồn Kho (Tồn > 0)
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="javascript:void(0)" onclick="switchInventoryTab('out-of-stock', this)">
+      <i class="fas fa-dolly-flatbed mr-1 text-danger"></i>Hàng Hết / Cần Ký Gửi Thêm (Tồn = 0)
+    </a>
+  </li>
+</ul>
+
+<!-- BẢNG HÀNG TỒN KHO -->
+<div class="admin-card">
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr>
+          <th>Ảnh</th>
+          <th>Tên Món Đồ Cũ</th>
+          <th>Chủng Loại</th>
+          <th>Giá Bán</th>
+          <th class="text-center">Số Lượng Tồn</th>
+          <th class="text-center">Đã Bán</th>
+          <th>Người Ký Gửi / Đăng Bán</th>
+          <th class="text-center" style="width: 140px;">Hành Động</th>
+        </tr>
+      </thead>
+      <tbody id="inventory-tbody">
+        <!-- Render bởi JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL CẬP NHẬT SỐ LƯỢNG KHO (NHẬP THÊM HÀNG) -->
+<div class="modal fade" id="restockModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-plus-circle mr-2"></i>Nhập Thêm Số Lượng Kho</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="restock-prod-id">
+        <p class="font-weight-bold text-dark" id="restock-prod-name">Tên sản phẩm</p>
+        <div class="form-group">
+          <label for="restock-qty-input" class="font-weight-bold">Số lượng tồn kho cập nhật:</label>
+          <input type="number" class="form-control" id="restock-qty-input" min="0" value="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-success font-weight-bold" onclick="saveRestock()">
+          <i class="fas fa-save mr-1"></i>Lưu Số Lượng
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  let currentTab = "in-stock";
+
+  $(document).ready(function() {
+    renderInventory();
+  });
+
+  function switchInventoryTab(tab, el) {
+    currentTab = tab;
+    $("#inventory-tabs .nav-link").removeClass("active text-success").addClass("text-dark");
+    $(el).addClass("active text-success").removeClass("text-dark");
+    renderInventory();
+  }
+
+  function renderInventory() {
+    const all = ThriftDB.getProducts();
+    const inStockList = all.filter(p => p.stock > 0);
+    const outStockList = all.filter(p => p.stock === 0);
+
+    $("#inv-in-stock-count").text(`${inStockList.length} món`);
+    $("#inv-out-stock-count").text(`${outStockList.length} món`);
+
+    const listToRender = currentTab === "in-stock" ? inStockList : outStockList;
+    const tbody = $("#inventory-tbody");
+    tbody.empty();
+
+    if (listToRender.length === 0) {
+      tbody.append(`<tr><td colspan="8" class="text-center text-muted py-4">Không có món đồ nào trong danh mục này!</td></tr>`);
+      return;
+    }
+
+    listToRender.forEach(p => {
+      let stockBadge = p.stock > 0 
+        ? `<span class="badge badge-success font-weight-bold px-3 py-1">${p.stock}</span>` 
+        : `<span class="badge badge-danger font-weight-bold px-3 py-1">Hết hàng (=0)</span>`;
+
+      tbody.append(`
+        <tr>
+          <td>
+            <img src="${p.image}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px;" class="border" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
+          </td>
+          <td>
+            <strong>${p.name}</strong><br>
+            <small class="text-muted"><span class="badge badge-light border">${p.condition}</span></small>
+          </td>
+          <td><small class="badge badge-light border text-uppercase">${p.categoryName}</small></td>
+          <td class="font-weight-bold text-danger">${ThriftDB.formatCurrency(p.price)}</td>
+          <td class="text-center">${stockBadge}</td>
+          <td class="text-center font-weight-bold text-muted">${p.soldCount || 0}</td>
+          <td><small>${p.sellerName} (${p.sellerPhone})</small></td>
+          <td class="text-center">
+            <button class="btn btn-outline-success btn-sm font-weight-bold" onclick="openRestockModal(${p.id})">
+              <i class="fas fa-edit mr-1"></i>Cập nhật SL
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  function openRestockModal(id) {
+    const p = ThriftDB.getProductById(id);
+    if (!p) return;
+
+    $("#restock-prod-id").val(p.id);
+    $("#restock-prod-name").text(p.name + ` (Hiện tại: ${p.stock} món)`);
+    $("#restock-qty-input").val(p.stock > 0 ? p.stock : 1);
+    $("#restockModal").modal("show");
+  }
+
+  function saveRestock() {
+    const id = $("#restock-prod-id").val();
+    const qty = parseInt($("#restock-qty-input").val());
+    if (isNaN(qty) || qty < 0) {
+      alert("Vui lòng nhập số lượng hợp lệ (>= 0)!");
+      return;
+    }
+
+    const prods = ThriftDB.getProducts();
+    const p = prods.find(item => item.id === parseInt(id));
+    if (p) {
+      p.stock = qty;
+      ThriftDB.saveProducts(prods);
+      $("#restockModal").modal("hide");
+      alert("Đã cập nhật số lượng tồn kho thành công!");
+      renderInventory();
+    }
+  }
+</script>
+}

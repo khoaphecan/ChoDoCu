@@ -1,0 +1,681 @@
+@{
+    ViewData["Title"] = "Thiết Lập Hồ Sơ & Cài Đặt Tài Khoản - ThriftShop";
+}
+
+<!-- Route Guard: Chuyển hướng ngay nếu chưa đăng nhập -->
+<script>
+    (function() {
+        try {
+            var u = localStorage.getItem("thrift_current_user");
+            if (!u || u === "null" || u === "undefined") {
+                var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.replace('/Account/Login?returnUrl=' + returnUrl);
+            }
+        } catch(e) {}
+    })();
+</script>
+
+<style>
+    .profile-page-wrapper {
+        width: 100%;
+        max-width: 1240px;
+        margin: 30px auto 50px;
+        padding: 0 clamp(14px, 2.5vw, 30px);
+        display: flex;
+        gap: clamp(16px, 2vw, 28px);
+        align-items: flex-start;
+    }
+
+    /* CỘT TRÁI: MENU THIẾT LẬP HỒ SƠ (CHUẨN ẢNH 2) */
+    .profile-sidebar {
+        width: clamp(240px, 24vw, 280px);
+        flex-shrink: 0;
+        background: #ffffff;
+        border: 1px solid #e4e4e7;
+        border-radius: 14px;
+        padding: 20px 14px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .profile-sidebar-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #18181b;
+        margin: 0 0 16px 10px;
+    }
+
+    .profile-nav-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .profile-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #3f3f46;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        background: transparent;
+        width: 100%;
+        text-align: left;
+    }
+
+    .profile-nav-item i {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+        color: #71717a;
+    }
+
+    .profile-nav-item:hover {
+        background: #f4f4f5;
+        color: #18181b;
+    }
+
+    .profile-nav-item.active {
+        background: #f4f4f5;
+        color: #ff3c00;
+        font-weight: 700;
+    }
+
+    .profile-nav-item.active i {
+        color: #ff3c00;
+    }
+
+    /* CỘT PHẢI: KHUNG NỘI DUNG (CHUẨN ẢNH 2) */
+    .profile-main-content {
+        flex: 1;
+        min-width: 0;
+        background: #ffffff;
+        border: 1px solid #e4e4e7;
+        border-radius: 14px;
+        padding: 28px clamp(18px, 3.5vw, 40px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .profile-breadcrumb {
+        font-size: 13.5px;
+        color: #2563eb;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .profile-section-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #18181b;
+        margin-bottom: 24px;
+        letter-spacing: -0.3px;
+    }
+
+    /* KHU VỰC ĐỔI AVATAR TÙY Ý */
+    .avatar-upload-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px;
+        background: #fafafa;
+        border: 1px dashed #d4d4d8;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .avatar-preview-wrap {
+        position: relative;
+        width: 86px;
+        height: 86px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #ff3c00;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .avatar-preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-actions-wrap {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .avatar-actions-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #18181b;
+        margin-bottom: 6px;
+    }
+
+    .avatar-actions-hint {
+        font-size: 12.5px;
+        color: #71717a;
+        margin-bottom: 10px;
+    }
+
+    .avatar-btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-avatar-upload {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        background: #18181b;
+        color: white;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-avatar-upload:hover {
+        background: #27272a;
+    }
+
+    .btn-avatar-preset {
+        padding: 7px 12px;
+        background: white;
+        border: 1px solid #d4d4d8;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #3f3f46;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-avatar-preset:hover {
+        border-color: #ff3c00;
+        color: #ff3c00;
+    }
+
+    /* FORM FIELDS (CHUẨN ẢNH 2) */
+    .form-group-profile {
+        margin-bottom: 20px;
+    }
+
+    .form-label-profile {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #52525b;
+        margin-bottom: 6px;
+    }
+
+    .form-label-profile span.required {
+        color: #ef4444;
+    }
+
+    .input-with-clear {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-input-profile {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #d4d4d8;
+        border-radius: 10px;
+        font-size: 14.5px;
+        color: #18181b;
+        outline: none;
+        background: #ffffff;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+    }
+
+    .form-input-profile:focus {
+        border-color: #ff3c00;
+        box-shadow: 0 0 0 3px rgba(255, 60, 0, 0.12);
+    }
+
+    .btn-clear-input {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #a1a1aa;
+        cursor: pointer;
+        font-size: 14px;
+        display: none;
+    }
+
+    .btn-clear-input:hover {
+        color: #52525b;
+    }
+
+    .form-textarea-profile {
+        width: 100%;
+        min-height: 90px;
+        padding: 12px 14px;
+        border: 1px solid #d4d4d8;
+        border-radius: 10px;
+        font-size: 14.5px;
+        color: #18181b;
+        outline: none;
+        resize: vertical;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .form-textarea-profile:focus {
+        border-color: #ff3c00;
+        box-shadow: 0 0 0 3px rgba(255, 60, 0, 0.12);
+    }
+
+    .field-hint-bottom {
+        font-size: 12px;
+        color: #71717a;
+        margin-top: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .url-preview-tag {
+        font-size: 12.5px;
+        color: #ff3c00;
+        font-weight: 500;
+        margin-top: 6px;
+    }
+
+    .btn-submit-profile {
+        padding: 13px 36px;
+        background: #ff3c00;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        box-shadow: 0 4px 14px rgba(255, 60, 0, 0.3);
+        margin-top: 10px;
+    }
+
+    .btn-submit-profile:hover {
+        background: #e03500;
+        transform: translateY(-1px);
+    }
+
+    /* RESPONSIVE & SCALING */
+    @@media (max-width: 860px) {
+        .profile-page-wrapper {
+            flex-direction: column;
+        }
+        .profile-sidebar {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="profile-page-wrapper">
+    <!-- CỘT TRÁI: MENU ĐIỀU HƯỚNG (CHUẨN ẢNH 2: BỎ LỊCH SỬ ĐĂNG NHẬP, ĐỔI THÀNH ĐỔI MẬT KHẨU) -->
+    <aside class="profile-sidebar">
+        <h3 class="profile-sidebar-title">Thiết lập hồ sơ</h3>
+        <div class="profile-nav-list">
+            <button class="profile-nav-item active" id="tabBtnProfile" onclick="switchProfileTab('profile')">
+                <i class="far fa-user-circle"></i>
+                <span>Cá nhân, chuyên trang</span>
+            </button>
+            <button class="profile-nav-item" id="tabBtnPassword" onclick="switchProfileTab('password')">
+                <i class="fas fa-lock"></i>
+                <span>Đổi mật khẩu</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- CỘT PHẢI: CHI TIẾT CÀI ĐẶT -->
+    <main class="profile-main-content">
+        <!-- TAB 1: HỒ SƠ CÁ NHÂN (CHUẨN ẢNH 2) -->
+        <div id="tabPaneProfile">
+            <div class="profile-breadcrumb">Hồ sơ cá nhân</div>
+            <h2 class="profile-section-title">Hồ sơ cá nhân</h2>
+
+            <!-- ĐỔI AVATAR TÙY Ý (THEO YÊU CẦU CỦA BẠN) -->
+            <div class="avatar-upload-section">
+                <div class="avatar-preview-wrap">
+                    <img id="avatarPreview" class="avatar-preview-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80" alt="Avatar">
+                </div>
+                <div class="avatar-actions-wrap">
+                    <div class="avatar-actions-title">Ảnh đại diện người bán & người mua</div>
+                    <div class="avatar-actions-hint">Hỗ trợ tải ảnh từ máy (JPG, PNG) hoặc chọn mẫu có sẵn để tạo uy tín khi giao dịch đồ cũ.</div>
+                    <div class="avatar-btn-row">
+                        <label class="btn-avatar-upload">
+                            <i class="fas fa-camera"></i> Tải ảnh từ máy
+                            <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" onchange="handleAvatarFileSelect(event)">
+                        </label>
+                        <button type="button" class="btn-avatar-preset" onclick="setPresetAvatar(1)">Mẫu 1</button>
+                        <button type="button" class="btn-avatar-preset" onclick="setPresetAvatar(2)">Mẫu 2</button>
+                        <button type="button" class="btn-avatar-preset" onclick="setPresetAvatar(3)">Mẫu 3</button>
+                        <button type="button" class="btn-avatar-preset" onclick="promptAvatarUrl()">Dán URL ảnh</button>
+                    </div>
+                </div>
+            </div>
+
+            <form id="profileForm" onsubmit="handleSaveProfile(event)">
+                <!-- Họ và tên * -->
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputFullName">
+                        Họ và tên <span class="required">*</span>
+                    </label>
+                    <div class="input-with-clear">
+                        <input type="text" id="inputFullName" class="form-input-profile" placeholder="Nhập họ và tên" required oninput="checkClearBtn(this, 'btnClearName')">
+                        <button type="button" id="btnClearName" class="btn-clear-input" onclick="clearField('inputFullName', this)"><i class="fas fa-times-circle"></i></button>
+                    </div>
+                </div>
+
+                <!-- Số điện thoại * -->
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputPhone">
+                        Số điện thoại <span class="required">*</span>
+                    </label>
+                    <input type="tel" id="inputPhone" class="form-input-profile" placeholder="0901234567" required>
+                </div>
+
+                <!-- Địa chỉ -->
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputAddress">
+                        Địa chỉ
+                    </label>
+                    <select id="inputAddress" class="form-input-profile">
+                        <option value="Quận 1, TP. Hồ Chí Minh">Quận 1, TP. Hồ Chí Minh</option>
+                        <option value="Quận 3, TP. Hồ Chí Minh">Quận 3, TP. Hồ Chí Minh</option>
+                        <option value="Quận Bình Thạnh, TP. Hồ Chí Minh">Quận Bình Thạnh, TP. Hồ Chí Minh</option>
+                        <option value="Quận Phú Nhuận, TP. Hồ Chí Minh">Quận Phú Nhuận, TP. Hồ Chí Minh</option>
+                        <option value="Quận Gò Vấp, TP. Hồ Chí Minh">Quận Gò Vấp, TP. Hồ Chí Minh</option>
+                        <option value="Quận Cầu Giấy, Hà Nội">Quận Cầu Giấy, Hà Nội</option>
+                        <option value="Quận Đống Đa, Hà Nội">Quận Đống Đa, Hà Nội</option>
+                        <option value="Quận Hải Châu, Đà Nẵng">Quận Hải Châu, Đà Nẵng</option>
+                        <option value="Khác">Khu vực khác</option>
+                    </select>
+                </div>
+
+                <!-- Giới thiệu về trang -->
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputBio">
+                        Giới thiệu về trang
+                    </label>
+                    <textarea id="inputBio" class="form-textarea-profile" placeholder="Mô tả phong cách thanh lý đồ cũ của bạn, sở thích hoặc cam kết bảo đảm chất lượng..."></textarea>
+                    <div class="field-hint-bottom">
+                        <span>Tối đa 60 từ</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit-profile">
+                    <i class="fas fa-save mr-1"></i> Lưu thay đổi
+                </button>
+            </form>
+        </div>
+
+        <!-- TAB 2: ĐỔI MẬT KHẨU (ĐÃ THAY THẾ CHO CÀI ĐẶT CŨ THEO YÊU CẦU) -->
+        <div id="tabPanePassword" style="display: none;">
+            <div class="profile-breadcrumb">Bảo mật tài khoản</div>
+            <h2 class="profile-section-title">Đổi mật khẩu</h2>
+
+            <form id="passwordForm" onsubmit="handleSavePassword(event)">
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputOldPassword">
+                        Mật khẩu hiện tại <span class="required">*</span>
+                    </label>
+                    <input type="password" id="inputOldPassword" class="form-input-profile" placeholder="Nhập mật khẩu hiện tại" required>
+                </div>
+
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputNewPassword">
+                        Mật khẩu mới <span class="required">*</span>
+                    </label>
+                    <input type="password" id="inputNewPassword" class="form-input-profile" placeholder="Ít nhất 8 ký tự" minlength="8" required>
+                </div>
+
+                <div class="form-group-profile">
+                    <label class="form-label-profile" for="inputConfirmPassword">
+                        Nhập lại mật khẩu mới <span class="required">*</span>
+                    </label>
+                    <input type="password" id="inputConfirmPassword" class="form-input-profile" placeholder="Nhập lại mật khẩu mới" minlength="8" required>
+                </div>
+
+                <button type="submit" class="btn-submit-profile">
+                    <i class="fas fa-key mr-1"></i> Cập nhật mật khẩu
+                </button>
+            </form>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+<script>
+    let currentAvatarData = '';
+
+    const PRESET_AVATARS = [
+        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
+        "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&q=80"
+    ];
+
+    function initProfilePage() {
+        if (typeof ThriftDB === 'undefined' || !ThriftDB.isLoggedIn()) {
+            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+            return;
+        }
+
+        const user = ThriftDB.getCurrentUser();
+        if (!user) return;
+
+        // Điền dữ liệu vào form
+        document.getElementById('inputFullName').value = user.name || '';
+        document.getElementById('inputPhone').value = user.phone || '';
+        if (user.address) {
+            const addrSelect = document.getElementById('inputAddress');
+            let found = false;
+            for (let i = 0; i < addrSelect.options.length; i++) {
+                if (addrSelect.options[i].value === user.address) {
+                    addrSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && user.address) {
+                const opt = document.createElement('option');
+                opt.value = user.address;
+                opt.textContent = user.address;
+                opt.selected = true;
+                addrSelect.appendChild(opt);
+            }
+        }
+        document.getElementById('inputBio').value = user.bio || '';
+
+        currentAvatarData = user.avatar || PRESET_AVATARS[0];
+        document.getElementById('avatarPreview').src = currentAvatarData;
+
+        checkClearBtn(document.getElementById('inputFullName'), 'btnClearName');
+    }
+
+    function switchProfileTab(tab) {
+        const tabProfile = document.getElementById('tabPaneProfile');
+        const tabPassword = document.getElementById('tabPanePassword');
+        const btnProfile = document.getElementById('tabBtnProfile');
+        const btnPassword = document.getElementById('tabBtnPassword');
+
+        if (tab === 'profile') {
+            tabProfile.style.display = 'block';
+            tabPassword.style.display = 'none';
+            btnProfile.classList.add('active');
+            btnPassword.classList.remove('active');
+        } else {
+            tabProfile.style.display = 'none';
+            tabPassword.style.display = 'block';
+            btnProfile.classList.remove('active');
+            btnPassword.classList.add('active');
+        }
+    }
+
+    function updateUrlPreview(val) {
+        const clean = (val || 'ten-goi-nho').toLowerCase().replace(/\s+/g, '-');
+        document.getElementById('urlPreview').textContent = `https://thriftshop.vn/user/${clean}`;
+    }
+
+    function checkClearBtn(input, btnId) {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.style.display = input.value.trim().length > 0 ? 'block' : 'none';
+        }
+    }
+
+    function clearField(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.value = '';
+            input.focus();
+            btn.style.display = 'none';
+        }
+    }
+
+    function handleAvatarFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 3 * 1024 * 1024) {
+            alert("Vui lòng chọn ảnh có dung lượng dưới 3MB!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            currentAvatarData = evt.target.result;
+            document.getElementById('avatarPreview').src = currentAvatarData;
+            if (typeof showToast === 'function') {
+                showToast("Đã tải ảnh đại diện lên! Nhấn 'Lưu thay đổi' để hoàn tất.", "info");
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function setPresetAvatar(idx) {
+        const url = PRESET_AVATARS[idx - 1] || PRESET_AVATARS[0];
+        currentAvatarData = url;
+        document.getElementById('avatarPreview').src = url;
+    }
+
+    function promptAvatarUrl() {
+        const url = prompt("Nhập đường link (URL) ảnh đại diện của bạn:", currentAvatarData);
+        if (url && url.trim().length > 5) {
+            currentAvatarData = url.trim();
+            document.getElementById('avatarPreview').src = currentAvatarData;
+        }
+    }
+
+    function handleSaveProfile(e) {
+        e.preventDefault();
+        const fullName = document.getElementById('inputFullName').value.trim();
+        const phone = document.getElementById('inputPhone').value.trim();
+        const address = document.getElementById('inputAddress').value;
+        const bio = document.getElementById('inputBio').value.trim();
+
+        if (!fullName) {
+            alert("Vui lòng nhập họ và tên!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', fullName);
+        formData.append('phone', phone);
+        formData.append('address', address);
+        formData.append('bio', bio);
+        if (currentAvatarData) {
+            formData.append('avatar', currentAvatarData);
+        }
+
+        fetch('/Account/UpdateProfile', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof ThriftDB !== 'undefined') {
+                    ThriftDB.updateCurrentUser({
+                        name: fullName,
+                        phone: phone,
+                        address: address,
+                        bio: bio,
+                        avatar: currentAvatarData
+                    });
+                }
+                if (typeof showToast === 'function') {
+                    showToast("Cập nhật thông tin hồ sơ cá nhân thành công! 🎉", "success");
+                } else {
+                    alert("Cập nhật thông tin thành công!");
+                }
+            } else {
+                alert(data.message || "Cập nhật hồ sơ thất bại!");
+            }
+        })
+        .catch(err => {
+            alert("Lỗi kết nối máy chủ!");
+        });
+    }
+
+    function handleSavePassword(e) {
+        e.preventDefault();
+        const oldPass = document.getElementById('inputOldPassword').value;
+        const newPass = document.getElementById('inputNewPassword').value;
+        const confirmPass = document.getElementById('inputConfirmPassword').value;
+
+        if (newPass.length < 6) {
+            alert("Mật khẩu mới phải có ít nhất 6 ký tự!");
+            return;
+        }
+
+        if (newPass !== confirmPass) {
+            alert("Mật khẩu xác nhận không khớp với mật khẩu mới!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('oldPassword', oldPass);
+        formData.append('newPassword', newPass);
+        formData.append('confirmPassword', confirmPass);
+
+        fetch('/Account/ChangePassword', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('passwordForm').reset();
+                if (typeof ThriftDB !== 'undefined') {
+                    ThriftDB.changePassword(oldPass, newPass);
+                }
+                if (typeof showToast === 'function') {
+                    showToast("Đổi mật khẩu tài khoản thành công! 🔒", "success");
+                } else {
+                    alert("Đổi mật khẩu thành công!");
+                }
+            } else {
+                alert(data.message || "Đổi mật khẩu thất bại!");
+            }
+        })
+        .catch(err => {
+            alert("Lỗi kết nối máy chủ!");
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initProfilePage);
+</script>
+}

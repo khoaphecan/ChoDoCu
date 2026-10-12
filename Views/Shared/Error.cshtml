@@ -1,0 +1,20 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Lỗi";
+}
+
+<div class="container my-5 text-center">
+    <h1 class="text-danger font-weight-bold">Đã xảy ra lỗi!</h1>
+    <h4 class="text-muted mb-4">Yêu cầu của bạn không thể hoàn tất.</h4>
+
+    @if (Model.ShowRequestId)
+    {
+        <p class="small text-muted">
+            <strong>Mã Request:</strong> <code>@Model.RequestId</code>
+        </p>
+    }
+
+    <a asp-controller="Home" asp-action="Index" class="btn btn-success font-weight-bold mt-3">
+        <i class="fas fa-home mr-1"></i>Về Trang Chủ
+    </a>
+</div>

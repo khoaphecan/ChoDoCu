@@ -1,0 +1,378 @@
+@{
+    ViewData["Title"] = "Kho Hàng Đồ Cũ Secondhand - ThriftShop";
+}
+
+<div class="shop-layout-container" style="margin-top: 35px;">
+    <!-- CỘT TRÁI: BỘ LỌC 2ND (THEO MẪU ẢNH 3) -->
+    <aside class="shop-filter-sidebar">
+        <h3 class="filter-main-title">Bộ lọc 2nd</h3>
+
+        <!-- NHÓM 1: DANH MỤC (5 DANH MỤC CHUẨN) -->
+        <div class="filter-group-title">Danh mục</div>
+        <div class="filter-checkbox-list">
+            <label class="filter-checkbox-item">
+                <input type="checkbox" name="catFilter" value="1" onchange="onFilterChange()">
+                <span>Đồ điện tử</span>
+            </label>
+            <label class="filter-checkbox-item">
+                <input type="checkbox" name="catFilter" value="2" onchange="onFilterChange()">
+                <span>Đồ gia dụng</span>
+            </label>
+            <label class="filter-checkbox-item">
+                <input type="checkbox" name="catFilter" value="3" onchange="onFilterChange()">
+                <span>Văn phòng phẩm</span>
+            </label>
+            <label class="filter-checkbox-item">
+                <input type="checkbox" name="catFilter" value="4" onchange="onFilterChange()">
+                <span>Thời trang</span>
+            </label>
+            <label class="filter-checkbox-item">
+                <input type="checkbox" name="catFilter" value="5" onchange="onFilterChange()">
+                <span>Khác</span>
+            </label>
+        </div>
+
+        <hr class="filter-divider">
+
+        <!-- NHÓM 2: KHOẢNG GIÁ (DUAL RANGE SLIDER + INPUT TỪ - ĐẾN) -->
+        <div class="filter-group-title">Khoảng giá</div>
+        <div class="dual-range-wrapper">
+            <div class="dual-range-track"></div>
+            <div class="dual-range-fill" id="sliderFill"></div>
+            <input type="range" id="priceRangeMin" min="0" max="10000000" step="50000" value="0" oninput="onRangeMinInput()">
+            <input type="range" id="priceRangeMax" min="0" max="10000000" step="50000" value="10000000" oninput="onRangeMaxInput()">
+        </div>
+
+        <div class="price-inputs-row">
+            <input type="number" id="priceInputMin" placeholder="Từ" min="0" step="10000" onchange="onMinInputChange()">
+            <input type="number" id="priceInputMax" placeholder="Đến" min="0" step="10000" onchange="onMaxInputChange()">
+        </div>
+
+        <div class="filter-action-buttons">
+            <button type="button" class="btn-filter-apply" onclick="applyFilters()">Lọc</button>
+            <button type="button" class="btn-filter-reset" onclick="resetFilters()">Xóa</button>
+        </div>
+    </aside>
+
+    <!-- CỘT PHẢI: DANH SÁCH SẢN PHẨM (THEO MẪU ẢNH 4 & 5) -->
+    <section class="shop-content-area">
+        <div class="shop-content-header">
+            <div class="shop-prod-count">
+                Hiển thị <strong id="productCount">0</strong> sản phẩm
+            </div>
+            <div class="shop-sort-box">
+                <label for="sortFilter">Sắp xếp:</label>
+                <select id="sortFilter" onchange="onSortChange()">
+                    <option value="newest" selected>Mới đăng</option>
+                    <option value="price-asc">Giá: Thấp &rarr; Cao</option>
+                    <option value="price-desc">Giá: Cao &rarr; Thấp</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PRODUCT GRID (DARK CARDS THEO ẢNH 4) -->
+        <div class="product-grid-dark" id="productGrid">
+            <!-- Render bằng JavaScript -->
+        </div>
+
+        <!-- PHÂN TRANG (THEO MẪU ẢNH 5: 10 SẢN PHẨM / TRANG) -->
+        <div class="pagination-container-modern" id="paginationContainer">
+            <!-- Nút chuyển trang render bằng JS -->
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+<script>
+    const MAX_PRICE = 10000000;
+    const PAGE_SIZE = 9;
+    let currentPage = 1;
+    let currentFilteredList = [];
+    let searchQuery = "";
+
+    function updateSliderTrack() {
+        const minVal = parseInt(document.getElementById('priceRangeMin').value) || 0;
+        const maxVal = parseInt(document.getElementById('priceRangeMax').value) || MAX_PRICE;
+        const fill = document.getElementById('sliderFill');
+        if (fill) {
+            const percent1 = (minVal / MAX_PRICE) * 100;
+            const percent2 = (maxVal / MAX_PRICE) * 100;
+            fill.style.left = percent1 + "%";
+            fill.style.width = (percent2 - percent1) + "%";
+        }
+    }
+
+    function onRangeMinInput() {
+        const minEl = document.getElementById('priceRangeMin');
+        const maxEl = document.getElementById('priceRangeMax');
+        let minVal = parseInt(minEl.value) || 0;
+        let maxVal = parseInt(maxEl.value) || MAX_PRICE;
+
+        if (minVal > maxVal) {
+            minVal = maxVal;
+            minEl.value = minVal;
+        }
+        document.getElementById('priceInputMin').value = minVal || "";
+        updateSliderTrack();
+    }
+
+    function onRangeMaxInput() {
+        const minEl = document.getElementById('priceRangeMin');
+        const maxEl = document.getElementById('priceRangeMax');
+        let minVal = parseInt(minEl.value) || 0;
+        let maxVal = parseInt(maxEl.value) || MAX_PRICE;
+
+        if (maxVal < minVal) {
+            maxVal = minVal;
+            maxEl.value = maxVal;
+        }
+        document.getElementById('priceInputMax').value = maxVal >= MAX_PRICE ? "" : maxVal;
+        updateSliderTrack();
+    }
+
+    function onMinInputChange() {
+        let val = parseInt(document.getElementById('priceInputMin').value) || 0;
+        if (val < 0) val = 0;
+        if (val > MAX_PRICE) val = MAX_PRICE;
+        const maxVal = parseInt(document.getElementById('priceRangeMax').value) || MAX_PRICE;
+        if (val > maxVal) val = maxVal;
+        document.getElementById('priceRangeMin').value = val;
+        updateSliderTrack();
+    }
+
+    function onMaxInputChange() {
+        let val = parseInt(document.getElementById('priceInputMax').value);
+        if (isNaN(val) || val <= 0 || val > MAX_PRICE) val = MAX_PRICE;
+        const minVal = parseInt(document.getElementById('priceRangeMin').value) || 0;
+        if (val < minVal) val = minVal;
+        document.getElementById('priceRangeMax').value = val;
+        updateSliderTrack();
+    }
+
+    function onFilterChange() {
+        applyFilters();
+    }
+
+    function onSortChange() {
+        applyFilters();
+    }
+
+    function resetFilters() {
+        document.querySelectorAll('input[name="catFilter"]').forEach(cb => cb.checked = false);
+        document.getElementById('priceRangeMin').value = 0;
+        document.getElementById('priceRangeMax').value = MAX_PRICE;
+        document.getElementById('priceInputMin').value = "";
+        document.getElementById('priceInputMax').value = "";
+        document.getElementById('sortFilter').value = "newest";
+        updateSliderTrack();
+        applyFilters();
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        executeFilterAndRender();
+    }
+
+    function goToPage(page) {
+        const totalPages = Math.ceil(currentFilteredList.length / PAGE_SIZE) || 1;
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderCurrentPageProducts();
+        renderPagination();
+
+        const grid = document.getElementById('productGrid');
+        if (grid) {
+            grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function calculateProductRelevance(p, query) {
+        if (!query) return p.featured ? 50 : 0;
+        let score = 0;
+        const q = query.toLowerCase();
+        const name = (p.name || '').toLowerCase();
+        const cat = (p.categoryName || '').toLowerCase();
+        const desc = (p.description || '').toLowerCase();
+
+        if (name.startsWith(q)) score += 100;
+        else if (name.includes(q)) score += 60;
+        
+        q.split(/\s+/).filter(Boolean).forEach(w => {
+            if (name.includes(w)) score += 20;
+            if (cat.includes(w)) score += 15;
+            if (desc.includes(w)) score += 5;
+        });
+
+        if (p.featured) score += 15;
+        return score;
+    }
+
+    function executeFilterAndRender() {
+        if (typeof ThriftDB === 'undefined') return;
+
+        let products = ThriftDB.getProducts();
+
+        // 1. Lọc theo checkbox Danh mục đã chọn
+        const checkedCats = Array.from(document.querySelectorAll('input[name="catFilter"]:checked')).map(cb => cb.value);
+        if (checkedCats.length > 0) {
+            products = products.filter(p => checkedCats.includes(String(p.categoryId)));
+        }
+
+        // 2. Lọc theo Khoảng giá
+        const minPrice = parseInt(document.getElementById('priceRangeMin').value) || 0;
+        const maxPrice = parseInt(document.getElementById('priceRangeMax').value) || MAX_PRICE;
+        products = products.filter(p => p.price >= minPrice && p.price <= maxPrice);
+
+        // 3. Lọc theo từ khóa tìm kiếm nếu có
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            products = products.filter(p => {
+                const name = (p.name || '').toLowerCase();
+                const desc = (p.description || '').toLowerCase();
+                const cat = (p.categoryName || '').toLowerCase();
+                return name.includes(q) || desc.includes(q) || cat.includes(q);
+            });
+        }
+
+        // 4. Sắp xếp (Mới đăng, Giá cả)
+        const sortVal = document.getElementById('sortFilter') ? document.getElementById('sortFilter').value : 'newest';
+        if (sortVal === 'price-asc') {
+            products.sort((a, b) => a.price - b.price);
+        } else if (sortVal === 'price-desc') {
+            products.sort((a, b) => b.price - a.price);
+        } else {
+            // Mặc định: Mới đăng
+            products.sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : a.id;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : b.id;
+                return dateB - dateA || b.id - a.id;
+            });
+        }
+
+        currentFilteredList = products;
+
+        // Cập nhật số lượng
+        const countEl = document.getElementById('productCount');
+        if (countEl) {
+            countEl.textContent = products.length;
+        }
+
+        renderCurrentPageProducts();
+        renderPagination();
+    }
+
+    function renderCurrentPageProducts() {
+        const grid = document.getElementById('productGrid');
+        if (!grid) return;
+
+        if (currentFilteredList.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #71717a; background: white; border-radius: 14px; border: 1px dashed #d4d4d8;">Không tìm thấy món đồ cũ nào phù hợp với bộ lọc. Hãy thử điều chỉnh lại khoảng giá hoặc danh mục.</div>';
+            return;
+        }
+
+        // Cắt đúng 9 sản phẩm cho trang hiện tại (PAGE_SIZE = 9, lưới 3x3 cân đối)
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const pageItems = currentFilteredList.slice(startIndex, startIndex + PAGE_SIZE);
+
+        grid.innerHTML = pageItems.map(p => {
+            const isFav = typeof ThriftDB !== 'undefined' && typeof ThriftDB.isFavorite === 'function' && ThriftDB.isFavorite(p.id);
+            return `
+                <div class="card-dark-item">
+                    <div style="position: relative;">
+                        <a href="/Products/Details/${p.id}" class="card-dark-image" style="display: block; cursor: pointer; text-decoration: none;" title="Xem chi tiết ${p.name}">
+                            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
+                        </a>
+                        <button class="btn-card-fav ${isFav ? 'active' : ''}" onclick="toggleProductFavorite(${p.id}, event)" title="${isFav ? 'Bỏ yêu thích' : 'Yêu thích món đồ'}" data-fav-id="${p.id}">
+                            <i class="${isFav ? 'fas fa-heart text-danger' : 'far fa-heart'}"></i>
+                        </button>
+                    </div>
+                    <div class="card-dark-body">
+                        <div class="card-dark-category">${(p.categoryName || 'ĐỒ CŨ').toUpperCase()}</div>
+                        <h3 class="card-dark-title" title="${p.name}">
+                            <a href="/Products/Details/${p.id}" style="color: inherit; text-decoration: none;">${p.name}</a>
+                        </h3>
+                        <div class="card-dark-meta">
+                            <i class="fas fa-map-marker-alt mr-1"></i>${p.sellerAddress || 'TP.HCM'} · Người bán: <strong>${p.sellerName || 'Thành viên'}</strong>
+                        </div>
+                        <div class="card-dark-price-row">
+                            <span class="card-dark-price">${ThriftDB.formatCurrency(p.price)}</span>
+                            ${p.originalPrice && p.originalPrice > p.price ? `<span class="card-dark-old-price">${ThriftDB.formatCurrency(p.originalPrice)}</span>` : ''}
+                        </div>
+                        <div class="card-dark-actions">
+                            <a href="/Products/Details/${p.id}" class="btn-card-detail">Chi tiết</a>
+                            <button class="btn-card-add" onclick="openChatWithSeller(${p.id})" title="Nhắn tin với người bán">Chat</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderPagination() {
+        const container = document.getElementById('paginationContainer');
+        if (!container) return;
+
+        const totalPages = Math.ceil(currentFilteredList.length / PAGE_SIZE);
+        if (totalPages <= 1) {
+            container.innerHTML = "";
+            return;
+        }
+
+        let html = "";
+
+        // Nút Prev (<-)
+        html += `<button type="button" class="modern-page-btn ${currentPage === 1 ? 'disabled' : ''}" onclick="goToPage(${currentPage - 1})" title="Trang trước">&larr;</button>`;
+
+        // Các nút số trang
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button type="button" class="modern-page-btn ${currentPage === i ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+
+        // Nút Next (->)
+        html += `<button type="button" class="modern-page-btn ${currentPage === totalPages ? 'disabled' : ''}" onclick="goToPage(${currentPage + 1})" title="Trang sau">&rarr;</button>`;
+
+        container.innerHTML = html;
+    }
+
+    function handleAddToCart(productId) {
+        if (typeof ThriftDB !== 'undefined') {
+            ThriftDB.addToCart(productId, 1);
+            if (typeof updateCartBadge === 'function') updateCartBadge();
+            const p = ThriftDB.getProductById(productId);
+            showToast(`Đã thêm "${p ? p.name : 'Món đồ'}" vào giỏ hàng!`);
+        }
+    }
+
+    function initProductsPage() {
+        updateSliderTrack();
+
+        // Đọc query search từ url nếu có
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchParam = urlParams.get('search');
+        if (searchParam) {
+            searchQuery = searchParam.trim();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = searchQuery;
+            const sortFilter = document.getElementById('sortFilter');
+            if (sortFilter) sortFilter.value = 'newest';
+        }
+
+        const catParam = urlParams.get('category');
+        if (catParam) {
+            const cb = document.querySelector(`input[name="catFilter"][value="${catParam}"]`);
+            if (cb) cb.checked = true;
+        }
+
+        executeFilterAndRender();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProductsPage);
+    } else {
+        initProductsPage();
+    }
+    if (window.jQuery) {
+        $(document).ready(initProductsPage);
+    }
+</script>
+}

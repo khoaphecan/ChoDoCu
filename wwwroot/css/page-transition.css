@@ -1,0 +1,30 @@
+﻿/* =========================================
+   HIỆU ỨNG CHUYỂN TRANG CAMERA917
+========================================= */
+
+body {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+    /* Khi trang đã tải xong */
+    body.page-loaded {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Khi rời khỏi trang */
+    body.page-exit {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+/* Tôn trọng người dùng tắt animation */
+@media (prefers-reduced-motion: reduce) {
+    body {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

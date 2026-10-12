@@ -1,0 +1,1079 @@
+@using ThriftShop.Common
+@{
+    ViewData["Title"] = "Liên Hệ & Hộp Thư Chat - ThriftShop";
+    var activeProduct = ViewBag.ActiveProduct as ThriftShop.Models.Product;
+    var activeProductJson = activeProduct != null ? System.Text.Json.JsonSerializer.Serialize(new {
+        id = activeProduct.Id,
+        name = activeProduct.Name,
+        price = activeProduct.Price,
+        image = activeProduct.Image,
+        sellerId = activeProduct.SellerId,
+        sellerName = !string.IsNullOrWhiteSpace(activeProduct.SellerName) ? activeProduct.SellerName : "Người bán ThriftShop",
+        sellerAvatar = (!string.IsNullOrWhiteSpace(activeProduct.SellerAvatar) && !activeProduct.SellerAvatar.Contains("ui-avatars.com")) ? activeProduct.SellerAvatar : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
+        sellerPhone = !string.IsNullOrWhiteSpace(activeProduct.SellerPhone) ? activeProduct.SellerPhone : "0901234567",
+        sellerEmail = activeProduct.SellerEmail ?? ""
+    }) : "null";
+
+    var currentUserId = Context.Session.GetUserId();
+    var currentUserName = Context.Session.GetUserName();
+    var currentUserAvatar = Context.Session.GetUserAvatar();
+}
+
+<script>
+    (function() {
+        try {
+            @if (currentUserId.HasValue)
+            {
+                <text>
+                localStorage.setItem("thrift_current_user", JSON.stringify({
+                    id: @currentUserId.Value,
+                    name: "@Html.Raw(currentUserName ?? "Thành viên")",
+                    avatar: "@Html.Raw(currentUserAvatar ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80")"
+                }));
+                </text>
+            }
+        } catch(e) {}
+    })();
+</script>
+
+<style>
+    .chat-page-container {
+        width: min(96%, 1400px);
+        margin: 20px auto 40px;
+        background: #ffffff;
+        border: 1px solid #e4e4e7;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        display: flex;
+        height: min(84vh, 820px);
+        min-height: 540px;
+        overflow: hidden;
+    }
+
+    /* CỘT TRÁI: DANH SÁCH CUỘC TRÒ CHUYỆN (CHUẨN ẢNH 3) */
+    .chat-sidebar {
+        width: clamp(280px, 30vw, 380px);
+        border-right: 1px solid #e4e4e7;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .chat-sidebar-header {
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid #f4f4f5;
+    }
+
+    .chat-sidebar-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #18181b;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-search-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chat-search-input {
+        flex: 1;
+        padding: 9px 14px 9px 36px;
+        border: 1px solid #e4e4e7;
+        border-radius: 8px;
+        font-size: 13.5px;
+        outline: none;
+        background: #fafafa;
+        color: #18181b;
+    }
+
+    .chat-search-input:focus {
+        background: #ffffff;
+        border-color: #ff3c00;
+    }
+
+    .chat-search-icon {
+        position: absolute;
+        left: 12px;
+        color: #a1a1aa;
+        font-size: 14px;
+        pointer-events: none;
+    }
+
+    .chat-tabs {
+        display: flex;
+        gap: 8px;
+        padding: 12px 20px;
+        border-bottom: 1px solid #f4f4f5;
+        background: #fafafa;
+    }
+
+    .chat-tab-btn {
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #e4e4e7;
+        background: #ffffff;
+        color: #52525b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .chat-tab-btn:hover {
+        background: #f4f4f5;
+    }
+
+    .chat-tab-btn.active {
+        background: #18181b;
+        color: #ffffff;
+        border-color: #18181b;
+    }
+
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .chat-list-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 18px;
+        gap: 12px;
+        border-bottom: 1px solid #f4f4f5;
+        cursor: pointer;
+        transition: background 0.15s;
+        position: relative;
+    }
+
+    .chat-list-item:hover {
+        background: #f8fafc;
+    }
+
+    .chat-list-item.active {
+        background: #f1f5f9;
+    }
+
+    .chat-avatar-wrapper {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+    }
+
+    .chat-avatar-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .chat-prod-badge-thumb {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        border: 2px solid #ffffff;
+        object-fit: cover;
+    }
+
+    .chat-item-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-item-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #18181b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-item-time {
+        font-size: 11.5px;
+        font-weight: 400;
+        color: #a1a1aa;
+    }
+
+    .chat-item-del-btn {
+        background: transparent;
+        border: none;
+        color: #a1a1aa;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0.5;
+        transition: all 0.2s;
+        margin-left: 4px;
+    }
+
+    .chat-list-item:hover .chat-item-del-btn {
+        opacity: 1;
+    }
+
+    .chat-item-del-btn:hover {
+        color: #ef4444;
+        background: #fee2e2;
+    }
+
+    .chat-item-snippet {
+        font-size: 12.5px;
+        color: #71717a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+    }
+
+    .chat-unread-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ff3c00;
+        display: inline-block;
+        margin-left: 6px;
+    }
+
+    /* CỘT PHẢI: KHUNG TRÒ CHUYỆN CHI TIẾT (CHUẨN ẢNH 3) */
+    .chat-main-pane {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+    }
+
+    /* HEADER CỦA NGƯỜI ĐANG CHAT */
+    .chat-main-header {
+        padding: 14px 24px;
+        border-bottom: 1px solid #e4e4e7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+    }
+
+    .chat-user-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .chat-user-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .chat-user-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #18181b;
+    }
+
+    .chat-user-status {
+        font-size: 12px;
+        color: #16a34a;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .chat-header-actions {
+        display: flex;
+        gap: 14px;
+        color: #71717a;
+        font-size: 16px;
+    }
+
+    .chat-header-action-btn {
+        background: none;
+        border: none;
+        color: #71717a;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 6px;
+        border-radius: 6px;
+    }
+
+    .chat-header-action-btn:hover {
+        background: #f4f4f5;
+        color: #18181b;
+    }
+
+    /* THANH GHIM THÔNG TIN SẢN PHẨM TRÊN ĐẦU (CHUẨN ẢNH 3) */
+    .chat-pinned-product {
+        padding: 12px 24px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e4e4e7;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .chat-pinned-thumb-wrap {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        flex-shrink: 0;
+        background: white;
+    }
+
+    .chat-pinned-thumb-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .badge-tot {
+        position: absolute;
+        bottom: 2px;
+        left: 2px;
+        background: #16a34a;
+        color: white;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 1px 4px;
+        border-radius: 3px;
+        line-height: 1.2;
+    }
+
+    .chat-pinned-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-pinned-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #18181b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-pinned-price-row {
+        font-size: 13px;
+        margin-top: 2px;
+    }
+
+    .chat-pinned-price {
+        font-weight: 800;
+        color: #ff3c00;
+    }
+
+    .chat-pinned-status {
+        color: #71717a;
+        font-size: 12px;
+        margin-left: 6px;
+    }
+
+    .chat-pinned-action-btn {
+        padding: 6px 14px;
+        font-size: 12.5px;
+        font-weight: 600;
+        background: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        color: #334155;
+        text-decoration: none;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .chat-pinned-action-btn:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    /* KHUNG DANH SÁCH TIN NHẮN */
+    .chat-messages-container {
+        flex: 1;
+        padding: 20px 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #fcfcfc;
+    }
+
+    .msg-group {
+        display: flex;
+        flex-direction: column;
+        max-width: 70%;
+    }
+
+    .msg-group.received {
+        align-self: flex-start;
+    }
+
+    .msg-group.sent {
+        align-self: flex-end;
+    }
+
+    .msg-bubble {
+        padding: 10px 16px;
+        border-radius: 14px;
+        font-size: 13.5px;
+        line-height: 1.5;
+        white-space: pre-line;
+        word-break: break-word;
+    }
+
+    .msg-group.received .msg-bubble {
+        background: #f1f5f9;
+        color: #18181b;
+        border-bottom-left-radius: 4px;
+    }
+
+    .msg-group.sent .msg-bubble {
+        background: #ff3c00;
+        color: #ffffff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .msg-time {
+        font-size: 11px;
+        color: #a1a1aa;
+        margin-top: 3px;
+        padding: 0 4px;
+    }
+
+    .msg-group.sent .msg-time {
+        text-align: right;
+    }
+
+    /* THANH GỢI Ý CÂU HỎI NHANH (CHUẨN ẢNH 3) */
+    .chat-suggestion-chips {
+        padding: 8px 20px;
+        background: #ffffff;
+        border-top: 1px solid #f4f4f5;
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .chat-suggestion-chips::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .chat-suggestion-chips::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 4px;
+    }
+
+    .chat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        font-size: 12.5px;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .chat-chip:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+
+    /* KHUNG NHẬP TIN NHẮN (CHUẨN ẢNH 3) */
+    .chat-input-bar {
+        padding: 12px 24px 16px;
+        background: #ffffff;
+        border-top: 1px solid #e4e4e7;
+    }
+
+    .chat-input-textarea {
+        width: 100%;
+        min-height: 44px;
+        max-height: 100px;
+        padding: 10px 14px;
+        border: 1px solid #e4e4e7;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        resize: none;
+        font-family: inherit;
+        background: #fafafa;
+    }
+
+    .chat-input-textarea:focus {
+        background: #ffffff;
+        border-color: #ff3c00;
+    }
+
+    .chat-toolbar-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .chat-tools-left {
+        display: flex;
+        gap: 12px;
+    }
+
+    .chat-tool-btn {
+        background: none;
+        border: 1px solid #e4e4e7;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12.5px;
+        color: #52525b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .chat-tool-btn:hover {
+        background: #f4f4f5;
+        color: #18181b;
+    }
+
+    .chat-send-btn {
+        padding: 8px 20px;
+        background: #ff3c00;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s;
+    }
+
+    .chat-send-btn:hover {
+        background: #e03500;
+    }
+</style>
+
+<div class="chat-page-container">
+    <!-- CỘT TRÁI: DANH SÁCH NGƯỜI CHAT & SẢN PHẨM (CHUẨN ẢNH 3) -->
+    <div class="chat-sidebar">
+        <div class="chat-sidebar-header">
+            <div class="chat-sidebar-title">
+                <span>Chat</span>
+                <i class="fas fa-ellipsis-v" style="font-size: 14px; color: #a1a1aa; cursor: pointer;"></i>
+            </div>
+            <div class="chat-search-wrap">
+                <i class="fas fa-search chat-search-icon"></i>
+                <input type="text" id="chatSearchInput" class="chat-search-input" placeholder="Nhập 3 ký tự để bắt đầu tìm kiếm">
+            </div>
+        </div>
+
+        <!-- TABS: TẤT CẢ / CHƯA ĐỌC / TIN RÁC -->
+        <div class="chat-tabs">
+            <button class="chat-tab-btn active" onclick="switchChatTab('all', this)">Tất cả</button>
+            <button class="chat-tab-btn" onclick="switchChatTab('unread', this)">Chưa đọc</button>
+            <button class="chat-tab-btn" onclick="switchChatTab('spam', this)">Tin rác / Bỏ qua</button>
+        </div>
+
+        <!-- DANH SÁCH HỘI THOẠI -->
+        <div class="chat-list" id="chatListContainer">
+            <!-- Render bằng JS -->
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: CHI TIẾT ĐOẠN CHAT & THÔNG TIN MÓN ĐỒ -->
+    <div class="chat-main-pane" id="chatMainPane">
+        <!-- TRẠNG THÁI TRỐNG KHI CHƯA CHỌN HOẶC CHƯA CÓ ĐOẠN CHAT -->
+        <div id="chatEmptyPlaceholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 520px; text-align: center; padding: 40px 20px; color: #71717a;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: #f4f4f5; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 16px;">💬</div>
+            <h3 style="font-size: 20px; font-weight: 700; color: #18181b; margin-bottom: 8px;">Hộp Thư Liên Hệ</h3>
+            <p style="font-size: 14px; color: #71717a; max-width: 420px; line-height: 1.6; margin: 0 0 20px;">Hiện bạn chưa có cuộc trò chuyện nào. Hãy tìm kiếm món đồ cũ bạn yêu thích và bấm "Chat" để liên hệ trực tiếp với người bán.</p>
+            <a href="/" style="display: inline-block; padding: 11px 26px; background: #e53935; color: white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(229,57,53,0.25);">Khám Phá Món Đồ Cũ Ngay</a>
+        </div>
+
+        <!-- PHẦN CHAT HOẠT ĐỘNG KHI CÓ ĐOẠN CHAT ĐƯỢC CHỌN -->
+        <div id="chatActiveSection" style="display: none; flex-direction: column; height: 100%; width: 100%;">
+            <!-- HEADER NGƯỜI BÁN -->
+            <div class="chat-main-header">
+                <div class="chat-user-profile">
+                    <img id="activeSellerAvatar" class="chat-user-avatar" src="" alt="Avatar">
+                    <div>
+                        <div id="activeSellerName" class="chat-user-name"></div>
+                        <div class="chat-user-status">
+                            <span style="font-size: 8px;">🟢</span> <span id="activeSellerStatus">Đang hoạt động</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="chat-header-action-btn" title="Gắn thẻ phân loại"><i class="fas fa-tag"></i></button>
+                    <button class="chat-header-action-btn" title="Tùy chọn đoạn chat"><i class="fas fa-list-ul"></i></button>
+                    <button class="chat-header-action-btn" title="Xóa đoạn chat này" onclick="deleteActiveChat()" style="color: #ef4444;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+
+            <!-- THANH GHIM SẢN PHẨM ĐANG TRAO ĐỔI (CHUẨN ẢNH 3) -->
+            <div class="chat-pinned-product" id="pinnedProductBar" style="display: none;">
+                <div class="chat-pinned-thumb-wrap">
+                    <img id="pinnedProdImg" src="" alt="Sản phẩm">
+                    <span class="badge-tot">TỐT</span>
+                </div>
+                <div class="chat-pinned-info">
+                    <div id="pinnedProdTitle" class="chat-pinned-title"></div>
+                    <div class="chat-pinned-price-row">
+                        <span id="pinnedProdPrice" class="chat-pinned-price"></span>
+                        <span id="pinnedProdStatus" class="chat-pinned-status"></span>
+                    </div>
+                </div>
+                <a id="pinnedProdLink" href="#" class="chat-pinned-action-btn">
+                    Xem tin &rarr;
+                </a>
+            </div>
+
+            <!-- KHUNG TIN NHẮN -->
+            <div class="chat-messages-container" id="chatMessages">
+                <!-- Render tin nhắn -->
+            </div>
+
+            <!-- THANH GỢI Ý CÂU HỎI NHANH (CHUẨN ẢNH 3) -->
+            <div class="chat-suggestion-chips" id="suggestionChipsBar">
+                <div class="chat-chip" id="chipPhone" onclick="sendSuggestion('SĐT của bạn là gì ạ?')"><i class="fas fa-phone-alt"></i> SĐT liên hệ</div>
+                <div class="chat-chip" onclick="sendSuggestion('Món đồ này còn không bạn?')">Món đồ này còn không?</div>
+                <div class="chat-chip" onclick="sendSuggestion('Bạn có ship COD toàn quốc không?')">Bạn có ship hàng không?</div>
+                <div class="chat-chip" onclick="sendSuggestion('Sản phẩm còn bảo hành không?')">Sản phẩm còn bảo hành không?</div>
+                <div class="chat-chip" onclick="sendSuggestion('Sản phẩm này đã qua sửa chữa chưa?')">Sản phẩm này đã qua sửa chữa chưa?</div>
+                <div class="chat-chip" onclick="sendSuggestion('Có phụ kiện đi kèm theo sản phẩm không?')">Có phụ kiện đi kèm theo sản phẩm?</div>
+            </div>
+
+            <!-- THANH NHẬP LIỆU GỬI TIN -->
+            <div class="chat-input-bar">
+                <textarea id="chatInputText" class="chat-input-textarea" placeholder="Nhập tin nhắn..." rows="1" onkeydown="handleChatKeyDown(event)"></textarea>
+                <div class="chat-toolbar-bottom">
+                    <div class="chat-tools-left">
+                        <button class="chat-tool-btn" onclick="attachMediaPrompt()"><i class="fas fa-image"></i> Hình và video</button>
+                        <button class="chat-tool-btn" onclick="attachAddressPrompt()"><i class="fas fa-map-marker-alt"></i> Địa chỉ</button>
+                    </div>
+                    <button class="chat-send-btn" onclick="submitSendMessage()">
+                        Gửi tin <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentTab = 'all';
+    let activeChatId = null;
+    let chats = [];
+
+    function initChatPage() {
+        // KIỂM TRA ĐĂNG NHẬP: Khi chưa đăng nhập thì ngay lập tức chuyển hướng sang trang đăng nhập
+        if (typeof window.checkUserLoggedIn === 'function' ? !window.checkUserLoggedIn() : !localStorage.getItem('thrift_current_user')) {
+            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+            return;
+        }
+
+        chats = (typeof ThriftDB !== 'undefined' && typeof ThriftDB.getChats === 'function') ? ThriftDB.getChats() : [];
+
+        // Đồng bộ và làm sạch avatar các cuộc hội thoại cũ đang lưu trong localStorage
+        let chatsDirty = false;
+        chats.forEach(c => {
+            if (!c.sellerAvatar || c.sellerAvatar.includes('ui-avatars.com') || c.sellerAvatar.length < 10) {
+                if (typeof ThriftDB !== 'undefined' && typeof ThriftDB.getAvatarForName === 'function') {
+                    c.sellerAvatar = ThriftDB.getAvatarForName(c.sellerName || c.sellerId);
+                    chatsDirty = true;
+                }
+            }
+        });
+        if (chatsDirty && typeof ThriftDB !== 'undefined' && typeof ThriftDB.saveChats === 'function') {
+            ThriftDB.saveChats(chats);
+        }
+
+        const serverActiveProduct = @Html.Raw(activeProductJson);
+
+        if (serverActiveProduct && typeof ThriftDB !== 'undefined' && typeof ThriftDB.startOrGetChatForProduct === 'function') {
+            const activeChat = ThriftDB.startOrGetChatForProduct(serverActiveProduct);
+            chats = ThriftDB.getChats();
+            if (activeChat) {
+                activeChatId = activeChat.id;
+            }
+        } else {
+            // Kiểm tra xem có param productId trên URL không (khi nhấn Chat từ card sản phẩm)
+            const urlParams = new URLSearchParams(window.location.search);
+            const pIdParam = urlParams.get('productId') || urlParams.get('chat_prod');
+            if (pIdParam) {
+                const pId = parseInt(pIdParam);
+                const foundChat = chats.find(c => c.product && String(c.product.id) === String(pId));
+                if (foundChat) {
+                    activeChatId = foundChat.id;
+                } else if (typeof ThriftDB !== 'undefined') {
+                    const prod = ThriftDB.getProductById(pId);
+                    if (prod && typeof ThriftDB.startOrGetChatForProduct === 'function') {
+                        const newChat = ThriftDB.startOrGetChatForProduct(prod);
+                        chats = ThriftDB.getChats();
+                        activeChatId = newChat.id;
+                    }
+                }
+            }
+        }
+
+        if (!activeChatId && chats.length > 0) {
+            activeChatId = chats[0].id;
+        }
+
+        renderChatList();
+        renderActiveChat();
+
+        // Gắn listener tìm kiếm
+        const searchInput = document.getElementById('chatSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                renderChatList(e.target.value.trim().toLowerCase());
+            });
+        }
+    }
+
+    function switchChatTab(tab, btn) {
+        currentTab = tab;
+        document.querySelectorAll('.chat-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderChatList();
+    }
+
+    function getChatPartner(c) {
+        const currentUser = (typeof ThriftDB !== 'undefined' && ThriftDB.getCurrentUser) ? ThriftDB.getCurrentUser() : null;
+        const currentId = currentUser ? String(currentUser.id) : '';
+        const currentName = currentUser ? (currentUser.name || '').trim().toLowerCase() : '';
+
+        // Kiểm tra xem user hiện tại có phải người bán không
+        const isUserTheSeller = currentUser && currentId && (
+            (c.sellerId && String(c.sellerId) === currentId) ||
+            (c.sellerName && currentName && c.sellerName.trim().toLowerCase() === currentName)
+        );
+
+        if (isUserTheSeller) {
+            // Đối tác đang chat là người mua
+            const partnerName = c.buyerName || 'Người mua liên hệ';
+            let partnerAvatar = c.buyerAvatar;
+            if (!partnerAvatar || partnerAvatar.includes('ui-avatars.com') || partnerAvatar.length < 10) {
+                if (typeof ThriftDB !== 'undefined' && ThriftDB.getUserById) {
+                    const u = ThriftDB.getUserById(c.buyerName || c.buyerId);
+                    if (u && u.avatar && !u.avatar.includes('ui-avatars.com')) partnerAvatar = u.avatar;
+                }
+                if (!partnerAvatar && typeof ThriftDB !== 'undefined' && ThriftDB.getAvatarForName) {
+                    partnerAvatar = ThriftDB.getAvatarForName(partnerName);
+                }
+            }
+            return {
+                name: partnerName,
+                avatar: partnerAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80',
+                phone: c.buyerPhone || '',
+                partnerId: c.buyerId
+            };
+        } else {
+            // Đối tác đang chat là người bán (người muốn chat)
+            const partnerName = c.sellerName || 'Người bán';
+            let partnerAvatar = c.sellerAvatar;
+            if (!partnerAvatar || partnerAvatar.includes('ui-avatars.com') || partnerAvatar.length < 10) {
+                if (typeof ThriftDB !== 'undefined' && ThriftDB.getUserById) {
+                    const u = ThriftDB.getUserById(c.sellerName || c.sellerId);
+                    if (u && u.avatar && !u.avatar.includes('ui-avatars.com')) partnerAvatar = u.avatar;
+                }
+                if (!partnerAvatar && typeof ThriftDB !== 'undefined' && ThriftDB.getAvatarForName) {
+                    partnerAvatar = ThriftDB.getAvatarForName(partnerName);
+                }
+            }
+            return {
+                name: partnerName,
+                avatar: partnerAvatar || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80',
+                phone: c.sellerPhone || '',
+                partnerId: c.sellerId
+            };
+        }
+    }
+
+    function renderChatList(keyword = '') {
+        const container = document.getElementById('chatListContainer');
+        if (!container) return;
+        let filtered = chats;
+
+        if (currentTab === 'unread') {
+            filtered = filtered.filter(c => c.unread);
+        } else if (currentTab === 'spam') {
+            filtered = filtered.filter(c => c.tab === 'spam');
+        }
+
+        if (keyword && keyword.length >= 2) {
+            filtered = filtered.filter(c => 
+                (c.sellerName && c.sellerName.toLowerCase().includes(keyword)) || 
+                (c.buyerName && c.buyerName.toLowerCase().includes(keyword)) ||
+                (c.product && c.product.name && c.product.name.toLowerCase().includes(keyword)) ||
+                (c.lastMessage && c.lastMessage.toLowerCase().includes(keyword))
+            );
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px 16px; color: #a1a1aa; font-size: 13px;">Chưa có đoạn chat nào.</div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(c => {
+            const isActive = c.id === activeChatId;
+            const partner = getChatPartner(c);
+            let itemAvatar = partner.avatar;
+            if (!itemAvatar || itemAvatar.includes('ui-avatars.com')) {
+                itemAvatar = (typeof ThriftDB !== 'undefined') ? ThriftDB.getAvatarForName(partner.name) : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80';
+            }
+            return `
+                <div class="chat-list-item ${isActive ? 'active' : ''}" onclick="selectChat('${c.id}')">
+                    <div class="chat-avatar-wrapper">
+                        <img class="chat-avatar-img" src="${itemAvatar}" onerror="this.src='https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80'" alt="${partner.name}">
+                        ${c.product ? `<img class="chat-prod-badge-thumb" src="${c.product.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'" alt="">` : ''}
+                    </div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${partner.name}</span>
+                            <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                <span class="chat-item-time">${c.lastTime || ''}</span>
+                                <button class="chat-item-del-btn" title="Xóa đoạn chat này" onclick="event.stopPropagation(); deleteChatPrompt('${c.id}');">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chat-item-snippet" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${c.unread ? '<span class="chat-unread-dot"></span> ' : ''}
+                            ${c.product ? `<span style="font-weight: 600; color: #ff3c00;">[${c.product.name}]</span> ` : ''}${c.lastMessage || 'Chưa có tin nhắn'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function selectChat(chatId) {
+        activeChatId = chatId;
+        const target = chats.find(c => c.id === chatId);
+        if (target) {
+            target.unread = false;
+            if (typeof ThriftDB !== 'undefined' && typeof ThriftDB.saveChats === 'function') {
+                ThriftDB.saveChats(chats);
+            }
+        }
+        renderChatList();
+        renderActiveChat();
+    }
+
+    function deleteChatPrompt(chatId) {
+        if (!chatId) return;
+        const target = chats.find(c => c.id === chatId);
+        const partner = target ? getChatPartner(target) : null;
+        const partnerName = partner ? partner.name : 'người này';
+        const prodName = (target && target.product && target.product.name) ? ` về món "${target.product.name}"` : '';
+
+        if (!confirm(`Bạn có chắc muốn xóa cuộc trò chuyện với ${partnerName}${prodName}?`)) {
+            return;
+        }
+
+        if (typeof ThriftDB !== 'undefined' && typeof ThriftDB.deleteChat === 'function') {
+            ThriftDB.deleteChat(chatId);
+        } else {
+            chats = chats.filter(c => c.id !== chatId);
+            localStorage.setItem('thrift_chats', JSON.stringify(chats));
+        }
+
+        // Cập nhật lại mảng chats trong view
+        chats = chats.filter(c => c.id !== chatId);
+
+        // Nếu vừa xóa đoạn chat đang mở, chuyển sang chat khác hoặc hiển thị placeholder trống
+        if (activeChatId === chatId) {
+            activeChatId = chats.length > 0 ? chats[0].id : null;
+        }
+
+        renderChatList();
+        renderActiveChat();
+    }
+
+    function deleteActiveChat() {
+        if (!activeChatId) return;
+        deleteChatPrompt(activeChatId);
+    }
+
+    function renderActiveChat() {
+        const chat = chats.find(c => c.id === activeChatId);
+        const emptyPlaceholder = document.getElementById('chatEmptyPlaceholder');
+        const activeSection = document.getElementById('chatActiveSection');
+
+        if (!chat) {
+            if (emptyPlaceholder) emptyPlaceholder.style.display = 'flex';
+            if (activeSection) activeSection.style.display = 'none';
+            return;
+        }
+
+        if (emptyPlaceholder) emptyPlaceholder.style.display = 'none';
+        if (activeSection) activeSection.style.display = 'flex';
+
+        const partner = getChatPartner(chat);
+
+        // Render header thông tin người muốn chat (ảnh đại diện chuẩn xác, tránh bị nhầm)
+        const avatarEl = document.getElementById('activeSellerAvatar');
+        if (avatarEl) {
+            let av = partner.avatar;
+            if (!av || av.includes('ui-avatars.com')) {
+                av = (typeof ThriftDB !== 'undefined') ? ThriftDB.getAvatarForName(partner.name) : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80';
+            }
+            avatarEl.src = av || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80';
+            avatarEl.onerror = function() { this.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'; };
+        }
+        const nameEl = document.getElementById('activeSellerName');
+        if (nameEl) nameEl.textContent = partner.name || 'Người bán';
+        const statusEl = document.getElementById('activeSellerStatus');
+        if (statusEl) statusEl.textContent = chat.isOnline ? 'Đang hoạt động' : 'Vắng mặt';
+
+        // Render thanh ghim sản phẩm (vật muốn mua)
+        const pinnedBar = document.getElementById('pinnedProductBar');
+        if (chat.product) {
+            pinnedBar.style.display = 'flex';
+            const prodImg = document.getElementById('pinnedProdImg');
+            if (prodImg) {
+                prodImg.src = chat.product.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
+                prodImg.onerror = function() { this.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'; };
+            }
+            const titleEl = document.getElementById('pinnedProdTitle');
+            if (titleEl) titleEl.textContent = chat.product.name || 'Món đồ cũ';
+            const priceEl = document.getElementById('pinnedProdPrice');
+            const priceVal = Number(chat.product.price) || 0;
+            if (priceEl) priceEl.textContent = priceVal.toLocaleString('vi-VN') + ' ₫';
+            const statusEl = document.getElementById('pinnedProdStatus');
+            if (statusEl) statusEl.textContent = chat.product.statusText || '(Tin đang mở bán · Còn hàng)';
+            const linkEl = document.getElementById('pinnedProdLink');
+            if (linkEl) linkEl.href = `/Products/Details/${chat.product.id}`;
+        } else {
+            pinnedBar.style.display = 'none';
+        }
+
+        // Cập nhật chip SĐT nếu có
+        const chipPhone = document.getElementById('chipPhone');
+        if (partner.phone || chat.sellerPhone) {
+            const phone = partner.phone || chat.sellerPhone;
+            chipPhone.innerHTML = `<i class="fas fa-phone-alt"></i> SĐT: ${phone}`;
+            chipPhone.onclick = () => sendSuggestion(`Chào bạn, mình xin số điện thoại liên hệ trực tiếp: ${phone}`);
+        }
+
+        // Render danh sách tin nhắn kèm avatar phân biệt rõ ràng
+        const msgContainer = document.getElementById('chatMessages');
+        const currentUser = (typeof ThriftDB !== 'undefined' && ThriftDB.getCurrentUser) ? ThriftDB.getCurrentUser() : null;
+        const myAvatar = currentUser ? currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80';
+
+        msgContainer.innerHTML = (chat.messages || []).map(m => {
+            const isSent = m.sender === 'buyer';
+            const bubbleAvatar = isSent ? myAvatar : partner.avatar;
+            return `
+                <div class="msg-group ${isSent ? 'sent' : 'received'}" style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; ${isSent ? 'justify-content: flex-end;' : 'justify-content: flex-start;'}">
+                    ${!isSent ? `<img src="${bubbleAvatar}" alt="${partner.name}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; margin-bottom: 4px; border: 1.5px solid #e4e4e7;">` : ''}
+                    <div>
+                        <div class="msg-bubble">${m.text}</div>
+                        <div class="msg-time" style="font-size: 11px; color: #a1a1aa; margin-top: 3px; ${isSent ? 'text-align: right;' : 'text-align: left;'}">${m.time || ''}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Cuộn xuống dòng cuối cùng
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    function handleChatKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            submitSendMessage();
+        }
+    }
+
+    function sendSuggestion(text) {
+        document.getElementById('chatInputText').value = text;
+        submitSendMessage();
+    }
+
+    function attachMediaPrompt() {
+        const url = prompt('Dán đường link ảnh hoặc video món đồ bạn muốn gửi:');
+        if (url) {
+            sendDirectMessage(`[Hình ảnh]: ${url}`);
+        }
+    }
+
+    function attachAddressPrompt() {
+        const user = ThriftDB.getCurrentUser();
+        const defaultAddr = user ? user.address : '123 Nguyễn Huệ, Quận 1, TP.HCM';
+        const addr = prompt('Nhập địa chỉ giao dịch / nhận hàng của bạn:', defaultAddr);
+        if (addr) {
+            sendDirectMessage(`📍 Địa chỉ giao nhận của tôi: ${addr}`);
+        }
+    }
+
+    function submitSendMessage() {
+        const input = document.getElementById('chatInputText');
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        sendDirectMessage(text);
+    }
+
+    function sendDirectMessage(text) {
+        if (!activeChatId) return;
+
+        const sentMsg = ThriftDB.sendChatMessage(activeChatId, text, 'buyer');
+        chats = ThriftDB.getChats();
+        renderActiveChat();
+        renderChatList();
+
+        // Đồng bộ tin nhắn vào CSDL SQL Server Backend
+        const targetChat = chats.find(c => c.id === activeChatId);
+        const prodId = targetChat ? (targetChat.productId || 1) : 1;
+        fetch('/Cart/SendMessage?productId=' + prodId + '&message=' + encodeURIComponent(text), {
+            method: 'POST'
+        }).catch(() => {});
+
+        // Tự động phản hồi mô phỏng từ người bán sau 1.5 giây
+        setTimeout(() => {
+            const curChat = chats.find(c => c.id === activeChatId);
+            if (curChat) {
+                const autoReplies = [
+                    "Dạ món đồ này vẫn còn nguyên zin nhé bạn, bạn có cần xem thêm ảnh góc cạnh nào không ạ?",
+                    "Mình có hỗ trợ đồng kiểm COD bưu tá khi nhận hàng nha, bạn yên tâm nhé!",
+                    "Vâng ạ, bạn để lại địa chỉ và số điện thoại, mình đóng gói cẩn thận gửi sớm nhé."
+                ];
+                const replyText = autoReplies[Math.floor(Math.random() * autoReplies.length)];
+                ThriftDB.sendChatMessage(activeChatId, replyText, 'seller');
+                chats = ThriftDB.getChats();
+                renderActiveChat();
+                renderChatList();
+            }
+        }, 1500);
+    }
+
+    document.addEventListener('DOMContentLoaded', initChatPage);
+</script>
+}

@@ -1,0 +1,277 @@
+@model ThriftShop.Models.LoginViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập | ThriftShop</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 430px;
+            background: white;
+            padding: 40px;
+            border-radius: 14px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #111;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: #e53935;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #111;
+            font-size: 24px;
+        }
+
+        .description {
+            text-align: center;
+            color: #777;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 16px;
+            margin-bottom: 7px;
+            color: #111;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #e53935;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 7px;
+            background: #e53935;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #c62828;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 7px;
+            text-align: center;
+            font-size: 13.5px;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .validation-error {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .register {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 14px;
+            color: #111;
+        }
+
+        .register a {
+            color: #e53935;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .quick-accounts {
+            margin-top: 20px;
+            padding: 10px;
+            background: #fafafa;
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .quick-accounts a {
+            font-weight: bold;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="logo">
+            Thrift<span>Shop</span>
+        </div>
+
+        <h2>Đăng nhập</h2>
+
+        <p class="description">
+            Đăng nhập vào tài khoản ThriftShop
+        </p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="message error">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="message error">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="message success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <div id="client-message" class="message" style="display: none;"></div>
+
+        <!-- FORM ASP.NET MVC CHUẨN: POST lên Controller Account -> Action Login -->
+        <form asp-controller="Account" asp-action="Login" method="post" id="loginForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+            <label asp-for="Email">Email</label>
+            <input asp-for="Email"
+                   type="email"
+                   id="email"
+                   placeholder="Nhập email"
+                   required />
+            <span asp-validation-for="Email" class="validation-error"></span>
+
+            <label asp-for="Password">Mật khẩu</label>
+            <input asp-for="Password"
+                   type="password"
+                   id="password"
+                   placeholder="Nhập mật khẩu"
+                   required />
+            <span asp-validation-for="Password" class="validation-error"></span>
+
+            <button type="submit">
+                Đăng nhập
+            </button>
+
+            <div class="register">
+                Chưa có tài khoản? <a href="/Account/Register">Đăng ký ngay</a>
+            </div>
+
+            <a href="/" class="back">
+                ← Quay về trang chủ
+            </a>
+
+            <!-- Tiện ích điền nhanh 2 tài khoản mẫu -->
+            <div class="quick-accounts">
+                <span>Chọn nhanh tài khoản mẫu: </span>
+                <a href="javascript:void(0)" onclick="fillAcc('user')" style="color: #1976d2;">👤 User</a> |
+                <a href="javascript:void(0)" onclick="fillAcc('admin')" style="color: #e53935;">🛡️ Admin</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="~/js/data.js"></script>
+    <script>
+        function fillAcc(type) {
+            if (type === 'admin') {
+                document.getElementById('email').value = 'admin@thriftshop.vn';
+                document.getElementById('password').value = 'admin';
+            } else {
+                document.getElementById('email').value = 'user@thriftshop.vn';
+                document.getElementById('password').value = 'user';
+            }
+        }
+
+        // Đồng bộ trước khi submit form lên Server
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Đồng bộ LocalStorage cho các component client-side
+            if (typeof ThriftDB !== 'undefined') {
+                ThriftDB.login(email, password);
+            }
+        });
+    </script>
+</body>
+</html>

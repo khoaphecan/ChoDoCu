@@ -1,0 +1,444 @@
+@{
+    ViewData["Title"] = "Trang Cá Nhân & Tin Đăng Bán - ThriftShop";
+    var queryUserId = ViewBag.UserId as string ?? "";
+}
+
+<style>
+    .seller-profile-container {
+        width: 100%;
+        max-width: 1240px;
+        margin: 30px auto 60px;
+        padding: 0 clamp(14px, 2.5vw, 30px);
+    }
+
+    /* CARD HỒ SƠ NGƯỜI DÙNG */
+    .seller-hero-card {
+        background: #ffffff;
+        border: 1px solid #e4e4e7;
+        border-radius: 16px;
+        padding: clamp(20px, 3vw, 32px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        margin-bottom: 35px;
+    }
+
+    .seller-hero-main {
+        display: flex;
+        align-items: center;
+        gap: clamp(16px, 2.5vw, 28px);
+        flex-wrap: wrap;
+    }
+
+    .seller-avatar-wrapper {
+        position: relative;
+        width: clamp(80px, 10vw, 100px);
+        height: clamp(80px, 10vw, 100px);
+        flex-shrink: 0;
+    }
+
+    .seller-avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f4f4f5;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .seller-status-badge {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 18px;
+        height: 18px;
+        background: #22c55e;
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+    }
+
+    .seller-info-col {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .seller-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+    }
+
+    .seller-name-title {
+        font-size: clamp(20px, 2.4vw, 26px);
+        font-weight: 800;
+        color: #18181b;
+        margin: 0;
+    }
+
+    .seller-verified-tag {
+        color: #ff3c00;
+        font-size: 16px;
+    }
+
+    .seller-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: #71717a;
+        font-size: 13.5px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .seller-meta-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .seller-bio-text {
+        font-size: 14px;
+        color: #3f3f46;
+        line-height: 1.6;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 1px dashed #e2e8f0;
+        margin: 0;
+    }
+
+    .seller-actions-col {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-seller-action {
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-seller-primary {
+        background: #ff3c00;
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(255, 60, 0, 0.25);
+    }
+
+    .btn-seller-primary:hover {
+        background: #e03500;
+        color: white;
+    }
+
+    .btn-seller-secondary {
+        background: #ffffff;
+        color: #3f3f46;
+        border: 1.5px solid #e4e4e7;
+    }
+
+    .btn-seller-secondary:hover {
+        border-color: #ff3c00;
+        color: #ff3c00;
+    }
+
+    /* TIÊU ĐỀ KHU VỰC SẢN PHẨM */
+    .seller-listings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+        border-bottom: 1px solid #e4e4e7;
+        padding-bottom: 16px;
+    }
+
+    .seller-listings-title {
+        font-size: clamp(18px, 2vw, 22px);
+        font-weight: 800;
+        color: #18181b;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .seller-listings-badge {
+        font-size: 13px;
+        font-weight: 700;
+        background: #fee2e2;
+        color: #ef4444;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+
+    .seller-listings-note {
+        font-size: 13px;
+        color: #71717a;
+    }
+
+    /* EMPTY STATE */
+    .seller-empty-box {
+        text-align: center;
+        padding: 60px 20px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px dashed #d4d4d8;
+        max-width: 580px;
+        margin: 30px auto;
+    }
+
+    .seller-empty-icon {
+        font-size: 48px;
+        color: #d4d4d8;
+        margin-bottom: 14px;
+    }
+
+    .seller-empty-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #18181b;
+        margin-bottom: 6px;
+    }
+
+    .seller-empty-desc {
+        font-size: 13.5px;
+        color: #71717a;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="seller-profile-container">
+    <!-- 1. HỒ SƠ NGƯỜI DÙNG / NGƯỜI BÁN -->
+    <section class="seller-hero-card" id="sellerHeroCard">
+        <div class="seller-hero-main">
+            <div class="seller-avatar-wrapper">
+                <img id="sellerAvatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80" alt="Avatar" class="seller-avatar-img">
+                <span class="seller-status-badge" title="Đang hoạt động"></span>
+            </div>
+
+            <div class="seller-info-col">
+                <div class="seller-name-row">
+                    <h1 class="seller-name-title" id="sellerName">Đang tải...</h1>
+                    <i class="fas fa-check-circle seller-verified-tag" title="Người dùng uy tín"></i>
+                </div>
+
+                <div class="seller-meta-row">
+                    <span><i class="fas fa-circle text-success mr-1" style="font-size: 9px; color: #22c55e;"></i> Đang hoạt động</span>
+                    <span><i class="fas fa-bolt text-warning mr-1" style="color: #f59e0b;"></i> Phản hồi: Nhanh</span>
+                    <span><i class="fas fa-map-marker-alt text-danger mr-1" style="color: #ff3c00;"></i> <span id="sellerAddress">TP. Hồ Chí Minh</span></span>
+                    <span><i class="fas fa-phone mr-1"></i> <span id="sellerPhone">0903 124 567</span></span>
+                </div>
+
+                <p class="seller-bio-text" id="sellerBio">
+                    Chuyên thanh lý đồ công nghệ & gia dụng cũ còn tốt, hỗ trợ giao dịch trực tiếp.
+                </p>
+            </div>
+
+            <div class="seller-actions-col" id="sellerActionsContainer">
+                <!-- Nút thao tác tương ứng (sửa thông tin nếu là chính mình, hoặc Chat nếu là người mua) -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. BÀI ĐĂNG BÁN ĐỒ CŨ (BẮT BUỘC: ĐÃ BÁN / ĐÃ XOÁ KHÔNG HIỂN THỊ) -->
+    <div class="seller-listings-header">
+        <div>
+            <h2 class="seller-listings-title">
+                📦 Món Đồ Đang Đăng Bán
+                <span class="seller-listings-badge" id="sellerListingsCount">0 tin</span>
+            </h2>
+            <div class="seller-listings-note">
+                Chỉ hiển thị các món đồ đang mở bán công khai. Món đồ đã đánh dấu "Đã bán" hoặc đã xoá sẽ tự động ẩn khỏi trang cá nhân.
+            </div>
+        </div>
+        <div>
+            <a href="/Products" class="btn btn-outline-secondary" style="border-radius: 8px; font-weight: 600; font-size: 13.5px; padding: 7px 14px;">
+                <i class="fas fa-search mr-1"></i> Khám phá sàn đồ cũ
+            </a>
+        </div>
+    </div>
+
+    <!-- KHUNG RENDER LƯỚI SẢN PHẨM -->
+    <div id="sellerProductsGrid" class="modern-product-grid">
+        <!-- Render bằng JS -->
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const targetUserId = "@queryUserId";
+
+    function loadSellerProfilePage() {
+        if (typeof ThriftDB === 'undefined') return;
+
+        const currentUser = ThriftDB.getCurrentUser();
+        let targetIdentifier = targetUserId;
+
+        // Nếu không có userId trên query, mặc định lấy người dùng hiện tại đang đăng nhập
+        if (!targetIdentifier && currentUser) {
+            targetIdentifier = currentUser.id || currentUser.email;
+        }
+
+        // Lấy thông tin user
+        let userProfile = null;
+        if (targetIdentifier) {
+            userProfile = ThriftDB.getUserById(targetIdentifier);
+        }
+
+        // Fallback: nếu vẫn không tìm thấy, lấy currentUser hoặc default user
+        if (!userProfile) {
+            userProfile = currentUser || {
+                id: 2,
+                name: "Trần Nguyễn Anh Khoa",
+                email: "user@thriftshop.vn",
+                phone: "0889771935",
+                address: "Quận 1, TP. Hồ Chí Minh",
+                avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
+                bio: "Chuyên thanh lý đồ công nghệ & gia dụng cũ còn tốt, hỗ trợ giao dịch trực tiếp."
+            };
+        }
+
+        // Cập nhật DOM thông tin người dùng
+        const avatarEl = document.getElementById('sellerAvatar');
+        if (avatarEl && userProfile.avatar) {
+            avatarEl.src = userProfile.avatar;
+        }
+        const nameEl = document.getElementById('sellerName');
+        if (nameEl) nameEl.textContent = userProfile.name;
+        const addrEl = document.getElementById('sellerAddress');
+        if (addrEl) addrEl.textContent = userProfile.address || "TP. Hồ Chí Minh";
+        const phoneEl = document.getElementById('sellerPhone');
+        if (phoneEl) phoneEl.textContent = userProfile.phone || "0903 124 567";
+        const bioEl = document.getElementById('sellerBio');
+        if (bioEl) bioEl.textContent = userProfile.bio || "Thành viên mua bán & trao đổi đồ cũ uy tín trên sàn ThriftShop.";
+
+        // Xác định xem người xem có phải chính là chủ trang cá nhân này không
+        const isSelf = currentUser && (
+            String(currentUser.id) === String(userProfile.id) ||
+            (currentUser.email && currentUser.email.toLowerCase() === (userProfile.email || '').toLowerCase())
+        );
+
+        const actionsContainer = document.getElementById('sellerActionsContainer');
+        if (actionsContainer) {
+            if (isSelf) {
+                actionsContainer.innerHTML = `
+                    <a href="/Account/Profile" class="btn-seller-action btn-seller-secondary" title="Chỉnh sửa thông tin, avatar, mật khẩu">
+                        <i class="fas fa-user-edit"></i> Cài đặt tài khoản
+                    </a>
+                    <a href="/Products/PostItem" class="btn-seller-action btn-seller-primary" title="Đăng bán món đồ cũ mới">
+                        <i class="fas fa-plus-circle"></i> Đăng bán món mới
+                    </a>
+                `;
+            } else {
+                actionsContainer.innerHTML = `
+                    <button type="button" class="btn-seller-action btn-seller-primary" onclick="handleChatWithUser('${userProfile.id || userProfile.name}')" title="Nhắn tin trò chuyện với người bán">
+                        <i class="fas fa-comment-dots"></i> Chat với người bán
+                    </button>
+                    <a href="tel:${userProfile.phone || '0903124567'}" class="btn-seller-action btn-seller-secondary">
+                        <i class="fas fa-phone-alt"></i> Gọi điện
+                    </a>
+                `;
+            }
+        }
+
+        // 3. TẢI CÁC MÓN ĐỒ ĐANG MỞ BÁN CỦA NGƯỜI BÁN NÀY
+        // TUÂN THỦ NGHIÊM NGẶT: Các món "Đã bán" hoặc "Đã xoá" TUYỆT ĐỐI KHÔNG HIỆN!
+        const activeItems = ThriftDB.getSellerActiveProducts(userProfile.id || userProfile.name || userProfile.email);
+        
+        const countBadge = document.getElementById('sellerListingsCount');
+        if (countBadge) countBadge.textContent = `${activeItems.length} tin đang mở bán`;
+
+        const grid = document.getElementById('sellerProductsGrid');
+        if (!grid) return;
+
+        if (activeItems.length === 0) {
+            grid.innerHTML = `
+                <div class="seller-empty-box" style="grid-column: 1/-1;">
+                    <i class="fas fa-box-open seller-empty-icon"></i>
+                    <h3 class="seller-empty-title">Chưa có món đồ nào đang mở bán</h3>
+                    <p class="seller-empty-desc">
+                        ${isSelf ? 'Bạn chưa có món đồ nào đang đăng bán hoặc tất cả món đồ cũ của bạn đã được thanh lý thành công.' : 'Người dùng này hiện không có món đồ cũ nào đang mở bán công khai hoặc tất cả sản phẩm đã được bán.'}
+                    </p>
+                    ${isSelf ? `
+                        <a href="/Products/PostItem" class="btn-seller-action btn-seller-primary" style="display: inline-flex;">
+                            <i class="fas fa-plus-circle"></i> Đăng bán món đồ cũ ngay
+                        </a>
+                    ` : `
+                        <a href="/Products" class="btn-seller-action btn-seller-secondary" style="display: inline-flex;">
+                            <i class="fas fa-search"></i> Xem các món đồ khác trên sàn
+                        </a>
+                    `}
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = activeItems.map(p => {
+            const isFav = ThriftDB.isFavorite ? ThriftDB.isFavorite(p.id) : false;
+            return `
+                <div class="card-dark-item">
+                    <div style="position: relative;">
+                        <a href="/Products/Details/${p.id}" class="card-dark-image" style="display: block; cursor: pointer; text-decoration: none;" title="Xem chi tiết ${p.name}">
+                            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
+                        </a>
+                        <button class="btn-card-fav ${isFav ? 'active' : ''}" onclick="toggleProductFavorite(${p.id}, event)" title="${isFav ? 'Bỏ yêu thích' : 'Yêu thích món đồ'}" data-fav-id="${p.id}">
+                            <i class="${isFav ? 'fas fa-heart text-danger' : 'far fa-heart'}"></i>
+                        </button>
+                    </div>
+                    <div class="card-dark-body">
+                        <div class="card-dark-category">${(p.categoryName || 'ĐỒ CŨ').toUpperCase()}</div>
+                        <h3 class="card-dark-title" title="${p.name}">
+                            <a href="/Products/Details/${p.id}" style="color: inherit; text-decoration: none;">${p.name}</a>
+                        </h3>
+                        <div class="card-dark-meta">
+                            <i class="fas fa-map-marker-alt mr-1"></i>${p.sellerAddress || 'TP.HCM'}
+                        </div>
+                        <div class="card-dark-price-row">
+                            <span class="card-dark-price">${ThriftDB.formatCurrency(p.price)}</span>
+                            ${p.originalPrice && p.originalPrice > p.price ? `<span class="card-dark-old-price">${ThriftDB.formatCurrency(p.originalPrice)}</span>` : ''}
+                        </div>
+                        <div class="card-dark-actions">
+                            <a href="/Products/Details/${p.id}" class="btn-card-detail">Chi tiết</a>
+                            <button class="btn-card-add" onclick="openChatWithSeller(${p.id})" title="Nhắn tin với người bán">Chat</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function handleChatWithUser(sellerIdentifier) {
+        if (!window.checkUserLoggedIn()) {
+            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/Account/Login?returnUrl=${returnUrl}`;
+            return;
+        }
+        const activeItems = ThriftDB.getSellerActiveProducts(sellerIdentifier);
+        if (activeItems.length > 0) {
+            openChatWithSeller(activeItems[0].id);
+        } else {
+            window.location.href = '/Cart';
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadSellerProfilePage);
+    } else {
+        loadSellerProfilePage();
+    }
+    if (window.jQuery) {
+        $(document).ready(loadSellerProfilePage);
+    }
+</script>
+}

@@ -1,0 +1,143 @@
+@model ThriftShop.Models.ProductDetailViewModel
+@{
+    var p = Model?.Product;
+    var seller = Model?.Seller;
+    ViewData["Title"] = (p != null ? p.Name : "Chi Tiết Món Đồ Cũ") + " - ThriftShop";
+    var productId = p?.Id ?? (ViewBag.ProductId ?? 101);
+}
+
+<div class="container" style="max-width: 1440px; width: 95%; margin: 30px auto 60px; padding: 0 15px;">
+    <!-- BREADCRUMB -->
+    <div style="font-size: 13.5px; color: #71717a; margin-bottom: 20px;">
+        <a asp-controller="Home" asp-action="Index">Trang chủ</a> / 
+        <a asp-controller="Products" asp-action="Index">Sàn đồ cũ</a> / 
+        <span id="detailBreadcrumb" style="color: #ff3c00; font-weight: 500;">@(p != null ? p.Name : "Chi tiết món đồ")</span>
+    </div>
+
+    <!-- MAIN PRODUCT DETAIL CARD -->
+    <div class="product-detail-layout" id="productDetailCard">
+        <!-- LEFT: ẢNH MÓN ĐỒ -->
+        <div>
+            <div style="position: relative;">
+                <img id="detailImage" class="main-image" src="@(p != null ? p.Image : "")" alt="@(p != null ? p.Name : "Đồ cũ")" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
+            </div>
+            <div class="gallery-thumbs" id="detailThumbs">
+                @if (Model != null && Model.Images.Count > 1)
+                {
+                    foreach (var img in Model.Images)
+                    {
+                        <img src="@img" alt="Ảnh chi tiết" onclick="document.getElementById('detailImage').src = '@img'" style="width: 62px; height: 62px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #e4e4e7; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#ff3c00'" onmouseout="this.style.borderColor='#e4e4e7'">
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- RIGHT: THÔNG TIN CHI TIẾT & NGƯỜI BÁN -->
+        <div>
+            <span id="detailCategory" style="color: #71717a; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                @(p != null ? p.CategoryName : "ĐỒ CŨ SECONDHAND")
+            </span>
+            <h1 id="detailTitle" style="font-size: 22px; font-weight: 700; color: #18181b; margin: 6px 0 10px; line-height: 1.4;">
+                @(p != null ? p.Name : "")
+            </h1>
+
+            <div class="product-detail-price" id="detailPriceBox">
+                <span id="detailPrice" style="color: #ff3c00; font-size: 26px; font-weight: 800;">
+                    @(p != null ? p.Price.ToString("N0") + " ₫" : "0 ₫")
+                </span>
+                @if (p != null && p.OriginalPrice > p.Price)
+                {
+                    <span id="detailOriginalPrice" style="font-size: 15px; color: #a1a1aa; font-weight: 400; text-decoration: line-through; margin-left: 10px;">
+                        @p.OriginalPrice.ToString("N0") ₫
+                    </span>
+                }
+            </div>
+
+            <!-- MÔ TẢ TÌNH TRẠNG TỪ NGƯỜI BÁN -->
+            <div style="background: #f8fafc; border: 1px solid #e4e4e7; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 8px; color: #18181b;">
+                    <i class="fas fa-info-circle text-primary mr-1" style="color: #ff3c00;"></i> Mô tả tình trạng từ người bán:
+                </div>
+                <div id="detailConditionNotes" style="font-size: 13.5px; color: #3f3f46; line-height: 1.6;">
+                    @(p != null && !string.IsNullOrEmpty(p.ConditionDetails) ? p.ConditionDetails : "Đồ dùng giữ gìn cẩn thận, đã được vệ sinh sạch sẽ trước khi thanh lý.")
+                </div>
+            </div>
+
+            <!-- THÔNG TIN NGƯỜI ĐĂNG BÁN (CHUẨN ẢNH 4 - ĐÃ BỎ SỐ ĐÃ BÁN, SAO VÀ ĐÁNH GIÁ) -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: #ffffff; border: 1px solid #e4e4e7; border-radius: 14px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="position: relative; width: 50px; height: 50px; flex-shrink: 0;">
+                        <img id="detailSellerAvatar" src="@(seller?.Avatar ?? p?.SellerAvatar ?? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80")" alt="Seller" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #f4f4f5;">
+                        <span style="position: absolute; bottom: 1px; right: 1px; width: 12px; height: 12px; background: #22c55e; border: 2px solid white; border-radius: 50%;"></span>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <strong id="detailSellerName" style="font-size: 16px; color: #18181b; font-weight: 700;">
+                                @(seller?.Name ?? p?.SellerName ?? "Thành viên ThriftShop")
+                            </strong>
+                            <i class="far fa-user-circle" style="font-size: 14px; color: #71717a;"></i>
+                        </div>
+                        <div style="font-size: 13px; color: #71717a; display: flex; align-items: center; gap: 12px; margin-top: 3px;">
+                            <span style="display: inline-flex; align-items: center; gap: 5px;">
+                                <span style="display: inline-block; width: 7px; height: 7px; background: #22c55e; border-radius: 50%;"></span> Đang hoạt động
+                            </span>
+                            <span>Khu vực: <span style="color: #52525b; font-weight: 500;">@(p?.SellerAddress ?? "TP.HCM")</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NÚT XEM TRANG (BỎ SỐ ĐÃ BÁN, SAO VÀ ĐÁNH GIÁ NHƯ YÊU CẦU) -->
+                <div>
+                    <a id="btnViewSellerProfile" href="/Account/SellerProfile?userId=@(p?.SellerId ?? 0)" style="background: #f4f4f5; color: #18181b; font-weight: 600; font-size: 13.5px; border-radius: 20px; padding: 8px 18px; text-decoration: none; border: 1px solid #e4e4e7; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
+                        Xem trang
+                    </a>
+                </div>
+            </div>
+
+            <!-- NÚT CHAT VỚI NGƯỜI BÁN & YÊU THÍCH -->
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button id="btnChatWithSellerDetail" onclick="openChatWithSeller(@productId)" class="choice-btn active" style="flex: 1; padding: 14px; font-size: 15px; border-radius: 8px; background: #ff3c00; border: none; color: white;">
+                    <i class="fas fa-comment-dots mr-1"></i> Chat Với Người Bán
+                </button>
+                <button id="btnFavDetail" type="button" data-fav-id="@productId" onclick="toggleProductFavorite(@productId, event)" style="padding: 14px 20px; font-size: 15px; border-radius: 8px; border: 1.5px solid #e4e4e7; background: #ffffff; color: #71717a; cursor: pointer; transition: all 0.2s;" title="Yêu thích món đồ">
+                    <i class="@(Model != null && Model.IsFavorite ? "fas fa-heart text-danger mr-1" : "far fa-heart mr-1")" id="detailFavIcon"></i> 
+                    <span id="detailFavText">@(Model != null && Model.IsFavorite ? "Đã thích" : "Yêu thích")</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÔ TẢ CHI TIẾT TỪ NGƯỜI BÁN -->
+    <div style="margin-top: 35px; background: white; border: 1px solid #e4e4e7; border-radius: 16px; padding: 28px;">
+        <h3 style="font-size: 18px; font-weight: 700; color: #18181b; margin-bottom: 12px; border-bottom: 1px solid #f4f4f5; padding-bottom: 10px;">
+            📝 Mô Tả Chi Tiết Từ Người Bán
+        </h3>
+        <div id="detailDescription" style="font-size: 14px; color: #3f3f46; line-height: 1.8; white-space: pre-line;">
+            @(p != null && !string.IsNullOrEmpty(p.Description) ? p.Description : "Không có mô tả thêm.")
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const currentId = @productId;
+
+    function initProductDetail() {
+        const favBtn = document.getElementById('btnFavDetail');
+        if (favBtn) {
+            favBtn.onclick = (e) => {
+                toggleProductFavorite(currentId, e);
+            };
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProductDetail);
+    } else {
+        initProductDetail();
+    }
+    if (window.jQuery) {
+        $(document).ready(initProductDetail);
+    }
+</script>
+}

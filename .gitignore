@@ -1,0 +1,59 @@
+## [Visual Studio / .NET Core]
+bin/
+obj/
+out/
+.vs/
+*.user
+*.userprefs
+*.suo
+*.userosscache
+*.sln.docstates
+
+## [Build Results]
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## [Databases & Local Caches]
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+
+## [IDE / Editors]
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+## [OS Generated]
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## [Crash Logs / Temp]
+*.log
+*.tmp
+*.temp
+
+## [Course Materials / Local Docs]
+tl/
+

@@ -1,0 +1,49 @@
+@model ThriftShop.Models.Order
+@{
+    ViewData["Title"] = "Đặt Hàng Thành Công - ThriftShop";
+    var orderId = Model?.Id ?? (string?)ViewBag.OrderId;
+}
+
+<div class="container" style="margin-top: 50px; margin-bottom: 70px;">
+    <div style="max-width: 650px; margin: 0 auto; background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 45px 35px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+        <div style="width: 75px; height: 75px; border-radius: 50%; background: #ecfdf5; color: #10b981; font-size: 36px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1 style="font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 8px;">
+            Đặt Hàng Thành Công!
+        </h1>
+        <p style="color: #64748b; font-size: 15px; margin-bottom: 24px;">
+            Cảm ơn bạn đã lựa chọn mua sắm đồ cũ tái sử dụng tại sàn ThriftShop.
+        </p>
+
+        @if (!string.IsNullOrWhiteSpace(orderId))
+        {
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 14px 20px; display: inline-block; margin-bottom: 20px;">
+                Mã đơn hàng của bạn: <strong style="color: #ff3c00; font-size: 18px;" id="orderIdDisplay">@orderId</strong>
+            </div>
+        }
+
+        @if (Model != null)
+        {
+            <div style="font-size: 14px; color: #475569; margin-bottom: 24px;">
+                Người nhận: <strong>@Model.CustomerName</strong> (@Model.CustomerPhone) - Tổng thanh toán: <strong style="color: #ff3c00;">@Model.TotalAmount.ToString("N0") ₫</strong>
+            </div>
+        }
+
+        <div style="text-align: left; background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 30px; font-size: 14px; color: #334155; line-height: 1.8;">
+            <p><i class="fas fa-truck text-primary mr-2" style="color: #ff3c00;"></i>Người bán và ThriftShop sẽ đóng gói cẩn thận và bàn giao cho bưu tá giao hàng.</p>
+            <p><i class="fas fa-shield-alt text-primary mr-2" style="color: #ff3c00;"></i>Chính sách bảo vệ người mua: Đồng kiểm COD khi nhận và bao test hoàn tiền 7 ngày.</p>
+            <p><i class="fas fa-phone-alt text-primary mr-2" style="color: #ff3c00;"></i>Nhân viên chăm sóc khách hàng sẽ liên hệ xác nhận trong vòng 15 phút.</p>
+        </div>
+
+        <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-secondary" style="background: white; border: 1px solid #cbd5e1; color: #1e293b;">
+                <i class="fas fa-receipt mr-1"></i> Xem Đơn Hàng Của Tôi
+            </a>
+            <a asp-controller="Products" asp-action="Index" class="btn">
+                <i class="fas fa-th-large mr-1"></i> Tiếp Tục Mua Sắm
+            </a>
+        </div>
+    </div>
+</div>

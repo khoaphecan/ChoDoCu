@@ -1,0 +1,180 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý Danh Mục";
+}
+
+<div class="page-title-box d-flex justify-content-between align-items-center">
+  <div>
+    <h1 class="page-title">Quản Lý Danh Mục</h1>
+    <div class="page-breadcrumb">Phân loại danh mục hàng hóa và thống kê số lượng sản phẩm</div>
+  </div>
+  <div>
+    <button class="btn btn-success font-weight-bold" onclick="openAddCatModal()">
+      <i class="fas fa-plus-circle mr-1"></i>Thêm Danh Mục Mới
+    </button>
+  </div>
+</div>
+
+<div class="admin-card">
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 70px;">Mã</th>
+          <th style="width: 60px;">Icon</th>
+          <th>Tên Danh Mục Đồ Cũ</th>
+          <th>Mô Tả Danh Mục</th>
+          <th class="text-center">Tổng Hàng Hóa</th>
+          <th class="text-center" style="width: 140px;">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody id="categories-tbody">
+        <!-- Render bởi JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL THÊM / SỬA DANH MỤC -->
+<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title font-weight-bold" id="catModalTitle">Thêm Danh Mục Mới</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="category-form" onsubmit="handleSaveCat(event)">
+        <div class="modal-body">
+          <input type="hidden" id="edit-cat-id">
+          <div class="form-group">
+            <label for="cat-name" class="font-weight-bold">Tên danh mục <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="cat-name" placeholder="Ví dụ: Đồ gốm & Sưu tầm" minlength="2" required>
+          </div>
+          <div class="form-group">
+            <label for="cat-icon" class="font-weight-bold">Class Icon Font Awesome <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="cat-icon" placeholder="fas fa-tag" value="fas fa-box" required>
+            <small class="text-muted">Ví dụ: fas fa-tshirt, fas fa-laptop, fas fa-book, fas fa-couch...</small>
+          </div>
+          <div class="form-group">
+            <label for="cat-desc" class="font-weight-bold">Mô tả ngắn</label>
+            <textarea class="form-control" id="cat-desc" rows="2" placeholder="Mô tả các món đồ thuộc loại này..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success font-weight-bold">
+            <i class="fas fa-save mr-1"></i>Lưu Danh Mục
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  $(document).ready(function() {
+    renderCategoriesTable();
+  });
+
+  function renderCategoriesTable() {
+    const cats = ThriftDB.getCategories();
+    const prods = ThriftDB.getProducts();
+    const tbody = $("#categories-tbody");
+    tbody.empty();
+
+    cats.forEach(c => {
+      // Đếm số lượng sản phẩm thuộc danh mục
+      const count = prods.filter(p => p.categoryId === c.id).length;
+
+      tbody.append(`
+        <tr>
+          <td><strong class="text-muted">#${c.id}</strong></td>
+          <td class="text-center text-success"><i class="${c.icon || 'fas fa-tag'} fa-lg"></i></td>
+          <td><strong class="text-dark">${c.name}</strong></td>
+          <td><small class="text-muted">${c.description || "Không có mô tả"}</small></td>
+          <td class="text-center">
+            <span class="badge badge-primary px-3 py-1 font-weight-bold">${count} món</span>
+          </td>
+          <td class="text-center text-nowrap">
+            <button class="btn btn-outline-primary btn-sm px-2 mr-1" onclick="openEditCatModal(${c.id})" title="Chỉnh sửa">
+              <i class="fas fa-edit"></i> Sửa
+            </button>
+            <button class="btn btn-outline-danger btn-sm px-2" onclick="deleteCategory(${c.id}, ${count})" title="Xóa danh mục">
+              <i class="fas fa-trash-alt"></i> Xóa
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  function openAddCatModal() {
+    $("#catModalTitle").text("Thêm Danh Mục Đồ Cũ Mới");
+    $("#edit-cat-id").val("");
+    $("#category-form")[0].reset();
+    $("#cat-icon").val("fas fa-box");
+    $("#categoryModal").modal("show");
+  }
+
+  function openEditCatModal(id) {
+    const c = ThriftDB.getCategoryById(id);
+    if (!c) return;
+
+    $("#catModalTitle").text("Chỉnh Sửa Danh Mục #" + c.id);
+    $("#edit-cat-id").val(c.id);
+    $("#cat-name").val(c.name);
+    $("#cat-icon").val(c.icon);
+    $("#cat-desc").val(c.description || "");
+    $("#categoryModal").modal("show");
+  }
+
+  function handleSaveCat(e) {
+    e.preventDefault();
+    const id = $("#edit-cat-id").val();
+    const name = $("#cat-name").val().trim();
+    const icon = $("#cat-icon").val().trim() || "fas fa-tag";
+    const desc = $("#cat-desc").val().trim();
+
+    const cats = ThriftDB.getCategories();
+
+    if (id) {
+      const c = cats.find(item => item.id === parseInt(id));
+      if (c) {
+        c.name = name;
+        c.icon = icon;
+        c.description = desc;
+      }
+    } else {
+      const newCat = {
+        id: Date.now(),
+        name: name,
+        icon: icon,
+        description: desc
+      };
+      cats.push(newCat);
+    }
+
+    ThriftDB.saveCategories(cats);
+    $("#categoryModal").modal("hide");
+    alert("Đã lưu danh mục thành công!");
+    renderCategoriesTable();
+  }
+
+  // Kiểm tra ràng buộc trước khi xóa danh mục
+  function deleteCategory(id, count) {
+    if (count > 0) {
+      alert(`KHÔNG THỂ XÓA!\n\nDanh mục này đang có ${count} sản phẩm đồ cũ thuộc về nó. Vui lòng chuyển hoặc xóa các sản phẩm liên quan trước khi xóa danh mục để tránh lỗi dữ liệu!`);
+      return;
+    }
+
+    if (confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
+      let cats = ThriftDB.getCategories();
+      cats = cats.filter(c => c.id !== parseInt(id));
+      ThriftDB.saveCategories(cats);
+      alert("Đã xóa danh mục thành công!");
+      renderCategoriesTable();
+    }
+  }
+</script>
+}

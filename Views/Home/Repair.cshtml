@@ -1,0 +1,148 @@
+@{
+    ViewData["Title"] = "Dịch Vụ Spa, Vệ Sinh & Phục Dựng Đồ Cũ - ThriftShop";
+}
+
+<div class="main-wrapper" style="margin-top: 30px;">
+    <!-- KHUNG TẬP TRUNG (FOCUSED CONTAINER - KHÔNG CHIA 2 BÊN DÀY CỘP) -->
+    <div class="focused-card">
+        <h2>✨ Dịch Vụ Spa, Vệ Sinh & Phục Dựng Đồ Cũ (Thrift Spa)</h2>
+        <p class="desc">Chăm sóc & làm mới đồ secondhand: Spa đồ da, vệ sinh sneaker, khử khuẩn đồ vintage, bảo dưỡng đồ công nghệ & nhạc cụ.</p>
+
+        <!-- 1. FORM ĐẶT LỊCH GỌN GÀNG -->
+        <div style="background: #f8fafc; border: 1px solid #e4e4e7; border-radius: 12px; padding: 22px; margin-bottom: 28px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #18181b; margin-bottom: 14px;">
+                📅 Đặt Lịch Spa / Phục Dựng Món Đồ
+            </h3>
+            <form id="repairForm">
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label>Họ và tên (*)</label>
+                        <input type="text" placeholder="Nguyễn Văn A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại / Zalo (*)</label>
+                        <input type="tel" placeholder="0901234567" required>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label>Loại đồ cần làm mới (*)</label>
+                        <select required>
+                            <option value="fashion">Áo da / Áo khoác / Đồ hiệu Vintage</option>
+                            <option value="shoes">Giày Sneaker / Boot da / Guốc cao gót</option>
+                            <option value="tech">Thiết bị công nghệ / Điện thoại / Tai nghe cũ</option>
+                            <option value="music">Nhạc cụ (Guitar, Ukulele, Phím đàn...)</option>
+                            <option value="other">Đồ gốm / Đồng hồ / Phụ kiện khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày hẹn mang qua (*)</label>
+                        <input type="date" id="bookingDate" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mô tả tình trạng món đồ & Yêu cầu xử lý</label>
+                    <textarea rows="2" placeholder="VD: Giày Jordan ố đế cần tẩy ố vàng, Áo da vintage bị khô cứng cần dưỡng mềm..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary-block" style="border-radius: 8px;">
+                    Gửi Yêu Cầu Đặt Lịch
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. BẢNG BÁO GIÁ THAM KHẢO GỌN GÀNG -->
+        <div style="margin-bottom: 28px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #18181b; margin-bottom: 12px;">
+                📋 Bảng Giá Dịch Vụ Phổ Biến
+            </h3>
+            <table class="detail-specs-table" style="background: white; border: 1px solid #e4e4e7; border-radius: 10px; overflow: hidden;">
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600; color: #18181b;">Vệ sinh chuyên sâu & Khử khuẩn tia UV Sneaker / Giày boot</td>
+                        <td style="color: #ff3c00; font-weight: 700;">80.000₫ - 150.000₫</td>
+                        <td style="color: #71717a; font-size: 13px;">1 - 2 ngày</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #18181b;">Dưỡng mềm da thật & Phục hồi màu áo khoác da, túi xách vintage</td>
+                        <td style="color: #ff3c00; font-weight: 700;">200.000₫ - 450.000₫</td>
+                        <td style="color: #71717a; font-size: 13px;">2 - 3 ngày</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #18181b;">Vệ sinh bụi mạch, thay pin & pad tai nghe Bluetooth / Máy chơi game</td>
+                        <td style="color: #ff3c00; font-weight: 700;">150.000₫ - 350.000₫</td>
+                        <td style="color: #71717a; font-size: 13px;">Lấy ngay trong ngày</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #18181b;">Căn chỉnh cần, thay dây & vệ sinh thùng đàn Guitar / Bass</td>
+                        <td style="color: #ff3c00; font-weight: 700;">100.000₫ - 220.000₫</td>
+                        <td style="color: #71717a; font-size: 13px;">2 - 4 giờ</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. TRA CỨU TIẾN ĐỘ PHIẾU NHẬN MÁY -->
+        <div style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #18181b; margin-bottom: 8px;">
+                🔍 Tra Cứu Tiến Độ Phiếu Phục Dựng Đồ
+            </h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="orderCode" placeholder="Nhập mã phiếu (VD: SPA-3001)" style="flex: 1; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none;">
+                <button id="btnCheckOrder" class="choice-btn active" style="padding: 10px 20px;">Kiểm tra</button>
+            </div>
+            <div id="statusResult" style="display: none; margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 13.5px; line-height: 1.7;"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date().toISOString().split('T')[0];
+        const bookingDate = document.getElementById('bookingDate');
+        if (bookingDate) bookingDate.min = today;
+
+        document.getElementById('repairForm').onsubmit = (e) => {
+            e.preventDefault();
+            showToast('Đặt lịch thành công! Nhân viên ThriftShop sẽ gọi xác nhận trong 15 phút.');
+            e.target.reset();
+        };
+
+        const mockOrders = {
+            'SPA-3001': { device: 'Áo da Vintage Biker Schott', service: 'Dưỡng dầu mềm da + Khử mùi UV', status: 'Đang xử lý (Dự kiến xong 17h hôm nay)', cost: '250.000₫' },
+            'SPA-3002': { device: 'Giày Jordan 1 Chicago', service: 'Vệ sinh chuyên sâu + Tẩy ố viền đế', status: 'Đã hoàn thành - Sẵn sàng nhận đồ', cost: '120.000₫' }
+        };
+
+        document.getElementById('btnCheckOrder').onclick = () => {
+            const code = document.getElementById('orderCode').value.trim().toUpperCase();
+            const resultBox = document.getElementById('statusResult');
+
+            if (!code) {
+                showToast('Vui lòng nhập mã phiếu spa đồ!', 'error');
+                return;
+            }
+
+            if (mockOrders[code]) {
+                const info = mockOrders[code];
+                resultBox.style.display = 'block';
+                resultBox.style.background = '#f0fdf4';
+                resultBox.style.border = '1px solid #bbf7d0';
+                resultBox.style.color = '#166534';
+                resultBox.innerHTML = `
+                    <strong>Món đồ:</strong> ${info.device} | <strong>Dịch vụ:</strong> ${info.service}<br>
+                    <strong>Tiến độ:</strong> ${info.status} | <strong>Chi phí:</strong> <strong style="color:#ff3c00;">${info.cost}</strong>
+                `;
+            } else {
+                resultBox.style.display = 'block';
+                resultBox.style.background = '#fef2f2';
+                resultBox.style.border = '1px solid #fecaca';
+                resultBox.color = '#991b1b';
+                resultBox.innerHTML = `Không tìm thấy mã phiếu <strong>${code}</strong>. Vui lòng kiểm tra lại biên nhận.`;
+            }
+        };
+    });
+</script>
+}

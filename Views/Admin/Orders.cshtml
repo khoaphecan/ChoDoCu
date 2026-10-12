@@ -1,0 +1,348 @@
+@model IEnumerable<ThriftShop.Models.Order>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý Đơn Hàng";
+    var ordersJson = System.Text.Json.JsonSerializer.Serialize(Model ?? Enumerable.Empty<ThriftShop.Models.Order>());
+}
+
+<div class="page-title-box d-flex justify-content-between align-items-center">
+  <div>
+    <h1 class="page-title">Quản Lý Đơn Hàng</h1>
+    <div class="page-breadcrumb">Theo dõi, cập nhật tiến độ giao hàng và in hóa đơn bán lẻ</div>
+  </div>
+  <div>
+    <span class="badge badge-info p-2 font-weight-bold" style="font-size: 13px;" id="orders-total-badge">
+      Tổng số đơn: 0
+    </span>
+  </div>
+</div>
+
+<!-- KHỐI TÌM KIẾM ĐƠN HÀNG (THEO SLIDE 3 KTRA BE) -->
+<div class="card border-0 shadow-sm p-3 mb-4 bg-white">
+  <div class="row align-items-center">
+    <div class="col-md-4 mb-2 mb-md-0">
+      <label class="small font-weight-bold text-muted mb-1">Tìm theo Tên khách / Mã đơn:</label>
+      <input type="text" id="admin-order-search" class="form-control form-control-sm" placeholder="Nhập tên khách hàng..." onkeyup="filterAdminOrders()">
+    </div>
+    <div class="col-md-3 mb-2 mb-md-0">
+      <label class="small font-weight-bold text-muted mb-1">Trạng thái đơn hàng:</label>
+      <select id="admin-order-status-filter" class="form-control form-control-sm" onchange="filterAdminOrders()">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="pending">Chờ duyệt đơn</option>
+        <option value="processing">Đang đóng gói xử lý</option>
+        <option value="shipping">Đang giao hàng</option>
+        <option value="delivered">Đã giao thành công</option>
+        <option value="cancelled">Đã hủy đơn</option>
+      </select>
+    </div>
+    <div class="col-md-3 mb-2 mb-md-0">
+      <label class="small font-weight-bold text-muted mb-1">Trạng thái thanh toán:</label>
+      <select id="admin-order-payment-filter" class="form-control form-control-sm" onchange="filterAdminOrders()">
+        <option value="all">Tất cả thanh toán</option>
+        <option value="Chưa thanh toán">Chưa thanh toán (COD)</option>
+        <option value="Đã thanh toán">Đã thanh toán</option>
+      </select>
+    </div>
+    <div class="col-md-2 text-md-right mt-3 mt-md-0">
+      <button class="btn btn-outline-secondary btn-sm btn-block" onclick="resetOrderFilter()">
+        <i class="fas fa-undo mr-1"></i>Đặt lại
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- BẢNG DANH SÁCH ĐƠN HÀNG -->
+<div class="admin-card">
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr>
+          <th>Mã Đơn</th>
+          <th>Khách Hàng</th>
+          <th>Số Điện Thoại</th>
+          <th>Ngày Đặt</th>
+          <th>Thanh Toán</th>
+          <th>Tổng Tiền</th>
+          <th class="text-center">Trạng Thái Đơn</th>
+          <th class="text-center" style="width: 170px;">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody id="admin-orders-tbody">
+        <!-- Render bởi JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-edit mr-2"></i>Cập Nhật Trạng Thái Đơn Hàng</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="status-order-id">
+        <div class="mb-3">
+          Đơn hàng: <strong class="text-danger h5 mb-0" id="status-order-code">DH100234</strong>
+        </div>
+        <div class="form-group">
+          <label for="new-order-status" class="font-weight-bold">Chọn trạng thái mới <span class="text-danger">*</span></label>
+          <select class="form-control" id="new-order-status">
+            <option value="pending">Chờ duyệt đơn</option>
+            <option value="processing">Đang đóng gói xử lý</option>
+            <option value="shipping">Đang vận chuyển giao hàng</option>
+            <option value="delivered">Đã giao hàng thành công</option>
+            <option value="cancelled">Đã hủy đơn hàng</option>
+          </select>
+        </div>
+        <div class="form-group mb-0">
+          <label for="new-payment-status" class="font-weight-bold">Trạng thái thanh toán:</label>
+          <select class="form-control" id="new-payment-status">
+            <option value="Chưa thanh toán">Chưa thanh toán</option>
+            <option value="Đã thanh toán">Đã thanh toán</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary font-weight-bold" onclick="saveNewOrderStatus()">
+          <i class="fas fa-check mr-1"></i>Lưu Thay Đổi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XEM CHI TIẾT HÓA ĐƠN BÁN LẺ -->
+<div class="modal fade" id="adminInvoiceModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-file-invoice-dollar mr-2 text-warning"></i>Chi Tiết Đơn Hàng & Hóa Đơn Bán Lẻ</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body p-4" id="admin-invoice-content"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <i class="fas fa-print mr-1"></i>In Hóa Đơn
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  const serverOrders = @Html.Raw(ordersJson);
+
+  $(document).ready(function() {
+    renderAdminOrdersTable();
+  });
+
+  function renderAdminOrdersTable(items) {
+    const orders = items || (serverOrders && serverOrders.length > 0 ? serverOrders : ((typeof ThriftDB !== 'undefined') ? ThriftDB.getOrders() : []));
+    $("#orders-total-badge").text(`Tổng số đơn: ${orders.length}`);
+
+    const tbody = $("#admin-orders-tbody");
+    tbody.empty();
+
+    if (orders.length === 0) {
+      tbody.append('<tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy đơn hàng nào phù hợp!</td></tr>');
+      return;
+    }
+
+    orders.forEach(o => {
+      let badgeClass = "badge-warning";
+      let statusText = o.orderStatusText || "Chờ duyệt";
+      if (o.orderStatus === "processing") {
+        badgeClass = "badge-info";
+        statusText = "Đang xử lý";
+      } else if (o.orderStatus === "shipping") {
+        badgeClass = "badge-primary";
+        statusText = "Đang giao";
+      } else if (o.orderStatus === "delivered") {
+        badgeClass = "badge-success";
+        statusText = "Đã giao";
+      } else if (o.orderStatus === "cancelled") {
+        badgeClass = "badge-danger";
+        statusText = "Đã hủy";
+      }
+
+      let payBadge = o.paymentStatus === "Đã thanh toán" 
+        ? '<span class="badge badge-success">Đã thanh toán</span>' 
+        : '<span class="badge badge-secondary">Chưa thanh toán</span>';
+
+      tbody.append(`
+        <tr>
+          <td><strong class="text-success">${o.id}</strong></td>
+          <td><strong>${o.customerName}</strong></td>
+          <td><small>${o.customerPhone}</small></td>
+          <td><small class="text-muted">${o.orderDate}</small></td>
+          <td>${payBadge}</td>
+          <td class="font-weight-bold text-danger">${ThriftDB.formatCurrency(o.totalAmount)}</td>
+          <td class="text-center">
+            <span class="badge ${badgeClass} px-2 py-1">${statusText}</span>
+          </td>
+          <td class="text-center text-nowrap">
+            <button class="btn btn-outline-info btn-sm px-2 mr-1" onclick="viewOrderInvoiceAdmin('${o.id}')" title="Xem hóa đơn chi tiết">
+              <i class="fas fa-file-invoice"></i> Chi tiết
+            </button>
+            <button class="btn btn-outline-primary btn-sm px-2" onclick="openUpdateStatusModal('${o.id}')" title="Cập nhật trạng thái">
+              <i class="fas fa-sync-alt"></i> Đổi TT
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  function filterAdminOrders() {
+    const keyword = $("#admin-order-search").val().trim().toLowerCase();
+    const status = $("#admin-order-status-filter").val();
+    const pay = $("#admin-order-payment-filter").val();
+    const allOrders = ThriftDB.getOrders();
+
+    const filtered = allOrders.filter(o => {
+      const matchName = o.customerName.toLowerCase().includes(keyword) || o.id.toLowerCase().includes(keyword);
+      const matchStatus = status === "all" || o.orderStatus === status;
+      const matchPay = pay === "all" || (o.paymentStatus && o.paymentStatus.includes(pay));
+      return matchName && matchStatus && matchPay;
+    });
+
+    renderAdminOrdersTable(filtered);
+  }
+
+  function resetOrderFilter() {
+    $("#admin-order-search").val("");
+    $("#admin-order-status-filter").val("all");
+    $("#admin-order-payment-filter").val("all");
+    renderAdminOrdersTable();
+  }
+
+  function openUpdateStatusModal(orderId) {
+    const order = ThriftDB.getOrderById(orderId);
+    if (!order) return;
+
+    $("#status-order-id").val(order.id);
+    $("#status-order-code").text(order.id);
+    $("#new-order-status").val(order.orderStatus);
+    $("#new-payment-status").val(order.paymentStatus || "Chưa thanh toán");
+    $("#updateStatusModal").modal("show");
+  }
+
+  function saveNewOrderStatus() {
+    const orderId = $("#status-order-id").val();
+    const newStatus = $("#new-order-status").val();
+    const newPay = $("#new-payment-status").val();
+
+    const orders = ThriftDB.getOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      order.orderStatus = newStatus;
+      if (newStatus === "pending") order.orderStatusText = "Chờ duyệt đơn";
+      else if (newStatus === "processing") order.orderStatusText = "Đang đóng gói xử lý";
+      else if (newStatus === "shipping") order.orderStatusText = "Đang giao hàng";
+      else if (newStatus === "delivered") order.orderStatusText = "Đã giao hàng thành công";
+      else if (newStatus === "cancelled") order.orderStatusText = "Đã hủy đơn";
+
+      order.paymentStatus = newPay;
+      ThriftDB.saveOrders(orders);
+      $("#updateStatusModal").modal("hide");
+      alert("Đã cập nhật trạng thái đơn hàng thành công!");
+      renderAdminOrdersTable();
+    }
+  }
+
+  // Hiển thị hóa đơn bán lẻ chi tiết
+  function viewOrderInvoiceAdmin(orderId) {
+    const order = ThriftDB.getOrderById(orderId);
+    if (!order) return;
+
+    let itemsHtml = "";
+    order.items.forEach((it, idx) => {
+      itemsHtml += `
+        <tr>
+          <td class="text-center">${idx + 1}</td>
+          <td>
+            <strong>${it.productName}</strong><br>
+            <small class="text-muted">Tình trạng: ${it.condition}</small>
+          </td>
+          <td class="text-center">${ThriftDB.formatCurrency(it.price)}</td>
+          <td class="text-center">${it.quantity}</td>
+          <td class="text-right font-weight-bold text-danger">${ThriftDB.formatCurrency(it.subtotal)}</td>
+        </tr>
+      `;
+    });
+
+    const modalHtml = `
+      <div class="invoice-box">
+        <div class="invoice-header d-flex justify-content-between align-items-center">
+          <div>
+            <div class="invoice-company-title"><i class="fas fa-recycle mr-2"></i>ThriftShop Sài Gòn</div>
+            <small class="text-muted">Hệ Thống Mua Bán Đồ Cũ Secondhand Kiểm Duyệt</small>
+          </div>
+          <div class="text-right">
+            <h5 class="font-weight-bold text-dark mb-0">HÓA ĐƠN BÁN HÀNG</h5>
+            <small class="text-muted">Mã đơn: <strong>${order.id}</strong></small><br>
+            <small class="text-muted">Thời gian: ${order.orderDate}</small>
+          </div>
+        </div>
+
+        <div class="row my-3">
+          <div class="col-sm-6">
+            <h6 class="font-weight-bold text-success mb-1">Khách Hàng:</h6>
+            <p class="small mb-1"><strong>Họ tên:</strong> ${order.customerName}</p>
+            <p class="small mb-1"><strong>Điện thoại:</strong> ${order.customerPhone}</p>
+            <p class="small mb-0"><strong>Email:</strong> ${order.customerEmail || "Không có"}</p>
+          </div>
+          <div class="col-sm-6 text-sm-right">
+            <h6 class="font-weight-bold text-success mb-1">Địa Chỉ Nhận:</h6>
+            <p class="small mb-1">${order.shippingAddress}</p>
+            <p class="small mb-1"><strong>PTTT:</strong> ${order.paymentMethod}</p>
+            <p class="small mb-0"><strong>Trạng thái:</strong> <span class="badge badge-success">${order.orderStatusText || order.orderStatus}</span></p>
+          </div>
+        </div>
+
+        <table class="table table-bordered small">
+          <thead class="bg-light">
+            <tr>
+              <th style="width: 5%;" class="text-center">STT</th>
+              <th style="width: 45%;">Tên Món Đồ Cũ</th>
+              <th class="text-center">Đơn Giá</th>
+              <th class="text-center">SL</th>
+              <th class="text-right">Thành Tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="text-right font-weight-bold">Tạm tính:</td>
+              <td class="text-right font-weight-bold">${ThriftDB.formatCurrency(order.subtotal)}</td>
+            </tr>
+            <tr>
+              <td colspan="4" class="text-right font-weight-bold">Phí ship:</td>
+              <td class="text-right font-weight-bold text-success">${order.shippingFee === 0 ? "Miễn phí" : ThriftDB.formatCurrency(order.shippingFee)}</td>
+            </tr>
+            <tr class="bg-light">
+              <td colspan="4" class="text-right font-weight-bold h6 mb-0">TỔNG TIỀN THANH TOÁN:</td>
+              <td class="text-right font-weight-bold text-danger h6 mb-0">${ThriftDB.formatCurrency(order.totalAmount)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="small text-muted font-italic">
+          Ghi chú từ khách: ${order.notes || "Không có ghi chú"}
+        </div>
+      </div>
+    `;
+
+    $("#admin-invoice-content").html(modalHtml);
+    $("#adminInvoiceModal").modal("show");
+  }
+</script>
+}

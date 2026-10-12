@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ThriftShop | Website Mua Bán Đồ Cũ Secondhand</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Page Transition -->
+    <link rel="stylesheet" href="~/css/page-transition.css" asp-append-version="true" />
+    <!-- Custom Style (WebApplication8 aesthetic) -->
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <!-- Immediate Synchronous Route Guard for Protected Pages -->
+    <script>
+        (function() {
+            try {
+                var p = window.location.pathname.toLowerCase();
+                var protectedRoutes = ['/cart', '/products/postitem', '/products/mylistings', '/admin', '/account/profile', '/products/favorites'];
+                var isProtected = protectedRoutes.some(function(r) { return p === r || p.indexOf(r + '/') === 0; });
+                if (isProtected) {
+                    var u = localStorage.getItem("thrift_current_user");
+                    if (!u || u === "null" || u === "undefined") {
+                        var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                        window.location.replace('/Account/Login?returnUrl=' + returnUrl);
+                    }
+                }
+            } catch(e) {}
+        })();
+    </script>
+</head>
+<body>
+    <!-- HEADER CHUẨN CAMERA917 -->
+    <header>
+        <div class="top-bar">
+            <!-- Brand Logo -->
+            <div class="logo">
+                <a asp-controller="Home" asp-action="Index">Thrift<span>Shop</span></a>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search">
+                <form class="search-form" id="searchForm" asp-controller="Products" asp-action="Index" method="get">
+                    <input name="search" id="searchInput" type="search" placeholder="Tìm kiếm đồ cũ: quần áo vintage, công nghệ, giày dép, sách cũ..." autocomplete="off">
+                    <button type="submit" aria-label="Tìm kiếm">🔎</button>
+                </form>
+            </div>
+
+            <!-- User Actions -->
+            <div class="user">
+                <!-- Người dùng & Tài khoản: RENDER TỪ SERVER-SIDE SESSION (ASP.NET MVC) -->
+                <div id="user-header-auth" style="display: inline-flex; align-items: center; gap: 12px;">
+                    @if (Context.Session.IsLoggedIn())
+                    {
+                        <div class="dropdown" style="position: relative; display: inline-block;">
+                            <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #18181b; font-weight: 600;">
+                                <img src="@(Context.Session.GetUserAvatar() ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80")" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ff3c00;">
+                                <span>@Context.Session.GetUserName()</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" style="min-width: 200px; border-radius: 10px; margin-top: 8px;">
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                    <i class="fas fa-user-cog mr-2"></i>Cài đặt tài khoản
+                                </a>
+                                <a class="dropdown-item" asp-controller="Products" asp-action="Favorites">
+                                    <i class="fas fa-heart mr-2 text-danger"></i>Tin đã yêu thích
+                                </a>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="SellerProfile" asp-route-userId="@Context.Session.GetUserId()">
+                                    <i class="fas fa-id-badge mr-2"></i>Trang cá nhân của tôi
+                                </a>
+                                @if (Context.Session.IsAdmin())
+                                {
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item text-warning font-weight-bold" asp-controller="Admin" asp-action="Index">
+                                        <i class="fas fa-user-shield mr-2"></i>Trang Quản Trị (Admin)
+                                    </a>
+                                }
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                                </a>
+                            </div>
+                        </div>
+                        <script>
+                            try {
+                                localStorage.setItem("thrift_current_user", JSON.stringify({
+                                    id: @Context.Session.GetUserId(),
+                                    name: "@Html.Raw(Context.Session.GetUserName())",
+                                    email: "@Html.Raw(Context.Session.GetUserEmail())",
+                                    role: "@Html.Raw(Context.Session.GetUserRole())",
+                                    avatar: "@Html.Raw(Context.Session.GetUserAvatar())"
+                                }));
+                            } catch(e) {}
+                        </script>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" id="auth-link">Đăng nhập</a>
+                        <a asp-controller="Account" asp-action="Register" id="register-link">Đăng ký</a>
+                        <script>
+                            try {
+                                // Nếu server session chưa đăng nhập, đảm bảo clear session
+                                if (sessionStorage.getItem("thrift_session_active") !== "true") {
+                                    // localStorage.removeItem("thrift_current_user");
+                                }
+                            } catch(e) {}
+                        </script>
+                    }
+                </div>
+
+                <!-- Liên hệ & Hộp thư Chat -->
+                <a asp-controller="Cart" asp-action="Index" class="cart" title="Liên hệ & Hộp thư Chat" onclick="return handleCheckAuthNav(event, '/Cart');">
+                    💬 Liên hệ <span class="cart-count" id="cartCount">0</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- NAVIGATION MENU -->
+        <nav>
+            <ul>
+                <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                <li><a asp-controller="Products" asp-action="PostItem" onclick="return handleCheckAuthNav(event, '/Products/PostItem');">Đăng bán đồ cũ</a></li>
+                <li><a asp-controller="Products" asp-action="MyListings" onclick="return handleCheckAuthNav(event, '/Products/MyListings');">Tin của tôi</a></li>
+                <li><a asp-controller="Home" asp-action="Warranty">Chính sách bảo đảm</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT (FULL WIDTH - KHÔNG KHOẢNG TRẮNG 2 BÊN) -->
+    <main style="width: 100%; margin: 0; padding: 0;">
+        @RenderBody()
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
+        <span id="toast-message">Thành công!</span>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h4>ThriftShop Secondhand</h4>
+                <p>Nền tảng mua bán đồ cũ trực tuyến, thúc đẩy tái sử dụng và lối sống xanh bền vững.</p>
+                <p style="margin-top: 8px; color: #cbd5e1;"><i class="fas fa-shield-alt text-warning mr-1" style="color: #fbbf24;"></i>Mọi tin rao đều được Ban Quản Trị kiểm duyệt chất lượng trước khi mở bán.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Danh Mục & Dịch Vụ</h4>
+                <ul>
+                    <li><a asp-controller="Products" asp-action="Index">Tất Cả Tin Bán Đồ Cũ</a></li>
+                    <li><a asp-controller="Products" asp-action="PostItem">Đăng Bán Đồ Cũ Mới</a></li>
+                    <li><a asp-controller="Products" asp-action="MyListings">Quản Lý Tin Của Tôi</a></li>
+                    <li><a asp-controller="Products" asp-action="Favorites">Tin Đã Yêu Thích</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Hỗ trợ</h4>
+                <p><i class="fas fa-shield-alt mr-1"></i> <a asp-controller="Home" asp-action="Warranty" style="color: #cbd5e1; text-decoration: none;">Chính Sách Bảo Đảm</a></p>
+                <p><i class="fas fa-phone mr-1"></i> Hotline hỗ trợ: 1900 6868</p>
+                <p><i class="fas fa-envelope mr-1"></i> lienhe@thriftshop.vn</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ThriftShop - Đề tài 30: Website Mua Bán Đồ Cũ Secondhand.</p>
+        </div>
+    </footer>
+
+    <!-- Core Scripts (jQuery, Bootstrap, Data.js, Main.js, Transition.js) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/data.js" asp-append-version="true"></script>
+    <script src="~/js/main.js" asp-append-version="true"></script>
+    <script src="~/js/page-transition.js" asp-append-version="true"></script>
+    <script>
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            if (!toast) return;
+
+            toastMessage.textContent = message;
+            toast.className = `toast toast-${type} show`;
+
+            if (type === 'success') {
+                toastIcon.className = 'fas fa-check-circle';
+            } else {
+                toastIcon.className = 'fas fa-exclamation-circle';
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Cập nhật số lượng tin chờ duyệt trên Header
+        $(document).ready(function() {
+            if (typeof ThriftDB !== 'undefined') {
+                const pending = ThriftDB.getPendingCount();
+                $('#nav-pending-count').text(pending);
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                showToast("@Html.Raw(TempData["SuccessMessage"])", "success");
+                </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                showToast("@Html.Raw(TempData["ErrorMessage"])", "error");
+                </text>
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

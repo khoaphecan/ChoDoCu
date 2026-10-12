@@ -1,0 +1,383 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý Tin Đăng Đồ Cũ";
+}
+
+<div class="page-title-box d-flex justify-content-between align-items-center">
+  <div>
+    <h1 class="page-title">Quản Lý Tin Đăng</h1>
+    <div class="page-breadcrumb">Quản lý danh sách các món đồ cũ đang mở bán trên sàn, chỉnh sửa hoặc gỡ tin vi phạm</div>
+  </div>
+  <div>
+    <button class="btn btn-success font-weight-bold" onclick="openAddProductModal()">
+      <i class="fas fa-plus-circle mr-1"></i>Thêm Tin Đăng Mới
+    </button>
+  </div>
+</div>
+
+<!-- Bộ lọc & Tìm kiếm hàng hóa -->
+<div class="card border-0 shadow-sm p-3 mb-4 bg-white">
+  <div class="row align-items-center">
+    <div class="col-md-5 mb-2 mb-md-0">
+      <input type="text" id="admin-prod-search" class="form-control" placeholder="Tìm theo tên sản phẩm, mã món đồ..." onkeyup="filterAdminProducts()">
+    </div>
+    <div class="col-md-4 mb-2 mb-md-0">
+      <select id="admin-prod-cat-filter" class="form-control" onchange="filterAdminProducts()">
+        <option value="all">Tất cả chủng loại / danh mục</option>
+      </select>
+    </div>
+    <div class="col-md-3 text-md-right">
+      <span class="badge badge-light border p-2 small font-weight-bold" id="prod-total-count-badge">Tổng: 0 món</span>
+    </div>
+  </div>
+</div>
+
+<!-- Bảng danh sách hàng hóa (Index: hiển thị các cột tên, ảnh, giá, tồn kho, chủng loại) -->
+<div class="admin-card">
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 50px;">ID</th>
+          <th>Ảnh</th>
+          <th>Tên Món Đồ Cũ</th>
+          <th>Chủng Loại</th>
+          <th>Giá Bán</th>
+          <th class="text-center">Tồn Kho</th>
+          <th>Người Bán</th>
+          <th class="text-center" style="width: 140px;">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody id="admin-products-tbody">
+        <!-- Render bởi JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL THÊM / SỬA SẢN PHẨM (CRUD + UPLOAD ẢNH) -->
+<div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title font-weight-bold" id="productModalTitle">Thêm Sản Phẩm Đồ Cũ</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="product-admin-form" onsubmit="handleSaveProduct(event)">
+        <div class="modal-body p-4">
+          <input type="hidden" id="edit-prod-id">
+
+          <div class="form-group">
+            <label for="prod-name" class="font-weight-bold">Tên sản phẩm <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="prod-name" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="prod-cat" class="font-weight-bold">Danh mục <span class="text-danger">*</span></label>
+              <select class="form-control" id="prod-cat" required></select>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="prod-condition" class="font-weight-bold">Độ mới (%) <span class="text-danger">*</span></label>
+              <select class="form-control" id="prod-condition" required>
+                <option value="99% - Như mới">99% - Như mới</option>
+                <option value="95% - Rất mới">95% - Rất mới</option>
+                <option value="90% - Tốt">90% - Tốt</option>
+                <option value="85% - Khá">85% - Khá</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="prod-price" class="font-weight-bold">Giá thanh lý (₫) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="prod-price" required min="1000">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="prod-orig-price" class="font-weight-bold">Giá gốc mua mới (₫) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="prod-orig-price" required min="1000">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="prod-stock" class="font-weight-bold">Số lượng tồn kho <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="prod-stock" required min="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-image" class="font-weight-bold">Upload / Link URL hình ảnh <span class="text-danger">*</span></label>
+            <input type="url" class="form-control" id="prod-image" placeholder="https://..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-cond-details" class="font-weight-bold">Ghi chú khuyết điểm & phụ kiện</label>
+            <textarea class="form-control" id="prod-cond-details" rows="2" placeholder="Tình trạng thực tế..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-desc" class="font-weight-bold">Mô tả sản phẩm</label>
+            <textarea class="form-control" id="prod-desc" rows="3" placeholder="Mô tả chi tiết..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="prod-seller" class="font-weight-bold">Người bán</label>
+              <input type="text" class="form-control" id="prod-seller" value="Shop Hệ Thống">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="prod-seller-phone" class="font-weight-bold">Số điện thoại</label>
+              <input type="text" class="form-control" id="prod-seller-phone" value="19006868">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success font-weight-bold">
+            <i class="fas fa-save mr-1"></i>Lưu Sản Phẩm
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XEM CHI TIẾT SẢN PHẨM -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-eye mr-2 text-info"></i>Chi Tiết Sản Phẩm (Giao diện Quản trị)</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body p-4" id="prod-detail-view-content"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  $(document).ready(function() {
+    loadCategoriesDropdown();
+    renderAdminProductsTable();
+  });
+
+  function loadCategoriesDropdown() {
+    const cats = ThriftDB.getCategories();
+    const filterSelect = $("#admin-prod-cat-filter");
+    const modalSelect = $("#prod-cat");
+    modalSelect.empty();
+
+    cats.forEach(c => {
+      filterSelect.append(`<option value="${c.id}">${c.name}</option>`);
+      modalSelect.append(`<option value="${c.id}">${c.name}</option>`);
+    });
+  }
+
+  function renderAdminProductsTable(items) {
+    const products = items || ThriftDB.getProducts();
+    $("#prod-total-count-badge").text(`Tổng: ${products.length} món`);
+
+    const tbody = $("#admin-products-tbody");
+    tbody.empty();
+
+    if (products.length === 0) {
+      tbody.append('<tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy sản phẩm nào!</td></tr>');
+      return;
+    }
+
+    products.forEach(p => {
+      let stockBadge = p.stock > 0 
+        ? `<span class="badge badge-success">${p.stock}</span>` 
+        : `<span class="badge badge-danger">Hết hàng</span>`;
+
+      tbody.append(`
+        <tr>
+          <td><small class="text-muted">#${p.id}</small></td>
+          <td>
+            <img src="${p.image}" alt="${p.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" class="border" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
+          </td>
+          <td>
+            <strong class="d-block text-dark">${p.name}</strong>
+            <small class="text-muted"><span class="badge badge-light border">${p.condition}</span></small>
+          </td>
+          <td><small class="badge badge-light border text-uppercase">${p.categoryName}</small></td>
+          <td class="font-weight-bold text-danger">${ThriftDB.formatCurrency(p.price)}</td>
+          <td class="text-center">${stockBadge}</td>
+          <td><small>${p.sellerName}</small></td>
+          <td class="text-center text-nowrap">
+            <button class="btn btn-outline-info btn-sm p-1 px-2" onclick="viewProductDetailAdmin(${p.id})" title="Xem chi tiết">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-outline-primary btn-sm p-1 px-2" onclick="openEditProductModal(${p.id})" title="Sửa thông tin">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-outline-danger btn-sm p-1 px-2" onclick="deleteProduct(${p.id})" title="Xóa sản phẩm">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  function filterAdminProducts() {
+    const keyword = $("#admin-prod-search").val().trim().toLowerCase();
+    const catId = $("#admin-prod-cat-filter").val();
+    const all = ThriftDB.getProducts();
+
+    const filtered = all.filter(p => {
+      const matchName = p.name.toLowerCase().includes(keyword) || String(p.id).includes(keyword);
+      const matchCat = catId === "all" || p.categoryId === parseInt(catId);
+      return matchName && matchCat;
+    });
+
+    renderAdminProductsTable(filtered);
+  }
+
+  function openAddProductModal() {
+    $("#productModalTitle").text("Thêm Món Đồ Cũ Mới");
+    $("#edit-prod-id").val("");
+    $("#product-admin-form")[0].reset();
+    $("#prod-image").val("https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80");
+    $("#productModal").modal("show");
+  }
+
+  function openEditProductModal(id) {
+    const p = ThriftDB.getProductById(id);
+    if (!p) return;
+
+    $("#productModalTitle").text("Chỉnh Sửa Sản Phẩm #" + p.id);
+    $("#edit-prod-id").val(p.id);
+    $("#prod-name").val(p.name);
+    $("#prod-cat").val(p.categoryId);
+    $("#prod-condition").val(p.condition);
+    $("#prod-price").val(p.price);
+    $("#prod-orig-price").val(p.originalPrice);
+    $("#prod-stock").val(p.stock);
+    $("#prod-image").val(p.image);
+    $("#prod-cond-details").val(p.conditionDetails || "");
+    $("#prod-desc").val(p.description || "");
+    $("#prod-seller").val(p.sellerName || "Shop Hệ Thống");
+    $("#prod-seller-phone").val(p.sellerPhone || "19006868");
+
+    $("#productModal").modal("show");
+  }
+
+  function handleSaveProduct(e) {
+    e.preventDefault();
+    const editId = $("#edit-prod-id").val();
+    const catId = parseInt($("#prod-cat").val());
+    const catObj = ThriftDB.getCategoryById(catId);
+    const name = $("#prod-name").val().trim();
+    const condition = $("#prod-condition").val();
+    const price = parseInt($("#prod-price").val());
+    const origPrice = parseInt($("#prod-orig-price").val());
+    const stock = parseInt($("#prod-stock").val());
+    const image = $("#prod-image").val().trim();
+    const condDetails = $("#prod-cond-details").val().trim();
+    const desc = $("#prod-desc").val().trim();
+    const seller = $("#prod-seller").val().trim();
+    const phone = $("#prod-seller-phone").val().trim();
+
+    let conditionPercent = 90;
+    if (condition.includes("99%")) conditionPercent = 99;
+    else if (condition.includes("95%")) conditionPercent = 95;
+    else if (condition.includes("85%")) conditionPercent = 85;
+
+    const prods = ThriftDB.getProducts();
+
+    if (editId) {
+      // Cập nhật
+      const p = prods.find(item => item.id === parseInt(editId));
+      if (p) {
+        p.name = name;
+        p.categoryId = catId;
+        p.categoryName = catObj ? catObj.name : "Đồ cũ";
+        p.condition = condition;
+        p.conditionPercent = conditionPercent;
+        p.price = price;
+        p.originalPrice = origPrice;
+        p.stock = stock;
+        p.image = image;
+        p.conditionDetails = condDetails;
+        p.description = desc;
+        p.sellerName = seller;
+        p.sellerPhone = phone;
+      }
+    } else {
+      // Thêm mới
+      const newP = {
+        id: Date.now(),
+        name: name,
+        categoryId: catId,
+        categoryName: catObj ? catObj.name : "Đồ cũ",
+        condition: condition,
+        conditionPercent: conditionPercent,
+        price: price,
+        originalPrice: origPrice,
+        stock: stock,
+        soldCount: 0,
+        image: image,
+        conditionDetails: condDetails,
+        description: desc,
+        sellerName: seller,
+        sellerPhone: phone,
+        sellerAddress: "Kho Quản Trị Hệ Thống",
+        status: "approved",
+        featured: false,
+        createdAt: new Date().toLocaleString("vi-VN")
+      };
+      prods.unshift(newP);
+    }
+
+    ThriftDB.saveProducts(prods);
+    $("#productModal").modal("hide");
+    alert("Đã lưu thông tin sản phẩm thành công!");
+    renderAdminProductsTable();
+  }
+
+  function deleteProduct(id) {
+    if (confirm("Bạn có chắc chắn muốn xóa sản phẩm đồ cũ này khỏi hệ thống?")) {
+      let prods = ThriftDB.getProducts();
+      prods = prods.filter(p => p.id !== parseInt(id));
+      ThriftDB.saveProducts(prods);
+      alert("Đã xóa sản phẩm thành công!");
+      renderAdminProductsTable();
+    }
+  }
+
+  // Chi tiết sản phẩm trong Admin
+  function viewProductDetailAdmin(id) {
+    const p = ThriftDB.getProductById(id);
+    if (!p) return;
+
+    const html = `
+      <div class="row">
+        <div class="col-md-5 text-center mb-3">
+          <img src="${p.image}" class="img-fluid border shadow-sm" style="max-height: 250px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
+        </div>
+        <div class="col-md-7">
+          <span class="badge badge-light border text-uppercase mb-1">${p.categoryName}</span>
+          <h4 class="font-weight-bold text-dark">${p.name}</h4>
+          <div class="h4 text-danger font-weight-bold mb-2">${ThriftDB.formatCurrency(p.price)} 
+            <small class="text-muted font-weight-normal" style="text-decoration: line-through;">${ThriftDB.formatCurrency(p.originalPrice)}</small>
+          </div>
+          <div class="mb-2"><strong>Độ mới:</strong> <span class="badge badge-info">${p.condition}</span> | <strong>Tồn kho:</strong> <span class="badge badge-success">${p.stock}</span></div>
+          <div class="mb-2"><strong>Tình trạng & Khuyết điểm:</strong> <p class="small text-muted font-italic mb-0">${p.conditionDetails || "Không có ghi chú khuyết điểm"}</p></div>
+          <div class="mb-2"><strong>Mô tả:</strong> <p class="small text-muted mb-0">${p.description || "Không có"}</p></div>
+          <hr>
+          <div class="small">
+            <strong>Người đăng:</strong> ${p.sellerName} (${p.sellerPhone})<br>
+            <strong>Địa chỉ người bán:</strong> ${p.sellerAddress || "Chưa cập nhật"}
+          </div>
+        </div>
+      </div>
+    `;
+
+    $("#prod-detail-view-content").html(html);
+    $("#productDetailModal").modal("show");
+  }
+</script>
+}

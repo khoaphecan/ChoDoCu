@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ThriftShop Quản Trị</title>
+    <!-- Bootstrap 4.5.2 CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <!-- Font Awesome 5 Free -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <!-- KIỂM TRA QUYỀN ADMIN: CHỈ TÀI KHOẢN ADMIN MỚI ĐƯỢC PHÉP TRUY CẬP, CÒN LẠI CẤM VÀO -->
+    <script>
+        (function() {
+            try {
+                var uStr = localStorage.getItem("thrift_current_user");
+                if (!uStr || uStr === "null" || uStr === "undefined") {
+                    alert("Vui lòng đăng nhập tài khoản Ban Quản Trị (admin@thriftshop.vn) để truy cập trang quản trị!");
+                    window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+                    return;
+                }
+                var user = JSON.parse(uStr);
+                if (!user || (user.role !== "admin" && user.email !== "admin@thriftshop.vn")) {
+                    alert("CẢNH BÁO: Bạn không có quyền Quản Trị Viên! Chỉ tài khoản Ban Quản Trị (admin@thriftshop.vn) mới được phép truy cập.");
+                    window.location.replace('/');
+                }
+            } catch(e) {}
+        })();
+    </script>
+</head>
+<body class="admin-body">
+    <div class="admin-wrapper">
+        <!-- SIDEBAR -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <a asp-controller="Admin" asp-action="Index" class="sidebar-brand">
+                    <i class="fas fa-recycle text-success mr-2"></i>
+                    <span>Thrift<span style="color:#ff3c00;">Shop</span></span>
+                </a>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-header">Tổng Quan</li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Index">
+                        <i class="fas fa-tachometer-alt"></i>Bảng Điều Khiển
+                    </a>
+                </li>
+
+                <li class="menu-header">Kiểm Duyệt</li>
+                <li>
+                    <a asp-controller="Admin" asp-action="ApproveProducts" class="text-warning font-weight-bold">
+                        <i class="fas fa-clipboard-check"></i>Duyệt Tin Đăng
+                        <span class="badge badge-warning" id="admin-pending-badge">0</span>
+                    </a>
+                </li>
+
+                <li class="menu-header">Quản Lý Sàn Đồ Cũ</li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Products">
+                        <i class="fas fa-tags"></i>Quản Lý Tin Đăng
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Users">
+                        <i class="fas fa-users-cog"></i>Quản Lý User
+                    </a>
+                </li>
+
+                <li class="menu-header">Hệ Thống</li>
+                <li>
+                    <a asp-controller="Home" asp-action="Index" target="_blank" class="text-info">
+                        <i class="fas fa-external-link-alt"></i>Xem Trang Khách Hàng
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" onclick="handleAdminLogout()">
+                        <i class="fas fa-sign-out-alt"></i>Đăng Xuất
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="admin-main">
+            <!-- TOPBAR -->
+            <header class="admin-topbar">
+                <div>
+                    <h5 class="mb-0 font-weight-bold text-dark">@ViewData["Title"]</h5>
+                </div>
+                <div class="topbar-right">
+                    <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-warning font-weight-bold mr-2">
+                        <i class="fas fa-bell mr-1"></i>Tin chờ duyệt: <span class="badge badge-danger" id="admin-topbar-pending-alert">0</span>
+                    </a>
+                    <a asp-controller="Home" asp-action="Index" class="btn-client-preview mr-3">
+                        <i class="fas fa-store mr-1"></i>Trang Mua Sắm
+                    </a>
+                    <div class="admin-user-badge">
+                        <div class="admin-avatar">AD</div>
+                        <div>
+                            <div class="small font-weight-bold">Quản Trị Viên</div>
+                            <div class="text-muted" style="font-size: 11px;">admin@thriftshop.vn</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- PAGE CONTENT -->
+            <main class="admin-page-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Data & Admin scripts -->
+    <script src="~/js/data.js" asp-append-version="true"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

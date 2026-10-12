@@ -1,0 +1,336 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý User";
+}
+
+<div class="page-title-box d-flex justify-content-between align-items-center">
+  <div>
+    <h1 class="page-title">Quản Lý User</h1>
+    <div class="page-breadcrumb">Danh sách tài khoản quản trị và thành viên người dùng trên sàn</div>
+  </div>
+  <div id="btn-add-admin-wrapper">
+    <button class="btn btn-success font-weight-bold" onclick="openAddAdminModal()">
+      <i class="fas fa-user-plus mr-1"></i>Thêm Quản Trị Viên Mới
+    </button>
+  </div>
+</div>
+
+<!-- TABS PHÂN LOẠI NGƯỜI DÙNG -->
+<ul class="nav nav-tabs mb-4 font-weight-bold" id="user-tabs">
+  <li class="nav-item">
+    <a class="nav-link active text-success" href="javascript:void(0)" onclick="switchUserTab('admins', this)">
+      <i class="fas fa-user-shield mr-1"></i>Tài Khoản Quản Trị (Admin)
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="javascript:void(0)" onclick="switchUserTab('customers', this)">
+      <i class="fas fa-users mr-1"></i>Danh Sách Khách Hàng
+    </a>
+  </li>
+</ul>
+
+<!-- BẢNG DANH SÁCH NGƯỜI DÙNG -->
+<div class="admin-card">
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr id="users-table-header">
+          <!-- Render bởi JS -->
+        </tr>
+      </thead>
+      <tbody id="users-tbody">
+        <!-- Render bởi JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL THÊM / SỬA TÀI KHOẢN ADMIN -->
+<div class="modal fade" id="adminAccountModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title font-weight-bold" id="adminModalTitle">Thêm Tài Khoản Quản Trị Viên</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="admin-account-form" onsubmit="handleSaveAdmin(event)">
+        <div class="modal-body">
+          <input type="hidden" id="edit-admin-id">
+          <div class="form-group">
+            <label for="adm-name" class="font-weight-bold">Họ và tên Quản trị viên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="adm-name" required>
+          </div>
+          <div class="form-group">
+            <label for="adm-email" class="font-weight-bold">Email đăng nhập <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" id="adm-email" required>
+          </div>
+          <div class="form-group">
+            <label for="adm-phone" class="font-weight-bold">Số điện thoại</label>
+            <input type="tel" class="form-control" id="adm-phone" placeholder="0901234567">
+          </div>
+          <div class="form-group">
+            <label for="adm-password" class="font-weight-bold">Mật khẩu <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" id="adm-password" placeholder="Nhập mật khẩu..." minlength="4" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success font-weight-bold">
+            <i class="fas fa-save mr-1"></i>Lưu Tài Khoản
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XEM CHI TIẾT KHÁCH HÀNG & ĐƠN HÀNG -->
+<div class="modal fade" id="customerDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-user-circle mr-2 text-success"></i>Chi Tiết Khách Hàng & Đơn Hàng Đã Đặt</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body p-4" id="customer-detail-content">
+        <!-- Render thông tin khách và đơn hàng -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  let activeTab = "admins";
+
+  $(document).ready(function() {
+    renderUsersTable();
+  });
+
+  function switchUserTab(tab, el) {
+    activeTab = tab;
+    $("#user-tabs .nav-link").removeClass("active text-success").addClass("text-dark");
+    $(el).addClass("active text-success").removeClass("text-dark");
+
+    if (tab === "admins") {
+      $("#btn-add-admin-wrapper").show();
+    } else {
+      $("#btn-add-admin-wrapper").hide();
+    }
+
+    renderUsersTable();
+  }
+
+  function renderUsersTable() {
+    const allUsers = ThriftDB.getUsers();
+    const thead = $("#users-table-header");
+    const tbody = $("#users-tbody");
+    thead.empty();
+    tbody.empty();
+
+    if (activeTab === "admins") {
+      // TAB ADMIN: CÓ THÊM / SỬA / XÓA
+      thead.html(`
+        <th>ID</th>
+        <th>Tên Quản Trị Viên</th>
+        <th>Email</th>
+        <th>Số Điện Thoại</th>
+        <th>Quyền Hạn</th>
+        <th class="text-center" style="width: 140px;">Thao Tác</th>
+      `);
+
+      const admins = allUsers.filter(u => u.role === "admin");
+      admins.forEach(adm => {
+        tbody.append(`
+          <tr>
+            <td>#${adm.id}</td>
+            <td><strong>${adm.name}</strong></td>
+            <td>${adm.email}</td>
+            <td>${adm.phone || "---"}</td>
+            <td><span class="badge badge-danger">Quản trị viên (Admin)</span></td>
+            <td class="text-center text-nowrap">
+              <button class="btn btn-outline-primary btn-sm px-2 mr-1" onclick="openEditAdminModal(${adm.id})" title="Sửa">
+                <i class="fas fa-edit"></i> Sửa
+              </button>
+              <button class="btn btn-outline-danger btn-sm px-2" onclick="deleteAdmin(${adm.id})" title="Xóa">
+                <i class="fas fa-trash-alt"></i> Xóa
+              </button>
+            </td>
+          </tr>
+        `);
+      });
+    } else {
+      // TAB KHÁCH HÀNG
+      thead.html(`
+        <th>ID</th>
+        <th>Tên Khách Hàng</th>
+        <th>Email</th>
+        <th>Số Điện Thoại</th>
+        <th>Địa Chỉ Đăng Ký</th>
+        <th class="text-center" style="width: 180px;">Chi Tiết & Đơn Hàng</th>
+      `);
+
+      const customers = allUsers.filter(u => u.role !== "admin");
+      customers.forEach(cus => {
+        tbody.append(`
+          <tr>
+            <td>#${cus.id}</td>
+            <td><strong>${cus.name}</strong></td>
+            <td>${cus.email}</td>
+            <td>${cus.phone || "---"}</td>
+            <td><small>${cus.address || "Chưa cập nhật"}</small></td>
+            <td class="text-center">
+              <button class="btn btn-outline-info btn-sm font-weight-bold" onclick="viewCustomerDetail(${cus.id})">
+                <i class="fas fa-receipt mr-1"></i>Xem Chi Tiết & Đơn Hàng
+              </button>
+            </td>
+          </tr>
+        `);
+      });
+    }
+  }
+
+  // Modal Admin
+  function openAddAdminModal() {
+    $("#adminModalTitle").text("Thêm Quản Trị Viên Mới");
+    $("#edit-admin-id").val("");
+    $("#admin-account-form")[0].reset();
+    $("#adminAccountModal").modal("show");
+  }
+
+  function openEditAdminModal(id) {
+    const users = ThriftDB.getUsers();
+    const adm = users.find(u => u.id === parseInt(id));
+    if (!adm) return;
+
+    $("#adminModalTitle").text("Chỉnh Sửa Quản Trị Viên #" + adm.id);
+    $("#edit-admin-id").val(adm.id);
+    $("#adm-name").val(adm.name);
+    $("#adm-email").val(adm.email);
+    $("#adm-phone").val(adm.phone || "");
+    $("#adm-password").val(adm.password);
+    $("#adminAccountModal").modal("show");
+  }
+
+  function handleSaveAdmin(e) {
+    e.preventDefault();
+    const id = $("#edit-admin-id").val();
+    const name = $("#adm-name").val().trim();
+    const email = $("#adm-email").val().trim();
+    const phone = $("#adm-phone").val().trim();
+    const pass = $("#adm-password").val();
+
+    const users = ThriftDB.getUsers();
+
+    if (id) {
+      const u = users.find(item => item.id === parseInt(id));
+      if (u) {
+        u.name = name;
+        u.email = email;
+        u.phone = phone;
+        u.password = pass;
+      }
+    } else {
+      const newAdm = {
+        id: Date.now(),
+        name: name,
+        email: email,
+        phone: phone,
+        password: pass,
+        role: "admin"
+      };
+      users.push(newAdm);
+    }
+
+    ThriftDB.saveUsers(users);
+    $("#adminAccountModal").modal("hide");
+    alert("Đã lưu thông tin Quản trị viên thành công!");
+    renderUsersTable();
+  }
+
+  function deleteAdmin(id) {
+    const users = ThriftDB.getUsers();
+    if (users.filter(u => u.role === "admin").length <= 1) {
+      alert("Không thể xóa tài khoản Quản trị viên duy nhất còn lại!");
+      return;
+    }
+
+    if (confirm("Bạn có chắc chắn muốn xóa tài khoản Quản trị viên này?")) {
+      let list = users.filter(u => u.id !== parseInt(id));
+      ThriftDB.saveUsers(list);
+      alert("Đã xóa tài khoản Quản trị viên!");
+      renderUsersTable();
+    }
+  }
+
+  // Trang Detail: hiển thị thông tin khách hàng và danh sách đơn hàng
+  function viewCustomerDetail(customerId) {
+    const user = ThriftDB.getUsers().find(u => u.id === parseInt(customerId));
+    if (!user) return;
+
+    const allOrders = ThriftDB.getOrders();
+    const cusOrders = allOrders.filter(o => o.customerId === user.id || o.customerEmail === user.email);
+
+    let ordersHtml = "";
+    if (cusOrders.length === 0) {
+      ordersHtml = `<tr><td colspan="5" class="text-center text-muted py-3">Khách hàng này chưa phát sinh đơn hàng nào.</td></tr>`;
+    } else {
+      cusOrders.forEach(o => {
+        ordersHtml += `
+          <tr>
+            <td><strong class="text-success">${o.id}</strong></td>
+            <td><small>${o.orderDate}</small></td>
+            <td>${o.items.length} món đồ</td>
+            <td class="text-danger font-weight-bold">${ThriftDB.formatCurrency(o.totalAmount)}</td>
+            <td><span class="badge badge-success">${o.orderStatusText || o.orderStatus}</span></td>
+          </tr>
+        `;
+      });
+    }
+
+    const content = `
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h6 class="font-weight-bold text-success border-bottom pb-2">Thông Tin Khách Hàng</h6>
+          <p class="small mb-1"><strong>Họ tên:</strong> ${user.name}</p>
+          <p class="small mb-1"><strong>Email:</strong> ${user.email}</p>
+          <p class="small mb-1"><strong>Số điện thoại:</strong> ${user.phone || "Chưa cập nhật"}</p>
+          <p class="small mb-0"><strong>Địa chỉ:</strong> ${user.address || "Chưa cập nhật"}</p>
+        </div>
+        <div class="col-md-6 bg-light p-3 border">
+          <h6 class="font-weight-bold text-dark border-bottom pb-2">Thống Kê Mua Sắm</h6>
+          <p class="small mb-1"><strong>Tổng số đơn hàng:</strong> ${cusOrders.length} đơn</p>
+          <p class="small mb-1"><strong>Tổng tiền đã chi:</strong> <span class="text-danger font-weight-bold">${ThriftDB.formatCurrency(cusOrders.reduce((s, o) => s + o.totalAmount, 0))}</span></p>
+          <p class="small mb-0"><strong>Trạng thái tài khoản:</strong> <span class="badge badge-success">Đang hoạt động</span></p>
+        </div>
+      </div>
+
+      <h6 class="font-weight-bold text-dark mb-2">
+        <i class="fas fa-boxes mr-1 text-primary"></i>Lịch Sử Đơn Hàng Đã Đặt:
+      </h6>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm small mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Mã Đơn</th>
+              <th>Ngày Đặt</th>
+              <th>Số Món</th>
+              <th>Tổng Tiền</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ordersHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("#customer-detail-content").html(content);
+    $("#customerDetailModal").modal("show");
+  }
+</script>
+}

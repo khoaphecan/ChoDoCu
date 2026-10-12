@@ -1,0 +1,264 @@
+@model ThriftShop.Models.RegisterViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo tài khoản | ThriftShop</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .register-box {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            padding: 40px;
+            border-radius: 14px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #111;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: #e53935;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #111;
+        }
+
+        .description {
+            text-align: center;
+            color: #777;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 7px;
+            color: #111;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #e53935;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 7px;
+            background: #e53935;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #c62828;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 7px;
+            text-align: center;
+            font-size: 13.5px;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .validation-error {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .login {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 14px;
+            color: #111;
+        }
+
+        .login a {
+            color: #e53935;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-box">
+        <div class="logo">
+            Thrift<span>Shop</span>
+        </div>
+
+        <h2>Tạo tài khoản</h2>
+
+        <p class="description">
+            Đăng ký tài khoản ThriftShop
+        </p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="message error">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <!-- FORM ASP.NET MVC CHUẨN: POST lên AccountController -> Action Register -->
+        <form asp-controller="Account" asp-action="Register" method="post" id="registerForm">
+            @Html.AntiForgeryToken()
+
+            <label asp-for="Name">Họ và tên (*)</label>
+            <input asp-for="Name"
+                   type="text"
+                   id="fullName"
+                   placeholder="Nguyễn Văn A"
+                   required />
+            <span asp-validation-for="Name" class="validation-error"></span>
+
+            <label asp-for="Email">Email (*)</label>
+            <input asp-for="Email"
+                   type="email"
+                   id="email"
+                   placeholder="example@gmail.com"
+                   required />
+            <span asp-validation-for="Email" class="validation-error"></span>
+
+            <label asp-for="Phone">Số điện thoại (*)</label>
+            <input asp-for="Phone"
+                   type="tel"
+                   id="phone"
+                   placeholder="0901234567"
+                   required />
+            <span asp-validation-for="Phone" class="validation-error"></span>
+
+            <label asp-for="Address">Địa chỉ / Khu vực (*)</label>
+            <input asp-for="Address"
+                   type="text"
+                   id="address"
+                   placeholder="Quận 1, TP. Hồ Chí Minh"
+                   required />
+            <span asp-validation-for="Address" class="validation-error"></span>
+
+            <label asp-for="Password">Mật khẩu (*)</label>
+            <input asp-for="Password"
+                   type="password"
+                   id="password"
+                   placeholder="Ít nhất 6 ký tự"
+                   required />
+            <span asp-validation-for="Password" class="validation-error"></span>
+
+            <label asp-for="ConfirmPassword">Nhập lại mật khẩu (*)</label>
+            <input asp-for="ConfirmPassword"
+                   type="password"
+                   id="confirmPassword"
+                   placeholder="Nhập lại mật khẩu"
+                   required />
+            <span asp-validation-for="ConfirmPassword" class="validation-error"></span>
+
+            <button type="submit">
+                Đăng ký
+            </button>
+
+            <div class="login">
+                Đã có tài khoản? <a href="/Account/Login">Đăng nhập</a>
+            </div>
+
+            <a href="/" class="back">
+                ← Quay về trang chủ
+            </a>
+        </form>
+    </div>
+
+    <script src="~/js/data.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Đồng bộ sang LocalStorage cho các component client
+            if (typeof ThriftDB !== 'undefined') {
+                ThriftDB.register({
+                    name: fullName,
+                    email: email,
+                    phone: phone,
+                    address: address,
+                    password: password
+                });
+            }
+        });
+    </script>
+</body>
+</html>

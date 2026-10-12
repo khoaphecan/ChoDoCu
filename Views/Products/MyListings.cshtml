@@ -1,0 +1,316 @@
+@model IEnumerable<ThriftShop.Models.PendingPost>
+@{
+    ViewData["Title"] = "Quản Lý Tin Đăng Bán Của Tôi - ThriftShop";
+    var myPostsJson = System.Text.Json.JsonSerializer.Serialize(Model ?? Enumerable.Empty<ThriftShop.Models.PendingPost>());
+}
+
+<div class="main-wrapper" style="margin-top: 30px; margin-bottom: 60px;">
+    <div style="max-width: 1440px; width: 95%; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <h1 style="font-size: 22px; font-weight: 700; color: #18181b;">
+                    📑 Tin Đăng Bán Đồ Cũ Của Tôi
+                </h1>
+                <p style="font-size: 13.5px; color: #71717a; margin-top: 2px;">
+                    Theo dõi trạng thái duyệt Admin, chỉnh sửa thông tin, đánh dấu đã bán hoặc xóa bài đăng.
+                </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a asp-controller="Products" asp-action="PostItem" class="choice-btn active" style="padding: 9px 18px; text-decoration: none;">
+                    + Đăng Thêm Món Đồ Mới
+                </a>
+            </div>
+        </div>
+
+        <!-- THỐNG KÊ TRẠNG THÁI KIỂM DUYỆT -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 14px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12.5px; color: #b45309; font-weight: 600;">⏳ CHỜ ADMIN DUYỆT</div>
+                <div id="countPending" style="font-size: 22px; font-weight: 800; color: #d97706; margin-top: 2px;">0</div>
+            </div>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 14px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12.5px; color: #15803d; font-weight: 600;">✅ ĐÃ DUYỆT (MỞ BÁN)</div>
+                <div id="countApproved" style="font-size: 22px; font-weight: 800; color: #16a34a; margin-top: 2px;">0</div>
+            </div>
+            <div style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 14px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12.5px; color: #475569; font-weight: 600;">🤝 ĐÃ BÁN (ẨN KHỎI SÀN)</div>
+                <div id="countSold" style="font-size: 22px; font-weight: 800; color: #334155; margin-top: 2px;">0</div>
+            </div>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 14px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 12.5px; color: #b91c1c; font-weight: 600;">❌ BỊ TỪ CHỐI</div>
+                <div id="countRejected" style="font-size: 22px; font-weight: 800; color: #dc2626; margin-top: 2px;">0</div>
+            </div>
+        </div>
+
+        <!-- BẢNG DANH SÁCH BÀI ĐĂNG CỦA TÔI -->
+        <div style="background: white; border-radius: 12px; border: 1px solid #e4e4e7; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th style="width: 38%;">Món Đồ Cũ</th>
+                        <th>Giá Thanh Lý</th>
+                        <th>Danh Mục</th>
+                        <th>Trạng Thái</th>
+                        <th style="text-align: center; width: 260px;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="listingsBody">
+                    <!-- Render bằng JS từ ThriftDB -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CHỈNH SỬA BÀI ĐĂNG (BẮT BUỘC CHUYỂN VỀ PENDING CHO ADMIN DUYỆT LẠI) -->
+<div id="editPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
+    <div style="background: white; width: 90%; max-width: 600px; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <div style="padding: 18px 24px; border-bottom: 1px solid #e4e4e7; display: flex; justify-content: space-between; align-items: center; background: #fafafa;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #18181b; margin: 0;">
+                ✏️ Chỉnh Sửa Bài Đăng Bán Đồ Cũ
+            </h3>
+            <button onclick="closeEditModal()" style="background: none; border: none; font-size: 18px; color: #71717a; cursor: pointer;">&times;</button>
+        </div>
+        
+        <form id="editPostForm" style="padding: 24px;">
+            <input type="hidden" id="editPostId">
+
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12.5px; color: #92400e; line-height: 1.5;">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                <strong>Lưu ý:</strong> Khi bạn lưu nội dung chỉnh sửa, bài đăng sẽ <strong>tự động chuyển về trạng thái Chờ Admin duyệt lại</strong> trước khi tiếp tục hiển thị trên sàn.
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Tiêu đề món đồ (*)</label>
+                <input type="text" id="editPostTitle" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Giá bán (VNĐ) (*)</label>
+                    <input type="number" id="editPostPrice" required min="1000" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Danh mục (*)</label>
+                    <select id="editPostCategory" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none; background: white;">
+                        <option value="1">Đồ điện tử</option>
+                        <option value="2">Đồ gia dụng</option>
+                        <option value="3">Văn phòng phẩm</option>
+                        <option value="4">Thời trang</option>
+                        <option value="5">Khác</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Link ảnh món đồ (*)</label>
+                <input type="url" id="editPostImage" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Mô tả tình trạng chi tiết (*)</label>
+                <textarea id="editPostDescription" rows="3" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; outline: none; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="closeEditModal()" style="padding: 10px 18px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #52525b; font-size: 13.5px; cursor: pointer;">
+                    Hủy bỏ
+                </button>
+                <button type="submit" class="choice-btn active" style="padding: 10px 22px; font-size: 13.5px; border-radius: 8px;">
+                    Lưu & Gửi Admin Duyệt Lại
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    if (typeof ThriftDB !== 'undefined' && !ThriftDB.isLoggedIn()) {
+        alert("Vui lòng đăng nhập tài khoản để quản lý tin đăng của bạn!");
+        window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent('/Products/MyListings');
+    }
+
+    const serverMyPosts = @Html.Raw(myPostsJson);
+
+    function renderMyListings() {
+        const body = document.getElementById('listingsBody');
+        let posts = serverMyPosts && serverMyPosts.length > 0
+            ? serverMyPosts.map(p => ({
+                id: p.Id || p.id,
+                name: p.Name || p.name,
+                categoryId: p.CategoryId || p.categoryId,
+                categoryName: p.CategoryName || p.categoryName || 'Đồ cũ',
+                price: p.Price || p.price,
+                image: p.Image || p.image,
+                description: p.Description || p.description,
+                status: (p.Status || p.status || 'pending').toLowerCase(),
+                isSold: p.IsSold || p.isSold || false,
+                rejectReason: p.RejectReason || p.rejectReason,
+                createdAt: p.CreatedAt || p.createdAt
+            }))
+            : ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPosts() : []);
+
+        let pendingCount = 0;
+        let approvedCount = 0;
+        let soldCount = 0;
+        let rejectedCount = 0;
+
+        posts.forEach(p => {
+            if (p.isSold || p.status === 'sold') soldCount++;
+            else if (p.status === 'pending') pendingCount++;
+            else if (p.status === 'approved') approvedCount++;
+            else if (p.status === 'rejected') rejectedCount++;
+        });
+
+        document.getElementById('countPending').textContent = pendingCount;
+        document.getElementById('countApproved').textContent = approvedCount;
+        document.getElementById('countSold').textContent = soldCount;
+        document.getElementById('countRejected').textContent = rejectedCount;
+
+        if (posts.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #71717a;">Bạn chưa có tin đăng bán đồ cũ nào.</td></tr>';
+            return;
+        }
+
+        body.innerHTML = posts.map(p => {
+            let statusBadge = '';
+            if (p.isSold || p.status === 'sold') {
+                statusBadge = '<span style="background: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;"><i class="fas fa-check-double mr-1"></i>ĐÃ BÁN</span><div style="font-size: 11px; color: #64748b; margin-top: 3px;">(Đã ẩn khỏi sàn)</div>';
+            } else if (p.status === 'pending') {
+                statusBadge = '<span style="background: #fef3c7; color: #b45309; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;"><i class="fas fa-clock mr-1"></i>Chờ Admin duyệt</span>';
+            } else if (p.status === 'approved') {
+                statusBadge = '<span style="background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;"><i class="fas fa-check-circle mr-1"></i>Đã duyệt mở bán</span>';
+            } else {
+                statusBadge = `<span style="background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;"><i class="fas fa-times-circle mr-1"></i>Bị từ chối</span><div style="font-size: 11px; color: #dc2626; margin-top: 4px;">Lý do: ${p.rejectReason || 'Vi phạm tiêu chuẩn hình ảnh'}</div>`;
+            }
+
+            const isSold = p.isSold || p.status === 'sold';
+
+            return `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="${p.image}" class="cart-item-img" alt="${p.name}">
+                            <div>
+                                <div style="font-weight: 600; color: #18181b; font-size: 14px;">${p.name}</div>
+                                <div style="font-size: 12px; color: #71717a;">Danh mục: ${p.categoryName || 'Đồ cũ'} · ${p.createdAt || 'Gần đây'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-weight: 700; color: #ff3c00;">${ThriftDB.formatCurrency(p.price)}</td>
+                    <td><span style="font-size: 13px; color: #3f3f46; font-weight: 500;">${p.categoryName || 'Đồ cũ'}</span></td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                            <!-- NÚT CHỈNH SỬA (BẮT BUỘC ADMIN DUYỆT LẠI) -->
+                            <button onclick="openEditModal(${p.id})" style="padding: 5px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #2563eb; cursor: pointer; font-weight: 600;" title="Chỉnh sửa tin (Admin duyệt lại)">
+                                <i class="fas fa-edit mr-1"></i>Sửa
+                            </button>
+
+                            <!-- NÚT ĐÃ BÁN (ẨN KHỎI MỌI NGƯỜI NHƯNG GIỮ LẠI TRONG TIN CỦA TÔI) -->
+                            ${!isSold ? `
+                                <button onclick="handleMarkAsSold(${p.id})" style="padding: 5px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #475569; cursor: pointer; font-weight: 600;" title="Đánh dấu đã bán để ẩn khỏi sàn">
+                                    <i class="fas fa-check mr-1"></i>Đã bán
+                                </button>
+                            ` : ''}
+
+                            <!-- NÚT XÓA BÀI HẲN (XÓA VĨNH VIỄN) -->
+                            <button onclick="handleDeletePostPermanently(${p.id})" style="padding: 5px 10px; font-size: 12px; border: 1px solid #fca5a5; border-radius: 6px; background: #fef2f2; color: #dc2626; cursor: pointer; font-weight: 600;" title="Xóa vĩnh viễn khỏi hệ thống">
+                                <i class="fas fa-trash-alt mr-1"></i>Xóa hẳn
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // 1. Mở modal chỉnh sửa
+    function openEditModal(id) {
+        const p = ThriftDB.getPendingPostById(id);
+        if (!p) return;
+
+        document.getElementById('editPostId').value = p.id;
+        document.getElementById('editPostTitle').value = p.name;
+        document.getElementById('editPostPrice').value = p.price;
+        document.getElementById('editPostCategory').value = p.categoryId || 1;
+        document.getElementById('editPostImage').value = p.image;
+        document.getElementById('editPostDescription').value = p.description || '';
+
+        const modal = document.getElementById('editPostModal');
+        modal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editPostModal').style.display = 'none';
+    }
+
+    // 2. Submit form chỉnh sửa -> Bắt buộc Admin duyệt lại
+    document.getElementById('editPostForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = parseInt(document.getElementById('editPostId').value);
+        const name = document.getElementById('editPostTitle').value.trim();
+        const price = parseInt(document.getElementById('editPostPrice').value);
+        const categoryId = parseInt(document.getElementById('editPostCategory').value);
+        const catMap = { 1: 'Đồ điện tử', 2: 'Đồ gia dụng', 3: 'Văn phòng phẩm', 4: 'Thời trang', 5: 'Khác' };
+        const categoryName = catMap[categoryId] || 'Đồ cũ';
+        const image = document.getElementById('editPostImage').value.trim();
+        const description = document.getElementById('editPostDescription').value.trim();
+
+        ThriftDB.updatePost({
+            id: id,
+            name: name,
+            price: price,
+            categoryId: categoryId,
+            categoryName: categoryName,
+            image: image,
+            description: description
+        });
+
+        closeEditModal();
+        renderMyListings();
+        showToast('Đã cập nhật bài đăng! Tin được chuyển sang Chờ Admin duyệt lại lần nữa.');
+    });
+
+    // 3. Xử lý đánh dấu Đã bán (Ẩn khỏi mọi người)
+    function handleMarkAsSold(id) {
+        if (confirm('Đánh dấu món đồ này là "ĐÃ BÁN"? Món đồ sẽ được ẩn khỏi trang chủ và tìm kiếm, nhưng vẫn lưu trong mục Tin của bạn.')) {
+            fetch('/Products/MarkSold?id=' + id, { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        if (typeof ThriftDB !== 'undefined') ThriftDB.markPostSold(id);
+                        showToast('Đã đánh dấu ĐÃ BÁN! Món đồ đã được ẩn khỏi sàn.', 'success');
+                        setTimeout(() => location.reload(), 400);
+                    } else {
+                        alert(res.message || 'Lỗi thao tác');
+                    }
+                })
+                .catch(() => alert('Lỗi kết nối máy chủ!'));
+        }
+    }
+
+    // 4. Xóa bài hẳn khỏi hệ thống
+    function handleDeletePostPermanently(id) {
+        if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn XÓA BÀI HẲN khỏi toàn bộ hệ thống? Thao tác này không thể hoàn tác!')) {
+            fetch('/Products/DeletePermanently?id=' + id, { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        if (typeof ThriftDB !== 'undefined') ThriftDB.deletePostPermanently(id);
+                        showToast('Đã xóa bài đăng vĩnh viễn khỏi hệ thống!', 'success');
+                        setTimeout(() => location.reload(), 400);
+                    } else {
+                        alert(res.message || 'Lỗi thao tác');
+                    }
+                })
+                .catch(() => alert('Lỗi kết nối máy chủ!'));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMyListings();
+    });
+</script>
+}

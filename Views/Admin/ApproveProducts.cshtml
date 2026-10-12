@@ -1,0 +1,396 @@
+@model IEnumerable<ThriftShop.Models.PendingPost>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Kiểm Duyệt Tin Đồ Cũ";
+    var postsJson = System.Text.Json.JsonSerializer.Serialize(Model ?? Enumerable.Empty<ThriftShop.Models.PendingPost>());
+}
+
+<div class="page-title-box d-flex justify-content-between align-items-center">
+  <div>
+    <h1 class="page-title text-danger">
+      <i class="fas fa-clipboard-check mr-2"></i>Kiểm Duyệt Tin Đăng Bán Đồ Cũ
+    </h1>
+    <div class="page-breadcrumb">Quản lý và phê duyệt tin đăng bán đồ cũ từ người dùng trước khi mở bán</div>
+  </div>
+  <div>
+    <span class="badge badge-warning p-2 font-weight-bold" style="font-size: 14px;">
+      <i class="fas fa-clock mr-1"></i>Đang chờ duyệt: <span id="count-pending-badge">0</span> tin
+    </span>
+  </div>
+</div>
+
+<!-- Hướng dẫn nghiệp vụ kiểm duyệt -->
+<div class="alert alert-info border-info shadow-sm mb-4">
+  <h6 class="font-weight-bold mb-1"><i class="fas fa-shield-alt mr-2"></i>Quy trình kiểm định chất lượng Admin:</h6>
+  <p class="small mb-0">
+    Kiểm tra kỹ ngoại quan, tỉ lệ % độ mới và ghi chú khuyết điểm của người bán. 
+    Khi bấm <strong>"Duyệt Đăng Sàn"</strong>, món đồ cũ này sẽ được tự động kích hoạt và mở bán ngay lập tức trên trang chủ và danh mục cho khách hàng đặt mua. 
+    Nếu không đạt tiêu chuẩn, bấm <strong>"Từ Chối"</strong> và nhập lý do gửi lại cho người đăng.
+  </p>
+</div>
+
+<!-- TABS TRẠNG THÁI KIỂM DUYỆT -->
+<ul class="nav nav-tabs mb-4 font-weight-bold" id="approval-tabs">
+  <li class="nav-item">
+    <a class="nav-link active text-danger" href="javascript:void(0)" onclick="filterApproval('pending', this)">
+      <i class="fas fa-hourglass-half mr-1"></i>Chờ Duyệt (<span id="tab-pending-count">0</span>)
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterApproval('approved', this)">
+      <i class="fas fa-check-circle mr-1 text-success"></i>Đã Duyệt Mở Bán (<span id="tab-approved-count">0</span>)
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterApproval('rejected', this)">
+      <i class="fas fa-times-circle mr-1 text-danger"></i>Đã Từ Chối (<span id="tab-rejected-count">0</span>)
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterApproval('all', this)">
+      Tất Cả Tin Đăng
+    </a>
+  </li>
+</ul>
+
+<!-- BẢNG DANH SÁCH BÀI ĐĂNG CẦN DUYỆT -->
+<div class="admin-card">
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 32%;">Món Đồ Cũ & Danh Mục</th>
+          <th style="width: 20%;">Người Đăng Bán</th>
+          <th>Giá Thanh Lý</th>
+          <th class="text-center">Độ Mới</th>
+          <th class="text-center">Trạng Thái</th>
+          <th class="text-center" style="width: 220px;">Hành Động Kiểm Duyệt</th>
+        </tr>
+      </thead>
+      <tbody id="approval-tbody">
+        <!-- Render bởi JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- THÔNG BÁO NẾU RỖNG -->
+<div id="no-approval-alert" class="card border-0 shadow-sm text-center py-5 d-none">
+  <div class="card-body">
+    <i class="fas fa-check-double fa-3x text-success mb-3"></i>
+    <h5 class="font-weight-bold">Không có tin đăng nào trong mục này!</h5>
+    <p class="text-muted small">Tất cả các tin thanh lý đồ cũ đều đã được xem xét và xử lý.</p>
+  </div>
+</div>
+
+<!-- MODAL XEM CHI TIẾT ĐỂ KIỂM ĐỊNH -->
+<div class="modal fade" id="reviewDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-search-plus mr-2 text-warning"></i>Chi Tiết Món Đồ Cũ Cần Kiểm Duyệt</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body p-4" id="review-modal-body">
+        <!-- Render thông tin chi tiết -->
+      </div>
+      <div class="modal-footer bg-light" id="review-modal-footer">
+        <!-- Render nút Duyệt / Từ chối -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NHẬP LÝ DO TỪ CHỐI -->
+<div class="modal fade" id="rejectReasonModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-times-circle mr-2"></i>Từ Chối Tin Đăng Bán Đồ Cũ</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reject-post-id">
+        <p class="font-weight-bold text-dark mb-2">Vui lòng nhập lý do từ chối để phản hồi cho người bán:</p>
+        <div class="form-group">
+          <textarea class="form-control" id="reject-reason-input" rows="3" placeholder="Ví dụ: Hình ảnh chưa rõ các góc bị trầy xước, thông tin phụ kiện chưa đầy đủ hoặc giá thanh lý không hợp lý..."></textarea>
+        </div>
+        <div class="small text-muted">Lý do này sẽ hiển thị trong trang cá nhân của người bán để họ chỉnh sửa lại.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-danger font-weight-bold" onclick="confirmRejectPost()">
+          <i class="fas fa-ban mr-1"></i>Xác Nhận Từ Chối
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  let currentFilter = "pending";
+
+  $(document).ready(function() {
+    renderApprovalList();
+  });
+
+  function filterApproval(status, element) {
+    currentFilter = status;
+    $("#approval-tabs .nav-link").removeClass("active text-danger").addClass("text-dark");
+    $(element).addClass("active text-danger").removeClass("text-dark");
+    renderApprovalList();
+  }
+
+  const serverPosts = @Html.Raw(postsJson);
+
+  function renderApprovalList() {
+    let posts = serverPosts && serverPosts.length > 0
+        ? serverPosts.map(p => ({
+            id: p.Id || p.id,
+            name: p.Name || p.name,
+            categoryId: p.CategoryId || p.categoryId,
+            categoryName: p.CategoryName || p.categoryName || "Đồ cũ",
+            price: p.Price || p.price,
+            originalPrice: p.OriginalPrice || p.originalPrice,
+            condition: p.Condition || p.condition,
+            conditionPercent: p.ConditionPercent || p.conditionPercent,
+            conditionDetails: p.ConditionDetails || p.conditionDetails,
+            description: p.Description || p.description,
+            image: p.Image || p.image,
+            imagesJson: p.ImagesJson || p.imagesJson,
+            videosJson: p.VideosJson || p.videosJson,
+            stock: p.Stock || p.stock || 1,
+            sellerId: p.SellerId || p.sellerId,
+            sellerName: p.SellerName || p.sellerName,
+            sellerPhone: p.SellerPhone || p.sellerPhone,
+            sellerEmail: p.SellerEmail || p.sellerEmail,
+            sellerAddress: p.SellerAddress || p.sellerAddress,
+            sellerAvatar: p.SellerAvatar || p.sellerAvatar,
+            status: (p.Status || p.status || "pending").toLowerCase(),
+            createdAt: p.CreatedAt || p.createdAt
+        }))
+        : ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPosts() : []);
+
+    // Cập nhật số lượng tabs
+    const pendingCount = posts.filter(p => p.status === "pending").length;
+    const approvedCount = posts.filter(p => p.status === "approved").length;
+    const rejectedCount = posts.filter(p => p.status === "rejected").length;
+
+    $("#tab-pending-count").text(pendingCount);
+    $("#tab-approved-count").text(approvedCount);
+    $("#tab-rejected-count").text(rejectedCount);
+    $("#count-pending-badge").text(pendingCount);
+
+    let filtered = posts;
+    if (currentFilter !== "all") {
+      filtered = posts.filter(p => p.status === currentFilter);
+    }
+
+    const tbody = $("#approval-tbody");
+    tbody.empty();
+
+    if (filtered.length === 0) {
+      $("#no-approval-alert").removeClass("d-none");
+      return;
+    }
+
+    $("#no-approval-alert").addClass("d-none");
+
+    filtered.forEach(p => {
+      let statusBadge = "";
+      if (p.status === "pending") {
+        statusBadge = '<span class="badge badge-warning px-2 py-1"><i class="fas fa-clock mr-1"></i>Chờ duyệt</span>';
+      } else if (p.status === "approved") {
+        statusBadge = '<span class="badge badge-success px-2 py-1"><i class="fas fa-check-circle mr-1"></i>Đã mở bán</span>';
+      } else if (p.status === "rejected") {
+        statusBadge = '<span class="badge badge-danger px-2 py-1"><i class="fas fa-ban mr-1"></i>Bị từ chối</span>';
+      }
+
+      // Các nút hành động
+      let actionButtons = "";
+      if (p.status === "pending") {
+        actionButtons = `
+          <button class="btn btn-success btn-sm font-weight-bold px-2 mr-1" onclick="handleApprove(${p.id})" title="Duyệt bài này lên sàn">
+            <i class="fas fa-check mr-1"></i>Duyệt
+          </button>
+          <button class="btn btn-danger btn-sm font-weight-bold px-2 mr-1" onclick="openRejectModal(${p.id})" title="Từ chối bài này">
+            <i class="fas fa-times mr-1"></i>Từ chối
+          </button>
+          <button class="btn btn-outline-info btn-sm px-2" onclick="openReviewModal(${p.id})" title="Xem chi tiết để kiểm định">
+            <i class="fas fa-eye"></i>
+          </button>
+        `;
+      } else {
+        actionButtons = `
+          <button class="btn btn-outline-info btn-sm px-3" onclick="openReviewModal(${p.id})">
+            <i class="fas fa-eye mr-1"></i>Xem lại
+          </button>
+        `;
+      }
+
+      const pPriceStr = (Number(p.price) || 0).toLocaleString('vi-VN') + ' ₫';
+      const pOrigPriceStr = (Number(p.originalPrice) || 0).toLocaleString('vi-VN') + ' ₫';
+
+      tbody.append(`
+        <tr>
+          <td>
+            <div class="d-flex align-items-center">
+              <img src="${p.image}" alt="${p.name}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 6px;" class="mr-3 border" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
+              <div>
+                <h6 class="mb-1 font-weight-bold text-dark">${p.name}</h6>
+                <span class="badge badge-light border text-muted">${p.categoryName}</span>
+                <div class="small text-muted mt-1"><i class="far fa-calendar-alt mr-1"></i>${p.createdAt}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong>${p.sellerName}</strong>
+            <div class="small text-muted"><i class="fas fa-phone mr-1"></i>${p.sellerPhone}</div>
+            <div class="small text-muted"><i class="fas fa-map-marker-alt mr-1 text-danger"></i>${p.sellerAddress}</div>
+          </td>
+          <td>
+            <span class="text-danger font-weight-bold">${pPriceStr}</span><br>
+            <small class="text-muted" style="text-decoration: line-through;">Gốc: ${pOrigPriceStr}</small>
+          </td>
+          <td class="text-center">
+            <span class="badge badge-info">${p.condition}</span>
+          </td>
+          <td class="text-center">
+            ${statusBadge}
+          </td>
+          <td class="text-center text-nowrap">
+            ${actionButtons}
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  // 1. Phê duyệt món đồ cũ lên sàn (CỐT LÕI ĐỀ 30)
+  function handleApprove(postId) {
+    if (confirm("XÁC NHẬN DUYỆT BÀI ĐĂNG NÀY?\n\nMón đồ cũ này sẽ được đưa lên sàn mở bán và hiển thị công khai cho mọi người mua.")) {
+      fetch('/Admin/ApprovePost?id=' + postId, { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            if (typeof ThriftDB !== 'undefined') ThriftDB.approvePost(postId);
+            alert("THÀNH CÔNG!\n\nĐã duyệt món đồ cũ lên sàn mở bán.");
+            location.reload();
+          } else {
+            alert(res.message || "Lỗi khi duyệt bài!");
+          }
+        })
+        .catch(err => {
+          alert("Lỗi kết nối máy chủ khi duyệt bài!");
+        });
+    }
+  }
+
+  // 2. Mở modal nhập lý do từ chối
+  function openRejectModal(postId) {
+    $("#reject-post-id").val(postId);
+    $("#reject-reason-input").val("");
+    $("#rejectReasonModal").modal("show");
+  }
+
+  function confirmRejectPost() {
+    const postId = $("#reject-post-id").val();
+    const reason = $("#reject-reason-input").val().trim();
+    if (!reason) {
+      alert("Vui lòng nhập lý do từ chối để phản hồi cho người bán!");
+      return;
+    }
+
+    fetch('/Admin/RejectPost?id=' + postId + '&reason=' + encodeURIComponent(reason), { method: 'POST' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          if (typeof ThriftDB !== 'undefined') ThriftDB.rejectPost(postId, reason);
+          $("#rejectReasonModal").modal("hide");
+          alert("Đã từ chối bài đăng và ghi nhận lý do gửi cho người bán.");
+          location.reload();
+        } else {
+          alert(res.message || "Lỗi khi từ chối bài!");
+        }
+      })
+      .catch(err => {
+        alert("Lỗi kết nối máy chủ khi từ chối bài!");
+      });
+  }
+
+  // 3. Mở modal xem toàn bộ thông tin kiểm định
+  function openReviewModal(postId) {
+    const post = (serverPosts && serverPosts.find(p => (p.Id || p.id) == postId)) || ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPostById(postId) : null);
+    if (!post) return;
+
+    const pPrice = Number(post.Price || post.price) || 0;
+    const pOrigPrice = Number(post.OriginalPrice || post.originalPrice) || 0;
+    const pName = post.Name || post.name;
+    const pImg = post.Image || post.image;
+    const pCategory = post.CategoryName || post.categoryName || 'Đồ cũ';
+    const pCond = post.Condition || post.condition || '95%';
+    const pCondPercent = post.ConditionPercent || post.conditionPercent || 95;
+    const pCondDetails = post.ConditionDetails || post.conditionDetails || 'Không có ghi chú khuyết điểm';
+    const pDesc = post.Description || post.description || '';
+    const pSellerName = post.SellerName || post.sellerName || 'Thành viên';
+    const pSellerPhone = post.SellerPhone || post.sellerPhone || '';
+    const pSellerAddress = post.SellerAddress || post.sellerAddress || '';
+    const pStatus = (post.Status || post.status || 'pending').toLowerCase();
+
+    const discountPercent = pOrigPrice > pPrice ? Math.round((1 - (pPrice / pOrigPrice)) * 100) : 0;
+
+    const html = `
+      <div class="row">
+        <div class="col-md-5 text-center mb-3">
+          <img src="${post.image}" class="img-fluid border shadow-sm" style="max-height: 250px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
+          <div class="small text-muted mt-2">Ảnh thật người bán tự tải lên</div>
+        </div>
+        <div class="col-md-7">
+          <span class="badge badge-light border text-uppercase mb-1">${post.categoryName}</span>
+          <h4 class="font-weight-bold text-dark">${post.name}</h4>
+
+          <div class="p-2 bg-light border mb-3">
+            <span class="h4 text-danger font-weight-bold mb-0 mr-2">${ThriftDB.formatCurrency(post.price)}</span>
+            <span class="text-muted" style="text-decoration: line-through;">${ThriftDB.formatCurrency(post.originalPrice)}</span>
+            <span class="badge badge-danger ml-2">Giảm ${discountPercent}%</span>
+          </div>
+
+          <div class="mb-2">
+            <strong>Độ mới ngoại quan:</strong> <span class="badge badge-info">${post.condition}</span>
+          </div>
+          <div class="mb-2">
+            <strong>Ghi chú khuyết điểm thực tế:</strong>
+            <div class="p-2 border font-italic text-dark bg-white small">${post.conditionDetails}</div>
+          </div>
+          <div class="mb-2">
+            <strong>Mô tả chi tiết:</strong>
+            <div class="p-2 border text-dark bg-white small">${post.description}</div>
+          </div>
+          <hr>
+          <div class="small">
+            <strong>Người đăng bán:</strong> ${post.sellerName} | <strong>SĐT:</strong> ${post.sellerPhone}<br>
+            <strong>Khu vực:</strong> ${post.sellerAddress} | <strong>Thời gian:</strong> ${post.createdAt}
+          </div>
+        </div>
+      </div>
+    `;
+
+    let footerHtml = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>';
+    if (post.status === "pending") {
+      footerHtml += `
+        <button type="button" class="btn btn-danger font-weight-bold" onclick="$('#reviewDetailModal').modal('hide'); openRejectModal(${post.id});">
+          <i class="fas fa-times mr-1"></i>Từ Chối Tin
+        </button>
+        <button type="button" class="btn btn-success font-weight-bold" onclick="$('#reviewDetailModal').modal('hide'); handleApprove(${post.id});">
+          <i class="fas fa-check mr-1"></i>Duyệt Mở Bán Ngay
+        </button>
+      `;
+    }
+
+    $("#review-modal-body").html(html);
+    $("#review-modal-footer").html(footerHtml);
+    $("#reviewDetailModal").modal("show");
+  }
+</script>
+}

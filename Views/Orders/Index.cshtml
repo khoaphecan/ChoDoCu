@@ -1,0 +1,373 @@
+@{
+    ViewData["Title"] = "Đơn Hàng Của Tôi";
+}
+
+<!-- BREADCRUMB -->
+<div class="bg-light py-2 border-bottom">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 bg-transparent p-0 small">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Lịch sử đơn hàng của tôi</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<main class="container my-4">
+    <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-receipt text-success"></i> Đơn Hàng Của Tôi</h2>
+        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-success btn-sm font-weight-bold">
+            <i class="fas fa-shopping-bag mr-1"></i>Mua thêm đồ cũ
+        </a>
+    </div>
+
+    <!-- THÔNG BÁO CHO KHÁCH CHƯA ĐĂNG NHẬP -->
+    <div id="not-logged-in-banner" class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between mb-4 d-none" style="border-radius: 10px;">
+        <div>
+            <i class="fas fa-info-circle mr-2 text-warning"></i>
+            <strong>Bạn đang ở chế độ xem mẫu (Chưa đăng nhập):</strong> 
+            Vui lòng <a asp-controller="Account" asp-action="Login" class="font-weight-bold text-dark text-underline">Đăng nhập tài khoản</a> 
+            (User: <code>user@thriftshop.vn</code> / pass: <code>user</code>) để quản lý đơn hàng thực tế của bạn.
+        </div>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-warning btn-sm font-weight-bold ml-2">Đăng nhập ngay</a>
+    </div>
+
+    <!-- TÌM KIẾM ĐƠN HÀNG (THEO SLIDE 2 KTRA BE) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <div class="row align-items-center">
+                <div class="col-md-8 mb-2 mb-md-0">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                        </div>
+                        <input type="text" id="order-search-input" class="form-control border-left-0" placeholder="Tìm theo Mã đơn hàng (VD: DH100234) hoặc Tên sản phẩm...">
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-right">
+                    <button class="btn btn-success font-weight-bold px-3 mr-2" onclick="handleSearchOrder()">
+                        <i class="fas fa-search mr-1"></i>Tìm đơn hàng
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetOrderSearch()">
+                        Đặt lại
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS TRẠNG THÁI -->
+    <ul class="nav nav-tabs mb-4 font-weight-bold" id="order-status-tabs">
+        <li class="nav-item">
+            <a class="nav-link active text-success" href="javascript:void(0)" onclick="filterOrderByStatus('all', this)">
+                <i class="fas fa-list mr-1"></i>Tất cả đơn
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterOrderByStatus('pending', this)">
+                Chờ duyệt đơn
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterOrderByStatus('processing', this)">
+                Đang xử lý
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterOrderByStatus('shipping', this)">
+                Đang vận chuyển
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="javascript:void(0)" onclick="filterOrderByStatus('delivered', this)">
+                Đã giao hàng
+            </a>
+        </li>
+    </ul>
+
+    <!-- DANH SÁCH ĐƠN HÀNG -->
+    <div id="orders-list-container">
+        <!-- Render JS -->
+    </div>
+
+    <!-- THÔNG BÁO NẾU RỖNG -->
+    <div id="no-order-alert" class="card border-0 shadow-sm text-center py-5 d-none">
+        <div class="card-body">
+            <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+            <h4 class="font-weight-bold text-dark">BẠN CHƯA CÓ ĐƠN HÀNG NÀO. HÃY ĐẶT ĐƠN NGAY.</h4>
+            <p class="text-muted">Hàng ngàn món đồ cũ vintage độc đáo đang chờ bạn khám phá trên sàn ThriftShop.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-success btn-lg font-weight-bold mt-2">
+                <i class="fas fa-home mr-2"></i>Quay Về Trang Chủ (HOME)
+            </a>
+        </div>
+    </div>
+</main>
+
+<!-- MODAL HÓA ĐƠN CHI TIẾT -->
+<div class="modal fade" id="orderInvoiceModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-file-invoice mr-2"></i>HÓA ĐƠN CHI TIẾT ĐƠN HÀNG
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-4" id="invoice-modal-content"></div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="fas fa-print mr-1"></i>In Hóa Đơn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentStatusFilter = "all";
+    let searchKeyword = "";
+
+    $(document).ready(function() {
+        renderOrders();
+    });
+
+    function filterOrderByStatus(status, element) {
+        currentStatusFilter = status;
+        $("#order-status-tabs .nav-link").removeClass("active text-success").addClass("text-dark");
+        $(element).addClass("active text-success").removeClass("text-dark");
+        renderOrders();
+    }
+
+    function handleSearchOrder() {
+        searchKeyword = $("#order-search-input").val().trim().toLowerCase();
+        renderOrders();
+    }
+
+    function resetOrderSearch() {
+        $("#order-search-input").val("");
+        searchKeyword = "";
+        renderOrders();
+    }
+
+    function renderOrders() {
+        fetch('/Orders/GetMyOrders')
+            .then(res => res.json())
+            .then(serverOrders => {
+                let orders = Array.isArray(serverOrders) ? serverOrders : [];
+
+                orders.forEach(o => {
+                    if ((!o.items || o.items.length === 0) && o.itemsJson) {
+                        try { o.items = JSON.parse(o.itemsJson); } catch(e){}
+                    }
+                    if (!o.items) o.items = [];
+                });
+
+                const user = (typeof ThriftDB !== 'undefined') ? ThriftDB.getCurrentUser() : null;
+                if (!user && orders.length === 0) {
+                    $("#not-logged-in-banner").removeClass("d-none");
+                } else {
+                    $("#not-logged-in-banner").addClass("d-none");
+                }
+
+                if (currentStatusFilter !== "all") {
+                    orders = orders.filter(o => o.orderStatus === currentStatusFilter);
+                }
+
+                if (searchKeyword) {
+                    orders = orders.filter(o => {
+                        const matchId = (o.id || "").toLowerCase().includes(searchKeyword);
+                        const matchProd = (o.items || []).some(i => (i.productName || "").toLowerCase().includes(searchKeyword));
+                        return matchId || matchProd;
+                    });
+                }
+
+                const container = $("#orders-list-container");
+                container.empty();
+
+                if (orders.length === 0) {
+                    $("#no-order-alert").removeClass("d-none");
+                    return;
+                }
+
+                $("#no-order-alert").addClass("d-none");
+
+        orders.forEach(order => {
+            let badgeStatusClass = "badge-warning";
+            let statusText = "Chờ duyệt đơn";
+            if (order.orderStatus === "processing") {
+                badgeStatusClass = "badge-info";
+                statusText = "Đang xử lý đóng gói";
+            } else if (order.orderStatus === "shipping") {
+                badgeStatusClass = "badge-primary";
+                statusText = "Đang vận chuyển";
+            } else if (order.orderStatus === "delivered") {
+                badgeStatusClass = "badge-success";
+                statusText = "Đã giao hàng thành công";
+            } else if (order.orderStatus === "cancelled") {
+                badgeStatusClass = "badge-danger";
+                statusText = "Đã hủy đơn";
+            }
+
+            let itemsHtml = "";
+            order.items.forEach(it => {
+                itemsHtml += `
+                    <div class="d-flex align-items-center py-2 border-bottom">
+                        <img src="${it.image}" alt="${it.productName}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 6px;" class="mr-3 border">
+                        <div class="flex-fill">
+                            <h6 class="mb-1 font-weight-bold text-dark">${it.productName}</h6>
+                            <div class="small text-muted">
+                                <span class="badge badge-light border mr-2">${it.condition}</span>
+                                <span>Số lượng: x${it.quantity}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-weight-bold text-danger">${ThriftDB.formatCurrency(it.subtotal)}</div>
+                            <div class="mt-1">
+                                <button class="btn btn-outline-success btn-sm py-0 px-2 mr-1" onclick="handleBuyAgain(${it.productId})">
+                                    <i class="fas fa-redo-alt mr-1"></i>Mua lại
+                                </button>
+                                <a href="/Products/Details/${it.productId}" class="btn btn-link btn-sm p-0 text-muted">
+                                    Xem sản phẩm
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.append(`
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-3 border-bottom">
+                        <div>
+                            <span class="font-weight-bold text-dark mr-3"><i class="fas fa-barcode mr-1 text-muted"></i>Mã đơn: <span class="text-success">${order.id}</span></span>
+                            <span class="text-muted small mr-3"><i class="far fa-clock mr-1"></i>Ngày đặt: ${order.orderDate}</span>
+                            <span class="badge ${badgeStatusClass} font-weight-bold px-2 py-1">${statusText}</span>
+                        </div>
+                        <div class="mt-2 mt-md-0">
+                            <button class="btn btn-outline-info btn-sm font-weight-bold" onclick="showOrderInvoice('${order.id}')">
+                                <i class="fas fa-file-invoice mr-1"></i>Xem Hóa Đơn Chi Tiết
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        ${itemsHtml}
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2">
+                            <div class="small text-muted mb-2 mb-md-0">
+                                <i class="fas fa-map-marker-alt mr-1 text-danger"></i>Giao đến: <strong>${order.customerName}</strong> (${order.customerPhone}) - ${order.shippingAddress}
+                            </div>
+                            <div class="text-right">
+                                <span class="text-muted mr-2">Tổng số tiền:</span>
+                                <span class="h5 font-weight-bold text-danger mb-0">${ThriftDB.formatCurrency(order.totalAmount)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
+    }
+
+    function handleBuyAgain(productId) {
+        const res = ThriftDB.addToCart(productId, 1);
+        if (res.success) {
+            showToast("Đã thêm món đồ vào giỏ hàng!", "success");
+            setTimeout(function() {
+                window.location.href = "/Cart";
+            }, 500);
+        } else {
+            showToast(res.message, "warning");
+        }
+    }
+
+    function showOrderInvoice(orderId) {
+        const order = ThriftDB.getOrderById(orderId);
+        if (!order) return;
+
+        let itemsHtml = "";
+        order.items.forEach((it, idx) => {
+            itemsHtml += `
+                <tr>
+                    <td class="text-center">${idx + 1}</td>
+                    <td>
+                        <strong>${it.productName}</strong><br>
+                        <small class="text-muted">Tình trạng: ${it.condition}</small>
+                    </td>
+                    <td class="text-center">${ThriftDB.formatCurrency(it.price)}</td>
+                    <td class="text-center">${it.quantity}</td>
+                    <td class="text-right font-weight-bold text-danger">${ThriftDB.formatCurrency(it.subtotal)}</td>
+                </tr>
+            `;
+        });
+
+        const modalHtml = `
+            <div class="invoice-box">
+                <div class="invoice-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="invoice-company-title"><i class="fas fa-recycle mr-2"></i>ThriftShop Secondhand</div>
+                        <small class="text-muted">Chợ Mua Bán & Ký Gửi Đồ Cũ Uy Tín</small>
+                    </div>
+                    <div class="text-right">
+                        <h5 class="font-weight-bold text-dark mb-0">HÓA ĐƠN BÁN LẺ</h5>
+                        <small class="text-muted">Mã đơn: <strong>${order.id}</strong></small><br>
+                        <small class="text-muted">Ngày: ${order.orderDate}</small>
+                    </div>
+                </div>
+
+                <div class="row my-3">
+                    <div class="col-sm-6">
+                        <h6 class="font-weight-bold text-success mb-1">Thông Tin Khách Hàng:</h6>
+                        <p class="small mb-1"><strong>Họ tên:</strong> ${order.customerName}</p>
+                        <p class="small mb-1"><strong>Điện thoại:</strong> ${order.customerPhone}</p>
+                        <p class="small mb-0"><strong>Email:</strong> ${order.customerEmail || "Không có"}</p>
+                    </div>
+                    <div class="col-sm-6 text-sm-right">
+                        <h6 class="font-weight-bold text-success mb-1">Địa Chỉ Nhận Hàng:</h6>
+                        <p class="small mb-1">${order.shippingAddress}</p>
+                        <p class="small mb-1"><strong>Thanh toán:</strong> ${order.paymentMethod}</p>
+                        <p class="small mb-0"><strong>Trạng thái:</strong> <span class="badge badge-success">${order.orderStatusText || "Đang xử lý"}</span></p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered small">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width: 5%;" class="text-center">STT</th>
+                            <th style="width: 45%;">Tên Món Đồ Cũ</th>
+                            <th class="text-center">Đơn Giá</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-right">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-right font-weight-bold">Tạm tính tiền hàng:</td>
+                            <td class="text-right font-weight-bold">${ThriftDB.formatCurrency(order.subtotal)}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-right font-weight-bold">Phí vận chuyển:</td>
+                            <td class="text-right font-weight-bold text-success">${order.shippingFee === 0 ? "Miễn phí" : ThriftDB.formatCurrency(order.shippingFee)}</td>
+                        </tr>
+                        <tr class="bg-light">
+                            <td colspan="4" class="text-right font-weight-bold h6 mb-0">TỔNG CỘNG THANH TOÁN:</td>
+                            <td class="text-right font-weight-bold text-danger h6 mb-0">${ThriftDB.formatCurrency(order.totalAmount)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="text-center mt-4 small text-muted">
+                    <p class="font-italic mb-1">Cảm ơn bạn đã lựa chọn tái sử dụng đồ cũ cùng ThriftShop!</p>
+                    <p class="mb-0">Hotline hỗ trợ kỹ thuật và bảo hành: 1900 6868</p>
+                </div>
+            </div>
+        `;
+
+        $("#invoice-modal-content").html(modalHtml);
+        $("#orderInvoiceModal").modal("show");
+    }
+</script>
+}
