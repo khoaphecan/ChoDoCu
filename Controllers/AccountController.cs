@@ -122,7 +122,8 @@ namespace ThriftShop.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.ClearUser();
-            TempData["InfoMessage"] = "Đã đăng xuất khỏi hệ thống.";
+            Response.Cookies.Delete(".AspNetCore.Session");
+            TempData["SuccessMessage"] = "Đã đăng xuất thành công.";
             return RedirectToAction("Index", "Home");
         }
 

@@ -10,24 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
     <!-- Admin CSS -->
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
-    <!-- KIỂM TRA QUYỀN ADMIN: CHỈ TÀI KHOẢN ADMIN MỚI ĐƯỢC PHÉP TRUY CẬP, CÒN LẠI CẤM VÀO -->
-    <script>
-        (function() {
-            try {
-                var uStr = localStorage.getItem("thrift_current_user");
-                if (!uStr || uStr === "null" || uStr === "undefined") {
-                    alert("Vui lòng đăng nhập tài khoản Ban Quản Trị (admin@thriftshop.vn) để truy cập trang quản trị!");
-                    window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
-                    return;
-                }
-                var user = JSON.parse(uStr);
-                if (!user || (user.role !== "admin" && user.email !== "admin@thriftshop.vn")) {
-                    alert("CẢNH BÁO: Bạn không có quyền Quản Trị Viên! Chỉ tài khoản Ban Quản Trị (admin@thriftshop.vn) mới được phép truy cập.");
-                    window.location.replace('/');
-                }
-            } catch(e) {}
-        })();
-    </script>
 </head>
 <body class="admin-body">
     <div class="admin-wrapper">
@@ -74,7 +56,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0)" onclick="handleAdminLogout()">
+                    <a asp-controller="Account" asp-action="Logout" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}" class="text-danger font-weight-bold">
                         <i class="fas fa-sign-out-alt"></i>Đăng Xuất
                     </a>
                 </li>

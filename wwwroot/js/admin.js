@@ -135,13 +135,10 @@ function renderAdminTopbar(pageTitle) {
 }
 
 function handleAdminLogout() {
-  if (confirm("Bạn muốn đăng xuất khỏi trang Quản trị viên?")) {
-    if (typeof ThriftDB !== 'undefined' && ThriftDB.logout) {
-      ThriftDB.logout();
-    } else {
-      localStorage.removeItem("thrift_current_user");
-    }
-    const isHtml = window.location.pathname.endsWith('.html');
-    window.location.href = isHtml ? "../login.html" : "/Account/Login";
-  }
+  try {
+    localStorage.removeItem("thrift_current_user");
+    sessionStorage.clear();
+  } catch(e) {}
+  const isHtml = window.location.pathname.endsWith('.html');
+  window.location.href = isHtml ? "../index.html" : "/Account/Logout";
 }

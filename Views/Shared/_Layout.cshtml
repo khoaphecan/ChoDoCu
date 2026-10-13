@@ -78,7 +78,7 @@
                                     </a>
                                 }
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
+                                <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
                                 </a>
                             </div>
@@ -101,10 +101,8 @@
                         <a asp-controller="Account" asp-action="Register" id="register-link">Đăng ký</a>
                         <script>
                             try {
-                                // Nếu server session chưa đăng nhập, đảm bảo clear session
-                                if (sessionStorage.getItem("thrift_session_active") !== "true") {
-                                    // localStorage.removeItem("thrift_current_user");
-                                }
+                                localStorage.removeItem("thrift_current_user");
+                                sessionStorage.removeItem("thrift_session_active");
                             } catch(e) {}
                         </script>
                     }
