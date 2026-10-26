@@ -140,14 +140,6 @@
 
 @section Scripts {
 <script>
-  $(document).ready(function() {
-    if (typeof ThriftDB !== 'undefined') {
-      const pendingPosts = ThriftDB.getPendingPosts();
-      const pendingCount = pendingPosts.filter(p => p.status === "pending").length;
-      if (pendingCount > 0) {
-        $("#stat-pending-posts").text(pendingCount);
-      }
-    }
-  });
+  // Dữ liệu thống kê đã được render chuẩn từ LINQ Server-side: Model.PendingCount
 </script>
 }

@@ -175,7 +175,7 @@
 
     allApprovalPosts = posts;
 
-    // Cập nhật số lượng tabs
+    // Cập nhật số lượng tabs & đồng bộ các badge toàn hệ thống
     const pendingCount = posts.filter(p => p.status === "pending").length;
     const approvedCount = posts.filter(p => p.status === "approved").length;
     const rejectedCount = posts.filter(p => p.status === "rejected").length;
@@ -184,6 +184,16 @@
     $("#tab-approved-count").text(approvedCount);
     $("#tab-rejected-count").text(rejectedCount);
     $("#count-pending-badge").text(pendingCount);
+
+    // Đồng bộ tức thời badge trên Sidebar và Topbar
+    $("#admin-pending-badge").text(pendingCount);
+    $("#admin-topbar-pending-alert").text(pendingCount);
+    window.serverRealPendingCount = pendingCount;
+
+    // Đồng bộ vào localStorage để các trang khác của Admin dùng chung
+    if (serverPosts && serverPosts.length > 0 && typeof ThriftDB !== 'undefined' && typeof ThriftDB.savePendingPosts === 'function') {
+      ThriftDB.savePendingPosts(posts);
+    }
 
     let filtered = posts;
     if (currentFilter !== "all") {

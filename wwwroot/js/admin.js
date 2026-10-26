@@ -7,10 +7,20 @@ $(document).ready(function() {
   checkAdminAuth();
 });
 
-// Cập nhật số lượng tin đăng đồ cũ đang chờ duyệt trên Sidebar
-function updateAdminPendingBadge() {
-  const posts = ThriftDB.getPendingPosts();
-  const pendingCount = posts.filter(p => p.status === "pending").length;
+// Cập nhật số lượng tin đăng đồ cũ đang chờ duyệt trên Sidebar & Topbar
+function updateAdminPendingBadge(overrideCount) {
+  let pendingCount = 0;
+  if (typeof overrideCount === "number") {
+    pendingCount = overrideCount;
+  } else if (typeof window.serverRealPendingCount === "number") {
+    pendingCount = window.serverRealPendingCount;
+  } else if (typeof serverPosts !== "undefined" && Array.isArray(serverPosts)) {
+    pendingCount = serverPosts.filter(p => (p.Status || p.status) === "pending").length;
+  } else if (typeof ThriftDB !== 'undefined' && ThriftDB.getPendingPosts) {
+    const posts = ThriftDB.getPendingPosts();
+    pendingCount = posts.filter(p => (p.Status || p.status || "").toLowerCase() === "pending").length;
+  }
+
   const badge = $("#admin-pending-badge");
   if (badge.length) {
     badge.text(pendingCount);

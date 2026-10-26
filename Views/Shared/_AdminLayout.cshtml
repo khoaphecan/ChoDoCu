@@ -1,3 +1,12 @@
+@inject ThriftShop.Data.ThriftDbContext _dbAdminLayout
+@{
+    int realServerPendingCount = 0;
+    try
+    {
+        realServerPendingCount = _dbAdminLayout.PendingPosts.Count(p => p.Status == "pending");
+    }
+    catch { }
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -12,6 +21,9 @@
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 </head>
 <body class="admin-body">
+    <script>
+        window.serverRealPendingCount = @realServerPendingCount;
+    </script>
     <div class="admin-wrapper">
         <!-- SIDEBAR -->
         <div class="admin-sidebar">
@@ -33,7 +45,7 @@
                 <li>
                     <a asp-controller="Admin" asp-action="ApproveProducts" class="text-warning font-weight-bold">
                         <i class="fas fa-clipboard-check"></i>Duyệt Tin Đăng
-                        <span class="badge badge-warning" id="admin-pending-badge">0</span>
+                        <span class="badge badge-warning" id="admin-pending-badge">@realServerPendingCount</span>
                     </a>
                 </li>
 
@@ -72,7 +84,7 @@
                 </div>
                 <div class="topbar-right">
                     <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-warning font-weight-bold mr-2">
-                        <i class="fas fa-bell mr-1"></i>Tin chờ duyệt: <span class="badge badge-danger" id="admin-topbar-pending-alert">0</span>
+                        <i class="fas fa-bell mr-1"></i>Tin chờ duyệt: <span class="badge badge-danger" id="admin-topbar-pending-alert">@realServerPendingCount</span>
                     </a>
                     <a asp-controller="Home" asp-action="Index" class="btn-client-preview mr-3">
                         <i class="fas fa-store mr-1"></i>Trang Mua Sắm
