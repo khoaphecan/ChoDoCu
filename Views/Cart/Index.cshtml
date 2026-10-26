@@ -897,6 +897,14 @@
             return;
         }
 
+        // Đồng bộ xóa với CSDL backend SQL Server nếu đoạn chat gắn với sản phẩm cụ thể
+        const prodId = target && target.product ? (target.product.id || target.productId) : (target ? target.productId : null);
+        if (prodId) {
+            try {
+                fetch('/Cart/DeleteChat?productId=' + encodeURIComponent(prodId), { method: 'POST' }).catch(() => {});
+            } catch(e) {}
+        }
+
         if (typeof ThriftDB !== 'undefined' && typeof ThriftDB.deleteChat === 'function') {
             ThriftDB.deleteChat(chatId);
         } else {

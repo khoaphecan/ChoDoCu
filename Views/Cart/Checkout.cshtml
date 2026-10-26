@@ -87,6 +87,12 @@
 @section Scripts {
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // Kiểm tra đăng nhập phía client đồng bộ với server
+        if (typeof window.checkUserLoggedIn === 'function' ? !window.checkUserLoggedIn() : !localStorage.getItem('thrift_current_user')) {
+            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+            return;
+        }
+
         // Hỗ trợ đọc giỏ hàng từ cả thrift_cart lẫn cart
         let cart = [];
         try {

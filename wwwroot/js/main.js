@@ -286,14 +286,21 @@ window.toggleProductFavorite = function(productId, event) {
   return true;
 };
 
-// Xử lý đăng xuất
+// Xử lý đăng xuất đồng bộ cả Client (localStorage) và Server (Session/Cookie)
 function handleLogout() {
   if (confirm("Bạn có chắc chắn muốn đăng xuất tài khoản?")) {
-    ThriftDB.logout();
+    if (typeof ThriftDB !== 'undefined' && typeof ThriftDB.logout === 'function') {
+      ThriftDB.logout();
+    }
+    try {
+      localStorage.removeItem('thrift_current_user');
+      sessionStorage.clear();
+    } catch(e){}
     showToast("Đã đăng xuất tài khoản thành công!", "info");
     setTimeout(function() {
-      window.location.reload();
-    }, 600);
+      const isHtml = window.location.pathname.endsWith('.html');
+      window.location.href = isHtml ? 'index.html' : '/Account/Logout';
+    }, 300);
   }
 }
 
