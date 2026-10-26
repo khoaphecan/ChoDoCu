@@ -350,27 +350,41 @@
 
   // Chi tiết sản phẩm trong Admin
   function viewProductDetailAdmin(id) {
-    const p = ThriftDB.getProductById(id);
+    const p = (typeof ThriftDB !== 'undefined' ? ThriftDB.getProductById(id) : null);
     if (!p) return;
+
+    const pName = p.Name || p.name || 'Món đồ cũ';
+    const pImg = p.Image || p.image || 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=300';
+    const pCategory = p.CategoryName || p.categoryName || 'Đồ cũ';
+    const pPrice = Number(p.Price || p.price) || 0;
+    const pOrigPrice = Number(p.OriginalPrice || p.originalPrice) || 0;
+    const pCondition = p.Condition || p.condition || '95%';
+    const pStock = p.Stock || p.stock || 1;
+    const pConditionDetails = p.ConditionDetails || p.conditionDetails || "Không có ghi chú khuyết điểm";
+    const pDescription = p.Description || p.description || "Không có mô tả thêm";
+    const pSellerName = p.SellerName || p.sellerName || 'Thành viên';
+    const pSellerPhone = p.SellerPhone || p.sellerPhone || 'Chưa cập nhật';
+    const pSellerAddress = p.SellerAddress || p.sellerAddress || "Chưa cập nhật";
+    const formatVND = num => (Number(num) || 0).toLocaleString('vi-VN') + ' ₫';
 
     const html = `
       <div class="row">
         <div class="col-md-5 text-center mb-3">
-          <img src="${p.image}" class="img-fluid border shadow-sm" style="max-height: 250px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
+          <img src="${pImg}" class="img-fluid border shadow-sm rounded" style="max-height: 250px; width: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
         </div>
         <div class="col-md-7">
-          <span class="badge badge-light border text-uppercase mb-1">${p.categoryName}</span>
-          <h4 class="font-weight-bold text-dark">${p.name}</h4>
-          <div class="h4 text-danger font-weight-bold mb-2">${ThriftDB.formatCurrency(p.price)} 
-            <small class="text-muted font-weight-normal" style="text-decoration: line-through;">${ThriftDB.formatCurrency(p.originalPrice)}</small>
+          <span class="badge badge-light border text-uppercase mb-1">${pCategory}</span>
+          <h4 class="font-weight-bold text-dark mb-2">${pName}</h4>
+          <div class="h4 text-danger font-weight-bold mb-2">${formatVND(pPrice)} 
+            ${pOrigPrice > pPrice ? `<small class="text-muted font-weight-normal" style="text-decoration: line-through;">${formatVND(pOrigPrice)}</small>` : ''}
           </div>
-          <div class="mb-2"><strong>Độ mới:</strong> <span class="badge badge-info">${p.condition}</span> | <strong>Tồn kho:</strong> <span class="badge badge-success">${p.stock}</span></div>
-          <div class="mb-2"><strong>Tình trạng & Khuyết điểm:</strong> <p class="small text-muted font-italic mb-0">${p.conditionDetails || "Không có ghi chú khuyết điểm"}</p></div>
-          <div class="mb-2"><strong>Mô tả:</strong> <p class="small text-muted mb-0">${p.description || "Không có"}</p></div>
+          <div class="mb-2"><strong>Độ mới:</strong> <span class="badge badge-info">${pCondition}</span> | <strong>Tồn kho:</strong> <span class="badge badge-success">${pStock}</span></div>
+          <div class="mb-2"><strong>Tình trạng & Khuyết điểm:</strong> <p class="small text-muted font-italic mb-0">${pConditionDetails}</p></div>
+          <div class="mb-2"><strong>Mô tả:</strong> <p class="small text-muted mb-0">${pDescription}</p></div>
           <hr>
           <div class="small">
-            <strong>Người đăng:</strong> ${p.sellerName} (${p.sellerPhone})<br>
-            <strong>Địa chỉ người bán:</strong> ${p.sellerAddress || "Chưa cập nhật"}
+            <strong>Người đăng:</strong> ${pSellerName} (${pSellerPhone})<br>
+            <strong>Địa chỉ người bán:</strong> ${pSellerAddress}
           </div>
         </div>
       </div>

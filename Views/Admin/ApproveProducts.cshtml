@@ -143,6 +143,7 @@
   }
 
   const serverPosts = @Html.Raw(postsJson);
+  let allApprovalPosts = [];
 
   function renderApprovalList() {
     let posts = serverPosts && serverPosts.length > 0
@@ -171,6 +172,8 @@
             createdAt: p.CreatedAt || p.createdAt
         }))
         : ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPosts() : []);
+
+    allApprovalPosts = posts;
 
     // Cập nhật số lượng tabs
     const pendingCount = posts.filter(p => p.status === "pending").length;
@@ -321,71 +324,103 @@
 
   // 3. Mở modal xem toàn bộ thông tin kiểm định
   function openReviewModal(postId) {
-    const post = (serverPosts && serverPosts.find(p => (p.Id || p.id) == postId)) || ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPostById(postId) : null);
-    if (!post) return;
+    const post = (allApprovalPosts && allApprovalPosts.find(p => String(p.id) === String(postId)))
+              || (Array.isArray(serverPosts) && serverPosts.find(p => String(p.Id || p.id) === String(postId))) 
+              || ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPostById(postId) : null);
+    if (!post) {
+      alert("Không tìm thấy thông tin tin đăng #" + postId);
+      return;
+    }
 
+    const pId = post.Id || post.id || postId;
     const pPrice = Number(post.Price || post.price) || 0;
     const pOrigPrice = Number(post.OriginalPrice || post.originalPrice) || 0;
-    const pName = post.Name || post.name;
-    const pImg = post.Image || post.image;
+    const pName = post.Name || post.name || 'Món đồ cũ';
+    const pImg = post.Image || post.image || 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=300';
     const pCategory = post.CategoryName || post.categoryName || 'Đồ cũ';
-    const pCond = post.Condition || post.condition || '95%';
+    const pCond = post.Condition || post.condition || '95% - Rất tốt';
     const pCondPercent = post.ConditionPercent || post.conditionPercent || 95;
-    const pCondDetails = post.ConditionDetails || post.conditionDetails || 'Không có ghi chú khuyết điểm';
-    const pDesc = post.Description || post.description || '';
+    const pCondDetails = post.ConditionDetails || post.conditionDetails || 'Đồ cũ đã qua sử dụng, hoạt động bình thường, không có lỗi ẩn.';
+    const pDesc = post.Description || post.description || 'Không có mô tả chi tiết thêm.';
     const pSellerName = post.SellerName || post.sellerName || 'Thành viên';
-    const pSellerPhone = post.SellerPhone || post.sellerPhone || '';
-    const pSellerAddress = post.SellerAddress || post.sellerAddress || '';
+    const pSellerPhone = post.SellerPhone || post.sellerPhone || 'Chưa cập nhật';
+    const pSellerAddress = post.SellerAddress || post.sellerAddress || 'TP.HCM';
     const pStatus = (post.Status || post.status || 'pending').toLowerCase();
+    const pCreatedAt = post.CreatedAt || post.createdAt || 'Mới đây';
 
     const discountPercent = pOrigPrice > pPrice ? Math.round((1 - (pPrice / pOrigPrice)) * 100) : 0;
+    const formatVND = num => (Number(num) || 0).toLocaleString('vi-VN') + ' ₫';
+
+    // Parse danh sách hình ảnh thực tế nếu có
+    let imageList = [];
+    try {
+      const rawImages = post.ImagesJson || post.imagesJson;
+      if (rawImages) {
+        const parsed = typeof rawImages === 'string' ? JSON.parse(rawImages) : rawImages;
+        if (Array.isArray(parsed) && parsed.length > 0) imageList = parsed.filter(x => !!x);
+      }
+    } catch(e) {}
+    if (!imageList.includes(pImg) && pImg) {
+      imageList.unshift(pImg);
+    }
 
     const html = `
       <div class="row">
         <div class="col-md-5 text-center mb-3">
-          <img src="${post.image}" class="img-fluid border shadow-sm" style="max-height: 250px; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
-          <div class="small text-muted mt-2">Ảnh thật người bán tự tải lên</div>
+          <img id="reviewMainImage" src="${pImg}" class="img-fluid border shadow-sm rounded" style="max-height: 250px; width: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
+          ${imageList.length > 1 ? `
+            <div class="d-flex justify-content-center flex-wrap mt-2" style="gap: 6px;">
+              ${imageList.map((img, idx) => `
+                <img src="${img}" style="width: 46px; height: 46px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid ${idx === 0 ? '#ff3c00' : '#dee2e6'};" onclick="document.getElementById('reviewMainImage').src = '${img}'; document.querySelectorAll('.review-thumb').forEach(t => t.style.borderColor='#dee2e6'); this.style.borderColor='#ff3c00';" class="review-thumb" title="Xem ảnh ${idx + 1}">
+              `).join('')}
+            </div>
+          ` : ''}
+          <div class="small text-muted mt-2"><i class="fas fa-camera mr-1"></i>Ảnh thật người bán tự tải lên (${imageList.length} ảnh)</div>
         </div>
         <div class="col-md-7">
-          <span class="badge badge-light border text-uppercase mb-1">${post.categoryName}</span>
-          <h4 class="font-weight-bold text-dark">${post.name}</h4>
+          <span class="badge badge-light border text-uppercase mb-1" style="font-size: 11px; letter-spacing: 0.5px;">${pCategory}</span>
+          <h4 class="font-weight-bold text-dark mb-2" style="line-height: 1.3;">${pName}</h4>
 
-          <div class="p-2 bg-light border mb-3">
-            <span class="h4 text-danger font-weight-bold mb-0 mr-2">${ThriftDB.formatCurrency(post.price)}</span>
-            <span class="text-muted" style="text-decoration: line-through;">${ThriftDB.formatCurrency(post.originalPrice)}</span>
-            <span class="badge badge-danger ml-2">Giảm ${discountPercent}%</span>
+          <div class="p-2 bg-light border rounded mb-3 d-flex align-items-center flex-wrap" style="gap: 8px;">
+            <span class="h4 text-danger font-weight-bold mb-0">${formatVND(pPrice)}</span>
+            ${pOrigPrice > pPrice ? `<span class="text-muted" style="text-decoration: line-through; font-size: 14px;">${formatVND(pOrigPrice)}</span>` : ''}
+            ${discountPercent > 0 ? `<span class="badge badge-danger">Giảm ${discountPercent}%</span>` : ''}
           </div>
 
           <div class="mb-2">
-            <strong>Độ mới ngoại quan:</strong> <span class="badge badge-info">${post.condition}</span>
+            <strong class="text-dark">Độ mới ngoại quan:</strong> <span class="badge badge-info px-2 py-1">${pCond}</span>
           </div>
           <div class="mb-2">
-            <strong>Ghi chú khuyết điểm thực tế:</strong>
-            <div class="p-2 border font-italic text-dark bg-white small">${post.conditionDetails}</div>
+            <strong class="text-dark">Ghi chú khuyết điểm thực tế:</strong>
+            <div class="p-2 border rounded font-italic text-dark bg-white small mt-1">${pCondDetails}</div>
           </div>
           <div class="mb-2">
-            <strong>Mô tả chi tiết:</strong>
-            <div class="p-2 border text-dark bg-white small">${post.description}</div>
+            <strong class="text-dark">Mô tả chi tiết:</strong>
+            <div class="p-2 border rounded text-dark bg-white small mt-1" style="max-height: 130px; overflow-y: auto; line-height: 1.5;">${pDesc}</div>
           </div>
-          <hr>
-          <div class="small">
-            <strong>Người đăng bán:</strong> ${post.sellerName} | <strong>SĐT:</strong> ${post.sellerPhone}<br>
-            <strong>Khu vực:</strong> ${post.sellerAddress} | <strong>Thời gian:</strong> ${post.createdAt}
+          <hr class="my-2">
+          <div class="small text-muted" style="line-height: 1.6;">
+            <div><strong class="text-dark">Người đăng bán:</strong> ${pSellerName} | <strong class="text-dark">SĐT:</strong> ${pSellerPhone}</div>
+            <div><strong class="text-dark">Khu vực xem đồ:</strong> ${pSellerAddress} | <strong class="text-dark">Thời gian gửi:</strong> ${pCreatedAt}</div>
           </div>
         </div>
       </div>
     `;
 
     let footerHtml = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>';
-    if (post.status === "pending") {
+    if (pStatus === "pending") {
       footerHtml += `
-        <button type="button" class="btn btn-danger font-weight-bold" onclick="$('#reviewDetailModal').modal('hide'); openRejectModal(${post.id});">
+        <button type="button" class="btn btn-danger font-weight-bold" onclick="$('#reviewDetailModal').modal('hide'); openRejectModal(${pId});">
           <i class="fas fa-times mr-1"></i>Từ Chối Tin
         </button>
-        <button type="button" class="btn btn-success font-weight-bold" onclick="$('#reviewDetailModal').modal('hide'); handleApprove(${post.id});">
+        <button type="button" class="btn btn-success font-weight-bold" onclick="$('#reviewDetailModal').modal('hide'); handleApprove(${pId});">
           <i class="fas fa-check mr-1"></i>Duyệt Mở Bán Ngay
         </button>
       `;
+    } else if (pStatus === "approved") {
+      footerHtml = '<span class="badge badge-success p-2 mr-auto"><i class="fas fa-check-circle mr-1"></i>Tin này đã được mở bán công khai trên sàn</span>' + footerHtml;
+    } else if (pStatus === "rejected") {
+      footerHtml = '<span class="badge badge-danger p-2 mr-auto"><i class="fas fa-ban mr-1"></i>Tin này đã bị từ chối</span>' + footerHtml;
     }
 
     $("#review-modal-body").html(html);
