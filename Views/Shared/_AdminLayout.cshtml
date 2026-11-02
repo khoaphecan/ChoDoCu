@@ -29,52 +29,50 @@
         <div class="admin-sidebar">
             <div class="sidebar-header">
                 <a asp-controller="Admin" asp-action="Index" class="sidebar-brand">
-                    <i class="fas fa-recycle text-success mr-2"></i>
-                    <span>Thrift<span style="color:#ff3c00;">Shop</span></span>
-                    <small class="badge badge-light border text-muted ml-auto font-weight-normal" style="font-size: 10px;">Admin</small>
+                    THRIFTSHOP ADMIN
                 </a>
             </div>
             @{
                 var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? "";
             }
             <ul class="sidebar-menu">
-                <li class="menu-header">Chức Năng Quản Trị</li>
+                <li class="menu-header">Menu Quản Trị</li>
                 <li class="@(currentAction == "Index" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Index">
-                        <i class="fas fa-tachometer-alt"></i>Bảng Điều Khiển
+                        Bảng Điều Khiển
                     </a>
                 </li>
                 <li class="@(currentAction == "ApproveProducts" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="ApproveProducts">
-                        <i class="fas fa-clipboard-check text-warning"></i>Duyệt Tin Đăng
-                        <span class="badge badge-warning" id="admin-pending-badge">@realServerPendingCount</span>
+                        Duyệt Tin Đăng
+                        <span class="badge badge-secondary" id="admin-pending-badge">@realServerPendingCount</span>
                     </a>
                 </li>
                 <li class="@(currentAction == "Categories" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Categories">
-                        <i class="fas fa-th-large text-success"></i>Quản Lý Danh Mục
+                        Quản Lý Danh Mục
                     </a>
                 </li>
                 <li class="@(currentAction == "Products" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Products">
-                        <i class="fas fa-tags text-primary"></i>Quản Lý Tin Đăng
+                        Quản Lý Tin Đăng
                     </a>
                 </li>
                 <li class="@(currentAction == "Users" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Users">
-                        <i class="fas fa-users-cog text-info"></i>Quản Lý Người Dùng
+                        Quản Lý Người Dùng
                     </a>
                 </li>
 
-                <li class="menu-header">Lối Tắt Hệ Thống</li>
+                <li class="menu-header">Hệ Thống</li>
                 <li>
-                    <a asp-controller="Home" asp-action="Index" target="_blank" class="text-info">
-                        <i class="fas fa-external-link-alt"></i>Xem Trang Khách Hàng
+                    <a asp-controller="Home" asp-action="Index" target="_blank">
+                        Xem Trang Khách Hàng
                     </a>
                 </li>
                 <li>
-                    <a asp-controller="Account" asp-action="Logout" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}" class="text-danger font-weight-bold">
-                        <i class="fas fa-sign-out-alt"></i>Đăng Xuất
+                    <a asp-controller="Account" asp-action="Logout" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}" style="color: #495057;">
+                        Đăng Xuất
                     </a>
                 </li>
             </ul>
@@ -82,22 +80,22 @@
 
         <!-- MAIN CONTENT -->
         <div class="admin-main">
-            <!-- TOPBAR ĐƠN GIẢN -->
+            <!-- TOPBAR ĐƠN SẮC -->
             <header class="admin-topbar">
                 <div>
-                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;">@ViewData["Title"]</h5>
+                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 14.5px;">@ViewData["Title"]</h5>
                 </div>
                 <div class="topbar-right">
-                    <a asp-controller="Admin" asp-action="ApproveProducts" class="text-dark font-weight-bold mr-3" style="text-decoration: none;">
-                        <i class="fas fa-bell text-warning mr-1"></i>Chờ duyệt: <span class="badge badge-warning" id="admin-topbar-pending-alert">@realServerPendingCount</span>
+                    <a asp-controller="Admin" asp-action="ApproveProducts" class="text-dark mr-3" style="text-decoration: none;">
+                        Chờ duyệt: <span class="badge badge-secondary" id="admin-topbar-pending-alert">@realServerPendingCount</span>
                     </a>
-                    <a asp-controller="Home" asp-action="Index" target="_blank" class="text-primary mr-3" style="text-decoration: none;">
-                        <i class="fas fa-globe mr-1"></i>Xem trang web
+                    <a asp-controller="Home" asp-action="Index" target="_blank" class="text-dark mr-3" style="text-decoration: none;">
+                        Xem website
                     </a>
                     <span class="text-muted">
-                        Admin: <strong class="text-dark">admin@thriftshop.vn</strong>
+                        Tài khoản: <strong class="text-dark">admin@thriftshop.vn</strong>
                     </span>
-                    <a asp-controller="Account" asp-action="Logout" class="text-danger font-weight-bold ml-2" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}">
+                    <a asp-controller="Account" asp-action="Logout" class="text-dark font-weight-bold ml-2" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}">
                         [Đăng xuất]
                     </a>
                 </div>

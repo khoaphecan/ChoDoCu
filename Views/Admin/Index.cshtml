@@ -9,37 +9,37 @@
   <div class="page-breadcrumb">Quản lý hệ thống sàn đồ cũ ThriftShop</div>
 </div>
 
-<!-- 4 Ô THỐNG KÊ CƠ BẢN -->
+<!-- 4 Ô THỐNG KÊ CƠ BẢN ĐƠN SẮC -->
 <div class="row mb-3">
   <div class="col-md-3 col-6">
     <div class="simple-stat-box">
       <div class="simple-stat-title">Tin Chờ Duyệt</div>
-      <div class="simple-stat-num text-danger" id="stat-pending-posts">@(Model?.PendingCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="ApproveProducts">Kiểm duyệt ngay &raquo;</a></small>
+      <div class="simple-stat-num" id="stat-pending-posts">@(Model?.PendingCount ?? 0)</div>
+      <small><a asp-controller="Admin" asp-action="ApproveProducts" class="text-dark">Kiểm duyệt ngay &raquo;</a></small>
     </div>
   </div>
 
   <div class="col-md-3 col-6">
     <div class="simple-stat-box">
       <div class="simple-stat-title">Danh Mục Hàng</div>
-      <div class="simple-stat-num text-success" id="stat-categories">@(Model?.CategoriesCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="Categories">Quản lý danh mục &raquo;</a></small>
+      <div class="simple-stat-num" id="stat-categories">@(Model?.CategoriesCount ?? 0)</div>
+      <small><a asp-controller="Admin" asp-action="Categories" class="text-dark">Quản lý danh mục &raquo;</a></small>
     </div>
   </div>
 
   <div class="col-md-3 col-6">
     <div class="simple-stat-box">
       <div class="simple-stat-title">Tin Đang Bán</div>
-      <div class="simple-stat-num text-primary" id="stat-products">@(Model?.ProductsCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="Products">Xem danh sách &raquo;</a></small>
+      <div class="simple-stat-num" id="stat-products">@(Model?.ProductsCount ?? 0)</div>
+      <small><a asp-controller="Admin" asp-action="Products" class="text-dark">Xem danh sách &raquo;</a></small>
     </div>
   </div>
 
   <div class="col-md-3 col-6">
     <div class="simple-stat-box">
       <div class="simple-stat-title">Tổng Người Dùng</div>
-      <div class="simple-stat-num text-dark" id="stat-users">@(Model?.UsersCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="Users">Quản lý tài khoản &raquo;</a></small>
+      <div class="simple-stat-num" id="stat-users">@(Model?.UsersCount ?? 0)</div>
+      <small><a asp-controller="Admin" asp-action="Users" class="text-dark">Quản lý tài khoản &raquo;</a></small>
     </div>
   </div>
 </div>
@@ -48,7 +48,7 @@
 <div class="card mb-4">
   <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
     <strong class="text-dark">Tin đồ cũ đang chờ kiểm duyệt gần đây</strong>
-    <a asp-controller="Admin" asp-action="ApproveProducts" class="small font-weight-bold">Xem tất cả (@(Model?.PendingCount ?? 0)) &raquo;</a>
+    <a asp-controller="Admin" asp-action="ApproveProducts" class="small text-dark font-weight-bold">Xem tất cả (@(Model?.PendingCount ?? 0)) &raquo;</a>
   </div>
   <div class="table-responsive">
     <table class="table table-bordered table-striped mb-0" style="font-size: 13px;">
@@ -69,7 +69,7 @@
             <tr>
               <td>
                 <div class="d-flex align-items-center">
-                  <img src="@p.Image" style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px; border: 1px solid #ddd;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
+                  <img src="@p.Image" style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px; border: 1px solid #ccc;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
                   <div>
                     <strong>@p.Name</strong>
                     <div class="text-muted" style="font-size: 11px;">Độ mới: @p.Condition</div>
@@ -78,9 +78,9 @@
               </td>
               <td>@p.SellerName</td>
               <td>@p.CategoryName</td>
-              <td class="text-danger font-weight-bold">@p.Price.ToString("N0") ₫</td>
+              <td class="font-weight-bold">@p.Price.ToString("N0") ₫</td>
               <td class="text-center">
-                <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-primary">
+                <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-dark">
                   Duyệt tin
                 </a>
               </td>

@@ -3,20 +3,20 @@
     ViewData["Title"] = "Quản Lý Tin Đăng Đồ Cũ";
 }
 
-<div class="page-title-box d-flex justify-content-between align-items-center">
+<div class="page-title-box d-flex justify-content-between align-items-center mb-3">
   <div>
     <h1 class="page-title">Quản Lý Tin Đăng</h1>
     <div class="page-breadcrumb">Quản lý danh sách các món đồ cũ đang mở bán trên sàn, chỉnh sửa hoặc gỡ tin vi phạm</div>
   </div>
   <div>
-    <button class="btn btn-success font-weight-bold" onclick="openAddProductModal()">
-      <i class="fas fa-plus-circle mr-1"></i>Thêm Tin Đăng Mới
+    <button class="btn btn-dark" onclick="openAddProductModal()">
+      + Thêm Tin Đăng Mới
     </button>
   </div>
 </div>
 
 <!-- Bộ lọc & Tìm kiếm hàng hóa -->
-<div class="card border-0 shadow-sm p-3 mb-4 bg-white">
+<div class="card p-3 mb-3 bg-light border">
   <div class="row align-items-center">
     <div class="col-md-5 mb-2 mb-md-0">
       <input type="text" id="admin-prod-search" class="form-control" placeholder="Tìm theo tên sản phẩm, mã món đồ..." onkeyup="filterAdminProducts()">
@@ -27,25 +27,25 @@
       </select>
     </div>
     <div class="col-md-3 text-md-right">
-      <span class="badge badge-light border p-2 small font-weight-bold" id="prod-total-count-badge">Tổng: 0 món</span>
+      <span class="badge badge-secondary p-2" id="prod-total-count-badge">Tổng: 0 món</span>
     </div>
   </div>
 </div>
 
-<!-- Bảng danh sách hàng hóa (Index: hiển thị các cột tên, ảnh, giá, tồn kho, chủng loại) -->
-<div class="admin-card">
+<!-- Bảng danh sách hàng hóa -->
+<div class="card mb-4">
   <div class="table-responsive">
-    <table class="table admin-table mb-0">
-      <thead>
+    <table class="table table-bordered table-striped mb-0" style="font-size: 13px;">
+      <thead class="thead-light">
         <tr>
           <th style="width: 50px;">ID</th>
-          <th>Ảnh</th>
+          <th style="width: 60px;">Ảnh</th>
           <th>Tên Món Đồ Cũ</th>
           <th>Chủng Loại</th>
           <th>Giá Bán</th>
           <th class="text-center">Tồn Kho</th>
           <th>Người Bán</th>
-          <th class="text-center" style="width: 140px;">Thao Tác</th>
+          <th class="text-center" style="width: 170px;">Thao Tác</th>
         </tr>
       </thead>
       <tbody id="admin-products-tbody">
@@ -55,30 +55,30 @@
   </div>
 </div>
 
-<!-- MODAL THÊM / SỬA SẢN PHẨM (CRUD + UPLOAD ẢNH) -->
+<!-- MODAL THÊM / SỬA SẢN PHẨM -->
 <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title font-weight-bold" id="productModalTitle">Thêm Sản Phẩm Đồ Cũ</h5>
-        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      <div class="modal-header bg-light">
+        <h5 class="modal-title font-weight-bold text-dark" id="productModalTitle">Thêm Sản Phẩm Đồ Cũ</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <form id="product-admin-form" onsubmit="handleSaveProduct(event)">
-        <div class="modal-body p-4">
+        <div class="modal-body p-3">
           <input type="hidden" id="edit-prod-id">
 
           <div class="form-group">
-            <label for="prod-name" class="font-weight-bold">Tên sản phẩm <span class="text-danger">*</span></label>
+            <label for="prod-name" class="font-weight-bold">Tên sản phẩm *</label>
             <input type="text" class="form-control" id="prod-name" required>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label for="prod-cat" class="font-weight-bold">Danh mục <span class="text-danger">*</span></label>
+              <label for="prod-cat" class="font-weight-bold">Danh mục *</label>
               <select class="form-control" id="prod-cat" required></select>
             </div>
             <div class="form-group col-md-6">
-              <label for="prod-condition" class="font-weight-bold">Độ mới (%) <span class="text-danger">*</span></label>
+              <label for="prod-condition" class="font-weight-bold">Độ mới (%) *</label>
               <select class="form-control" id="prod-condition" required>
                 <option value="99% - Như mới">99% - Như mới</option>
                 <option value="95% - Rất mới">95% - Rất mới</option>
@@ -90,21 +90,21 @@
 
           <div class="form-row">
             <div class="form-group col-md-4">
-              <label for="prod-price" class="font-weight-bold">Giá thanh lý (₫) <span class="text-danger">*</span></label>
+              <label for="prod-price" class="font-weight-bold">Giá thanh lý (₫) *</label>
               <input type="number" class="form-control" id="prod-price" required min="1000">
             </div>
             <div class="form-group col-md-4">
-              <label for="prod-orig-price" class="font-weight-bold">Giá gốc mua mới (₫) <span class="text-danger">*</span></label>
+              <label for="prod-orig-price" class="font-weight-bold">Giá gốc mua mới (₫) *</label>
               <input type="number" class="form-control" id="prod-orig-price" required min="1000">
             </div>
             <div class="form-group col-md-4">
-              <label for="prod-stock" class="font-weight-bold">Số lượng tồn kho <span class="text-danger">*</span></label>
+              <label for="prod-stock" class="font-weight-bold">Số lượng tồn kho *</label>
               <input type="number" class="form-control" id="prod-stock" required min="0">
             </div>
           </div>
 
           <div class="form-group">
-            <label for="prod-image" class="font-weight-bold">Upload / Link URL hình ảnh <span class="text-danger">*</span></label>
+            <label for="prod-image" class="font-weight-bold">Upload / Link URL hình ảnh *</label>
             <input type="url" class="form-control" id="prod-image" placeholder="https://..." required>
           </div>
 
@@ -131,8 +131,8 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-          <button type="submit" class="btn btn-success font-weight-bold">
-            <i class="fas fa-save mr-1"></i>Lưu Sản Phẩm
+          <button type="submit" class="btn btn-dark">
+            Lưu Sản Phẩm
           </button>
         </div>
       </form>
@@ -145,10 +145,10 @@
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header bg-light">
-        <h5 class="modal-title font-weight-bold text-dark"><i class="fas fa-eye mr-2 text-primary"></i>Chi Tiết Sản Phẩm Đồ Cũ</h5>
+        <h5 class="modal-title font-weight-bold text-dark">Chi Tiết Sản Phẩm Đồ Cũ</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <div class="modal-body p-4" id="prod-detail-view-content"></div>
+      <div class="modal-body p-3" id="prod-detail-view-content"></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
       </div>
@@ -189,32 +189,32 @@
 
     products.forEach(p => {
       let stockBadge = p.stock > 0 
-        ? `<span class="badge badge-success">${p.stock}</span>` 
-        : `<span class="badge badge-danger">Hết hàng</span>`;
+        ? `<span class="badge badge-secondary">${p.stock}</span>` 
+        : `<span class="badge badge-light border text-muted">Hết hàng</span>`;
 
       tbody.append(`
         <tr>
-          <td><small class="text-muted">#${p.id}</small></td>
+          <td><strong class="text-muted">#${p.id}</strong></td>
           <td>
-            <img src="${p.image}" alt="${p.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" class="border" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
+            <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border: 1px solid #ccc;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
           </td>
           <td>
             <strong class="d-block text-dark">${p.name}</strong>
             <small class="text-muted"><span class="badge badge-light border">${p.condition}</span></small>
           </td>
-          <td><small class="badge badge-light border text-uppercase">${p.categoryName}</small></td>
-          <td class="font-weight-bold text-danger">${ThriftDB.formatCurrency(p.price)}</td>
+          <td><span class="badge badge-light border">${p.categoryName}</span></td>
+          <td><strong>${ThriftDB.formatCurrency(p.price)}</strong></td>
           <td class="text-center">${stockBadge}</td>
           <td><small>${p.sellerName}</small></td>
           <td class="text-center text-nowrap">
-            <button class="btn btn-outline-info btn-sm p-1 px-2" onclick="viewProductDetailAdmin(${p.id})" title="Xem chi tiết">
-              <i class="fas fa-eye"></i>
+            <button class="btn btn-outline-dark btn-sm mr-1" onclick="viewProductDetailAdmin(${p.id})">
+              Xem
             </button>
-            <button class="btn btn-outline-primary btn-sm p-1 px-2" onclick="openEditProductModal(${p.id})" title="Sửa thông tin">
-              <i class="fas fa-edit"></i>
+            <button class="btn btn-outline-dark btn-sm mr-1" onclick="openEditProductModal(${p.id})">
+              Sửa
             </button>
-            <button class="btn btn-outline-danger btn-sm p-1 px-2" onclick="deleteProduct(${p.id})" title="Xóa sản phẩm">
-              <i class="fas fa-trash-alt"></i>
+            <button class="btn btn-outline-dark btn-sm" onclick="deleteProduct(${p.id})">
+              Xóa
             </button>
           </td>
         </tr>
@@ -370,19 +370,20 @@
     const html = `
       <div class="row">
         <div class="col-md-5 text-center mb-3">
-          <img src="${pImg}" class="img-fluid border shadow-sm rounded" style="max-height: 250px; width: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
+          <img src="${pImg}" class="img-fluid border" style="max-height: 240px; width: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'">
         </div>
         <div class="col-md-7">
-          <span class="badge badge-light border text-uppercase mb-1">${pCategory}</span>
-          <h4 class="font-weight-bold text-dark mb-2">${pName}</h4>
-          <div class="h4 text-danger font-weight-bold mb-2">${formatVND(pPrice)} 
-            ${pOrigPrice > pPrice ? `<small class="text-muted font-weight-normal" style="text-decoration: line-through;">${formatVND(pOrigPrice)}</small>` : ''}
+          <div><span class="badge badge-light border mb-1">${pCategory}</span></div>
+          <h5 class="font-weight-bold text-dark mb-2">${pName}</h5>
+          <div class="p-2 bg-light border mb-2">
+            <strong>${formatVND(pPrice)}</strong> 
+            ${pOrigPrice > pPrice ? `<small class="text-muted ml-2" style="text-decoration: line-through;">${formatVND(pOrigPrice)}</small>` : ''}
           </div>
-          <div class="mb-2"><strong>Độ mới:</strong> <span class="badge badge-info">${pCondition}</span> | <strong>Tồn kho:</strong> <span class="badge badge-success">${pStock}</span></div>
-          <div class="mb-2"><strong>Tình trạng & Khuyết điểm:</strong> <p class="small text-muted font-italic mb-0">${pConditionDetails}</p></div>
-          <div class="mb-2"><strong>Mô tả:</strong> <p class="small text-muted mb-0">${pDescription}</p></div>
-          <hr>
-          <div class="small">
+          <div class="mb-2"><strong>Độ mới:</strong> <span class="badge badge-secondary">${pCondition}</span> | <strong>Tồn kho:</strong> <span class="badge badge-secondary">${pStock}</span></div>
+          <div class="mb-2"><strong>Tình trạng & Khuyết điểm:</strong> <div class="p-2 border bg-white small">${pConditionDetails}</div></div>
+          <div class="mb-2"><strong>Mô tả:</strong> <div class="p-2 border bg-white small">${pDescription}</div></div>
+          <hr class="my-2">
+          <div class="small text-muted">
             <strong>Người đăng:</strong> ${pSellerName} (${pSellerPhone})<br>
             <strong>Địa chỉ người bán:</strong> ${pSellerAddress}
           </div>

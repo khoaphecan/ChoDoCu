@@ -1,11 +1,12 @@
 /* ==============================================================
-   GIAO DIỆN QUẢN TRỊ ADMIN ĐƠN GIẢN - PHONG CÁCH HTML/BOOTSTRAP CƠ BẢN
-   Không màu mè, không bóng mờ, đúng chuẩn bài tập web cơ bản
+   GIAO DIỆN QUẢN TRỊ ADMIN ĐƠN SẮC TỐI GIẢN (MONOCHROME)
+   Phong cách bài tập web cơ bản: chỉ đen, trắng, xám
+   Không màu mè, không hiệu ứng rườm rà, đúng chuẩn HTML/CSS nhập môn
    ============================================================== */
 
 body.admin-body {
-  background-color: #f8f9fa;
-  font-family: Arial, Tahoma, sans-serif;
+  background-color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
   color: #212529;
   font-size: 13.5px;
   margin: 0;
@@ -17,10 +18,10 @@ body.admin-body {
   min-height: 100vh;
 }
 
-/* Sidebar bên trái đơn giản */
+/* Sidebar bên trái đơn sắc */
 .admin-sidebar {
   width: 220px;
-  background-color: #ffffff;
+  background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
   flex-shrink: 0;
   display: flex;
@@ -30,15 +31,16 @@ body.admin-body {
 .sidebar-header {
   padding: 14px 15px;
   border-bottom: 1px solid #dee2e6;
-  background-color: #f1f3f5;
+  background-color: #e9ecef;
   text-align: center;
 }
 
 .sidebar-brand {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
   color: #212529;
   text-decoration: none !important;
+  letter-spacing: 0.5px;
 }
 
 .sidebar-menu {
@@ -54,29 +56,29 @@ body.admin-body {
   color: #6c757d;
   padding: 10px 15px 4px 15px;
   font-weight: bold;
-  background: #f8f9fa;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
+  background: #f1f3f5;
+  border-top: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .sidebar-menu li a {
   display: flex;
   align-items: center;
-  padding: 9px 15px;
-  color: #333333;
+  padding: 10px 15px;
+  color: #212529;
   text-decoration: none;
-  border-bottom: 1px solid #f1f1f1;
+  border-bottom: 1px solid #e9ecef;
   font-size: 13px;
 }
 
 .sidebar-menu li a:hover {
-  background-color: #e9ecef;
+  background-color: #dee2e6;
   color: #000000;
   text-decoration: none;
 }
 
 .sidebar-menu li.active a {
-  background-color: #007bff;
+  background-color: #343a40 !important;
   color: #ffffff !important;
   font-weight: bold;
 }
@@ -86,14 +88,17 @@ body.admin-body {
 }
 
 .sidebar-menu li a i {
-  width: 20px;
-  font-size: 14px;
+  width: 18px;
+  font-size: 13px;
   margin-right: 8px;
+  color: #495057 !important;
 }
 
 .sidebar-menu .badge {
   margin-left: auto;
   font-size: 11px;
+  background-color: #6c757d !important;
+  color: #ffffff !important;
 }
 
 /* Vùng nội dung chính bên phải */
@@ -104,10 +109,10 @@ body.admin-body {
   background-color: #ffffff;
 }
 
-/* Topbar đơn giản */
+/* Topbar đơn sắc */
 .admin-topbar {
-  background-color: #ffffff;
-  height: 50px;
+  background-color: #f8f9fa;
+  height: 48px;
   border-bottom: 1px solid #dee2e6;
   padding: 0 20px;
   display: flex;
@@ -118,13 +123,14 @@ body.admin-body {
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 12.5px;
+  gap: 14px;
+  font-size: 13px;
 }
 
 .admin-page-content {
   padding: 18px 20px;
   flex: 1;
+  background-color: #ffffff;
 }
 
 .page-title-box {
@@ -145,7 +151,7 @@ body.admin-body {
   color: #6c757d;
 }
 
-/* Khung card cơ bản */
+/* Khung card đơn sắc */
 .admin-card {
   background: #ffffff;
   border: 1px solid #dee2e6;
@@ -168,7 +174,7 @@ body.admin-body {
   margin: 0;
 }
 
-/* Bảng dữ liệu chuẩn HTML / Bootstrap */
+/* Bảng dữ liệu HTML / Bootstrap cổ điển */
 .admin-table {
   width: 100%;
   margin-bottom: 0;
@@ -176,12 +182,12 @@ body.admin-body {
 }
 
 .admin-table th {
-  background-color: #f1f3f5;
-  color: #333333;
+  background-color: #e9ecef;
+  color: #212529;
   font-size: 12.5px;
   font-weight: bold;
   padding: 8px 10px;
-  border: 1px solid #dee2e6;
+  border: 1px solid #ced4da;
   vertical-align: middle;
 }
 
@@ -191,23 +197,24 @@ body.admin-body {
   vertical-align: middle;
   font-size: 13px;
   background-color: #ffffff;
+  color: #212529;
 }
 
 .admin-table tr:hover td {
   background-color: #f8f9fa;
 }
 
-/* Hộp thống kê đơn giản không màu mè */
+/* Hộp thống kê đơn sắc cơ bản */
 .simple-stat-box {
   border: 1px solid #dee2e6;
-  background-color: #ffffff;
+  background-color: #f8f9fa;
   padding: 12px 14px;
   margin-bottom: 15px;
 }
 
 .simple-stat-title {
   font-size: 12px;
-  color: #6c757d;
+  color: #495057;
   font-weight: bold;
   text-transform: uppercase;
   margin-bottom: 4px;
@@ -219,7 +226,7 @@ body.admin-body {
   color: #212529;
 }
 
-/* Tabs chuẩn Bootstrap */
+/* Tabs chuẩn Bootstrap đơn sắc */
 .nav-tabs {
   border-bottom: 1px solid #dee2e6;
 }
@@ -227,26 +234,33 @@ body.admin-body {
 .nav-tabs .nav-link {
   font-size: 13px;
   font-weight: bold;
-  color: #495057;
+  color: #495057 !important;
   padding: 8px 14px;
   border: 1px solid transparent;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
 }
 
 .nav-tabs .nav-link.active {
-  color: #007bff !important;
-  background-color: #fff;
-  border-color: #dee2e6 #dee2e6 #fff;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border-color: #dee2e6 #dee2e6 #ffffff !important;
+  border-bottom: 2px solid #212529 !important;
 }
 
-/* Input & Form chuẩn */
+/* Input & Form đơn giản */
 .form-control, .custom-select {
   font-size: 13px;
   border-radius: 3px;
   border: 1px solid #ced4da;
   padding: 6px 10px;
   height: auto;
+  color: #212529;
+}
+
+.form-control:focus, .custom-select:focus {
+  border-color: #495057;
+  box-shadow: none;
 }
 
 .btn {
@@ -261,19 +275,117 @@ body.admin-body {
 }
 
 /* Modal đơn giản */
+.modal-content {
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+}
+
 .modal-header {
   padding: 10px 15px;
   border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+}
+
+.modal-header .close {
+  color: #212529 !important;
 }
 
 .modal-body {
   padding: 15px;
+  background-color: #ffffff;
+  color: #212529;
 }
 
 .modal-footer {
   padding: 10px 15px;
   border-top: 1px solid #dee2e6;
   background-color: #f8f9fa;
+}
+
+/* ==============================================================
+   QUY TẮC ĐỒNG BỘ ĐƠN SẮC TOÀN DIỆN CHO ADMIN (TRIỆT TIÊU TOÀN BỘ MÀU)
+   ============================================================== */
+
+/* Mọi icon trong admin chuyển sang màu xám/đen trung tính */
+.admin-wrapper i,
+.admin-wrapper .fas,
+.admin-wrapper .far,
+.admin-wrapper .fab {
+  color: #495057 !important;
+}
+
+/* Mọi text màu trong trang admin chuyển sang đen/xám */
+.admin-wrapper .text-danger,
+.admin-wrapper .text-success,
+.admin-wrapper .text-primary,
+.admin-wrapper .text-warning,
+.admin-wrapper .text-info {
+  color: #212529 !important;
+}
+
+/* Mọi badge màu trong trang admin chuyển sang badge xám/đen đơn sắc */
+.admin-wrapper .badge-danger,
+.admin-wrapper .badge-warning,
+.admin-wrapper .badge-success,
+.admin-wrapper .badge-primary,
+.admin-wrapper .badge-info,
+.admin-wrapper .badge-secondary {
+  background-color: #e9ecef !important;
+  color: #212529 !important;
+  border: 1px solid #ced4da !important;
+  font-weight: 600;
+}
+
+/* Mọi alert trong trang admin chuyển sang khung viền xám nhẹ */
+.admin-wrapper .alert-info,
+.admin-wrapper .alert-danger,
+.admin-wrapper .alert-warning,
+.admin-wrapper .alert-success {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  color: #212529 !important;
+}
+
+/* Mọi nút bấm trong trang admin chuyển sang nút đen/xám đơn sắc */
+.admin-wrapper .btn-primary,
+.admin-wrapper .btn-success,
+.admin-wrapper .btn-danger,
+.admin-wrapper .btn-warning,
+.admin-wrapper .btn-info {
+  background-color: #343a40 !important;
+  border-color: #343a40 !important;
+  color: #ffffff !important;
+}
+
+.admin-wrapper .btn-primary:hover,
+.admin-wrapper .btn-success:hover,
+.admin-wrapper .btn-danger:hover,
+.admin-wrapper .btn-warning:hover,
+.admin-wrapper .btn-info:hover {
+  background-color: #212529 !important;
+  border-color: #212529 !important;
+  color: #ffffff !important;
+}
+
+.admin-wrapper .btn-outline-primary,
+.admin-wrapper .btn-outline-success,
+.admin-wrapper .btn-outline-danger,
+.admin-wrapper .btn-outline-warning,
+.admin-wrapper .btn-outline-info {
+  background-color: #ffffff !important;
+  border-color: #6c757d !important;
+  color: #212529 !important;
+}
+
+.admin-wrapper .btn-outline-primary:hover,
+.admin-wrapper .btn-outline-success:hover,
+.admin-wrapper .btn-outline-danger:hover,
+.admin-wrapper .btn-outline-warning:hover,
+.admin-wrapper .btn-outline-info:hover {
+  background-color: #e9ecef !important;
+  border-color: #343a40 !important;
+  color: #000000 !important;
 }
 
 /* Responsive */

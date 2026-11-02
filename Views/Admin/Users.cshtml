@@ -3,37 +3,37 @@
     ViewData["Title"] = "Quản Lý User";
 }
 
-<div class="page-title-box d-flex justify-content-between align-items-center">
+<div class="page-title-box d-flex justify-content-between align-items-center mb-3">
   <div>
-    <h1 class="page-title">Quản Lý User</h1>
+    <h1 class="page-title">Quản Lý Người Dùng</h1>
     <div class="page-breadcrumb">Danh sách tài khoản quản trị và thành viên người dùng trên sàn</div>
   </div>
   <div id="btn-add-admin-wrapper">
-    <button class="btn btn-success font-weight-bold" onclick="openAddAdminModal()">
-      <i class="fas fa-user-plus mr-1"></i>Thêm Quản Trị Viên Mới
+    <button class="btn btn-dark" onclick="openAddAdminModal()">
+      + Thêm Quản Trị Viên Mới
     </button>
   </div>
 </div>
 
 <!-- TABS PHÂN LOẠI NGƯỜI DÙNG -->
-<ul class="nav nav-tabs mb-4 font-weight-bold" id="user-tabs">
+<ul class="nav nav-tabs mb-3 font-weight-bold" id="user-tabs">
   <li class="nav-item">
-    <a class="nav-link active text-success" href="javascript:void(0)" onclick="switchUserTab('admins', this)">
-      <i class="fas fa-user-shield mr-1"></i>Tài Khoản Quản Trị (Admin)
+    <a class="nav-link active" href="javascript:void(0)" onclick="switchUserTab('admins', this)">
+      Tài Khoản Quản Trị (Admin)
     </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link text-dark" href="javascript:void(0)" onclick="switchUserTab('customers', this)">
-      <i class="fas fa-users mr-1"></i>Danh Sách Khách Hàng
+    <a class="nav-link" href="javascript:void(0)" onclick="switchUserTab('customers', this)">
+      Danh Sách Khách Hàng
     </a>
   </li>
 </ul>
 
 <!-- BẢNG DANH SÁCH NGƯỜI DÙNG -->
-<div class="admin-card">
+<div class="card mb-4">
   <div class="table-responsive">
-    <table class="table admin-table mb-0">
-      <thead>
+    <table class="table table-bordered table-striped mb-0" style="font-size: 13px;">
+      <thead class="thead-light">
         <tr id="users-table-header">
           <!-- Render bởi JS -->
         </tr>
@@ -49,19 +49,19 @@
 <div class="modal fade" id="adminAccountModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title font-weight-bold" id="adminModalTitle">Thêm Tài Khoản Quản Trị Viên</h5>
-        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      <div class="modal-header bg-light">
+        <h5 class="modal-title font-weight-bold text-dark" id="adminModalTitle">Thêm Tài Khoản Quản Trị Viên</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <form id="admin-account-form" onsubmit="handleSaveAdmin(event)">
-        <div class="modal-body">
+        <div class="modal-body p-3">
           <input type="hidden" id="edit-admin-id">
           <div class="form-group">
-            <label for="adm-name" class="font-weight-bold">Họ và tên Quản trị viên <span class="text-danger">*</span></label>
+            <label for="adm-name" class="font-weight-bold">Họ và tên Quản trị viên *</label>
             <input type="text" class="form-control" id="adm-name" required>
           </div>
           <div class="form-group">
-            <label for="adm-email" class="font-weight-bold">Email đăng nhập <span class="text-danger">*</span></label>
+            <label for="adm-email" class="font-weight-bold">Email đăng nhập *</label>
             <input type="email" class="form-control" id="adm-email" required>
           </div>
           <div class="form-group">
@@ -69,14 +69,14 @@
             <input type="tel" class="form-control" id="adm-phone" placeholder="0901234567">
           </div>
           <div class="form-group">
-            <label for="adm-password" class="font-weight-bold">Mật khẩu <span class="text-danger">*</span></label>
+            <label for="adm-password" class="font-weight-bold">Mật khẩu *</label>
             <input type="password" class="form-control" id="adm-password" placeholder="Nhập mật khẩu..." minlength="4" required>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-          <button type="submit" class="btn btn-success font-weight-bold">
-            <i class="fas fa-save mr-1"></i>Lưu Tài Khoản
+          <button type="submit" class="btn btn-dark">
+            Lưu Tài Khoản
           </button>
         </div>
       </form>
@@ -89,10 +89,10 @@
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header bg-light">
-        <h5 class="modal-title font-weight-bold text-dark"><i class="fas fa-user-circle mr-2 text-primary"></i>Chi Tiết Khách Hàng & Đơn Hàng Đã Đặt</h5>
+        <h5 class="modal-title font-weight-bold text-dark">Chi Tiết Khách Hàng & Đơn Hàng Đã Đặt</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <div class="modal-body p-4" id="customer-detail-content">
+      <div class="modal-body p-3" id="customer-detail-content">
         <!-- Render thông tin khách và đơn hàng -->
       </div>
       <div class="modal-footer">
@@ -112,8 +112,8 @@
 
   function switchUserTab(tab, el) {
     activeTab = tab;
-    $("#user-tabs .nav-link").removeClass("active text-success").addClass("text-dark");
-    $(el).addClass("active text-success").removeClass("text-dark");
+    $("#user-tabs .nav-link").removeClass("active");
+    $(el).addClass("active");
 
     if (tab === "admins") {
       $("#btn-add-admin-wrapper").show();
@@ -146,17 +146,17 @@
       admins.forEach(adm => {
         tbody.append(`
           <tr>
-            <td>#${adm.id}</td>
+            <td><strong>#${adm.id}</strong></td>
             <td><strong>${adm.name}</strong></td>
             <td>${adm.email}</td>
             <td>${adm.phone || "---"}</td>
-            <td><span class="badge badge-danger">Quản trị viên (Admin)</span></td>
+            <td><span class="badge badge-secondary">Quản trị viên (Admin)</span></td>
             <td class="text-center text-nowrap">
-              <button class="btn btn-outline-primary btn-sm px-2 mr-1" onclick="openEditAdminModal(${adm.id})" title="Sửa">
-                <i class="fas fa-edit"></i> Sửa
+              <button class="btn btn-outline-dark btn-sm mr-1" onclick="openEditAdminModal(${adm.id})">
+                Sửa
               </button>
-              <button class="btn btn-outline-danger btn-sm px-2" onclick="deleteAdmin(${adm.id})" title="Xóa">
-                <i class="fas fa-trash-alt"></i> Xóa
+              <button class="btn btn-outline-dark btn-sm" onclick="deleteAdmin(${adm.id})">
+                Xóa
               </button>
             </td>
           </tr>
@@ -177,14 +177,14 @@
       customers.forEach(cus => {
         tbody.append(`
           <tr>
-            <td>#${cus.id}</td>
+            <td><strong>#${cus.id}</strong></td>
             <td><strong>${cus.name}</strong></td>
             <td>${cus.email}</td>
             <td>${cus.phone || "---"}</td>
             <td><small>${cus.address || "Chưa cập nhật"}</small></td>
             <td class="text-center">
-              <button class="btn btn-outline-info btn-sm font-weight-bold" onclick="viewCustomerDetail(${cus.id})">
-                <i class="fas fa-receipt mr-1"></i>Xem Chi Tiết & Đơn Hàng
+              <button class="btn btn-outline-dark btn-sm" onclick="viewCustomerDetail(${cus.id})">
+                Xem Đơn Hàng
               </button>
             </td>
           </tr>
@@ -281,43 +281,40 @@
       cusOrders.forEach(o => {
         ordersHtml += `
           <tr>
-            <td><strong class="text-success">${o.id}</strong></td>
+            <td><strong>#${o.id}</strong></td>
             <td><small>${o.orderDate}</small></td>
             <td>${o.items.length} món đồ</td>
-            <td class="text-danger font-weight-bold">${ThriftDB.formatCurrency(o.totalAmount)}</td>
-            <td><span class="badge badge-success">${o.orderStatusText || o.orderStatus}</span></td>
+            <td><strong>${ThriftDB.formatCurrency(o.totalAmount)}</strong></td>
+            <td><span class="badge badge-secondary">${o.orderStatusText || o.orderStatus}</span></td>
           </tr>
         `;
       });
     }
 
     const content = `
-      <div class="row mb-4">
+      <div class="row mb-3">
         <div class="col-md-6">
-          <h6 class="font-weight-bold text-success border-bottom pb-2">Thông Tin Khách Hàng</h6>
+          <div class="font-weight-bold border-bottom pb-1 mb-2">Thông Tin Khách Hàng</div>
           <p class="small mb-1"><strong>Họ tên:</strong> ${user.name}</p>
           <p class="small mb-1"><strong>Email:</strong> ${user.email}</p>
           <p class="small mb-1"><strong>Số điện thoại:</strong> ${user.phone || "Chưa cập nhật"}</p>
-          <p class="small mb-0"><strong>Địa chỉ:</strong> ${user.address || "Chưa cập nhật"}</p>
+          <p class="small mb-1"><strong>Địa chỉ:</strong> ${user.address || "Chưa cập nhật"}</p>
         </div>
-        <div class="col-md-6 bg-light p-3 border">
-          <h6 class="font-weight-bold text-dark border-bottom pb-2">Thống Kê Mua Sắm</h6>
-          <p class="small mb-1"><strong>Tổng số đơn hàng:</strong> ${cusOrders.length} đơn</p>
-          <p class="small mb-1"><strong>Tổng tiền đã chi:</strong> <span class="text-danger font-weight-bold">${ThriftDB.formatCurrency(cusOrders.reduce((s, o) => s + o.totalAmount, 0))}</span></p>
-          <p class="small mb-0"><strong>Trạng thái tài khoản:</strong> <span class="badge badge-success">Đang hoạt động</span></p>
+        <div class="col-md-6">
+          <div class="font-weight-bold border-bottom pb-1 mb-2">Thống Kê Mua Hàng</div>
+          <p class="small mb-1"><strong>Tổng số đơn đã đặt:</strong> ${cusOrders.length} đơn hàng</p>
+          <p class="small mb-1"><strong>Trạng thái tài khoản:</strong> Đang hoạt động bình thường</p>
         </div>
       </div>
 
-      <h6 class="font-weight-bold text-dark mb-2">
-        <i class="fas fa-boxes mr-1 text-primary"></i>Lịch Sử Đơn Hàng Đã Đặt:
-      </h6>
+      <div class="font-weight-bold mb-2">Lịch Sử Các Đơn Hàng Đã Đặt:</div>
       <div class="table-responsive">
-        <table class="table table-bordered table-sm small mb-0">
-          <thead class="bg-light">
+        <table class="table table-bordered table-striped mb-0" style="font-size: 12.5px;">
+          <thead class="thead-light">
             <tr>
               <th>Mã Đơn</th>
-              <th>Ngày Đặt</th>
-              <th>Số Món</th>
+              <th>Thời Gian</th>
+              <th>Số Lượng Món</th>
               <th>Tổng Tiền</th>
               <th>Trạng Thái</th>
             </tr>
