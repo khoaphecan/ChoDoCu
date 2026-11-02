@@ -82,25 +82,24 @@
 
         <!-- MAIN CONTENT -->
         <div class="admin-main">
-            <!-- TOPBAR -->
+            <!-- TOPBAR ĐƠN GIẢN -->
             <header class="admin-topbar">
                 <div>
-                    <h5 class="mb-0 font-weight-bold text-dark">@ViewData["Title"]</h5>
+                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;">@ViewData["Title"]</h5>
                 </div>
                 <div class="topbar-right">
-                    <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-warning font-weight-bold mr-2">
-                        <i class="fas fa-bell mr-1"></i>Tin chờ duyệt: <span class="badge badge-danger" id="admin-topbar-pending-alert">@realServerPendingCount</span>
+                    <a asp-controller="Admin" asp-action="ApproveProducts" class="text-dark font-weight-bold mr-3" style="text-decoration: none;">
+                        <i class="fas fa-bell text-warning mr-1"></i>Chờ duyệt: <span class="badge badge-warning" id="admin-topbar-pending-alert">@realServerPendingCount</span>
                     </a>
-                    <a asp-controller="Home" asp-action="Index" class="btn-client-preview mr-3">
-                        <i class="fas fa-store mr-1"></i>Trang Mua Sắm
+                    <a asp-controller="Home" asp-action="Index" target="_blank" class="text-primary mr-3" style="text-decoration: none;">
+                        <i class="fas fa-globe mr-1"></i>Xem trang web
                     </a>
-                    <div class="admin-user-badge">
-                        <div class="admin-avatar">AD</div>
-                        <div>
-                            <div class="small font-weight-bold">Quản Trị Viên</div>
-                            <div class="text-muted" style="font-size: 11px;">admin@thriftshop.vn</div>
-                        </div>
-                    </div>
+                    <span class="text-muted">
+                        Admin: <strong class="text-dark">admin@thriftshop.vn</strong>
+                    </span>
+                    <a asp-controller="Account" asp-action="Logout" class="text-danger font-weight-bold ml-2" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}">
+                        [Đăng xuất]
+                    </a>
                 </div>
             </header>
 

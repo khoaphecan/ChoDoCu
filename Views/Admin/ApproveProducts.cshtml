@@ -7,26 +7,21 @@
 
 <div class="page-title-box d-flex justify-content-between align-items-center">
   <div>
-    <h1 class="page-title text-danger">
-      <i class="fas fa-clipboard-check mr-2"></i>Kiểm Duyệt Tin Đăng Bán Đồ Cũ
+    <h1 class="page-title font-weight-bold">
+      <i class="fas fa-clipboard-check mr-2 text-primary"></i>Kiểm Duyệt Tin Đăng Bán Đồ Cũ
     </h1>
     <div class="page-breadcrumb">Quản lý và phê duyệt tin đăng bán đồ cũ từ người dùng trước khi mở bán</div>
   </div>
   <div>
-    <span class="badge badge-warning p-2 font-weight-bold" style="font-size: 14px;">
-      <i class="fas fa-clock mr-1"></i>Đang chờ duyệt: <span id="count-pending-badge">0</span> tin
+    <span class="badge badge-warning p-2 font-weight-bold" style="font-size: 13px;">
+      Tin chờ duyệt: <span id="count-pending-badge">0</span>
     </span>
   </div>
 </div>
 
 <!-- Hướng dẫn nghiệp vụ kiểm duyệt -->
-<div class="alert alert-info border-info shadow-sm mb-4">
-  <h6 class="font-weight-bold mb-1"><i class="fas fa-shield-alt mr-2"></i>Quy trình kiểm định chất lượng Admin:</h6>
-  <p class="small mb-0">
-    Kiểm tra kỹ ngoại quan, tỉ lệ % độ mới và ghi chú khuyết điểm của người bán. 
-    Khi bấm <strong>"Duyệt Đăng Sàn"</strong>, món đồ cũ này sẽ được tự động kích hoạt và mở bán ngay lập tức trên trang chủ và danh mục cho khách hàng đặt mua. 
-    Nếu không đạt tiêu chuẩn, bấm <strong>"Từ Chối"</strong> và nhập lý do gửi lại cho người đăng.
-  </p>
+<div class="alert alert-info py-2 mb-3" style="font-size: 13px;">
+  <strong>Quy trình kiểm duyệt:</strong> Kiểm tra ảnh thật, tình trạng món đồ và mô tả của người bán. Bấm <strong>"Duyệt"</strong> để mở bán lên trang chủ hoặc <strong>"Từ Chối"</strong> kèm lý do.
 </div>
 
 <!-- TABS TRẠNG THÁI KIỂM DUYỆT -->
@@ -87,9 +82,9 @@
 <div class="modal fade" id="reviewDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title font-weight-bold"><i class="fas fa-search-plus mr-2 text-warning"></i>Chi Tiết Món Đồ Cũ Cần Kiểm Duyệt</h5>
-        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      <div class="modal-header bg-light">
+        <h5 class="modal-title font-weight-bold text-dark"><i class="fas fa-search-plus mr-2 text-primary"></i>Chi Tiết Món Đồ Cũ Cần Kiểm Duyệt</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body p-4" id="review-modal-body">
         <!-- Render thông tin chi tiết -->
