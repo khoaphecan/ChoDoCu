@@ -1,35 +1,75 @@
+@model IEnumerable<ThriftShop.Models.Category>
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Quản Lý Danh Mục";
+    var productCounts = ViewBag.ProductCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var totalCats = Model?.Count() ?? 0;
 }
 
-<div class="page-title-box d-flex justify-content-between align-items-center">
+<div class="page-title-box d-flex justify-content-between align-items-center mb-4">
   <div>
-    <h1 class="page-title">Quản Lý Danh Mục</h1>
-    <div class="page-breadcrumb">Phân loại danh mục hàng hóa và thống kê số lượng sản phẩm</div>
+    <h1 class="page-title font-weight-bold">Quản Lý Danh Mục</h1>
+    <div class="page-breadcrumb text-muted">Phân loại danh mục hàng hóa đồ cũ và thống kê số lượng sản phẩm</div>
   </div>
   <div>
-    <button class="btn btn-success font-weight-bold" onclick="openAddCatModal()">
+    <button class="btn btn-success font-weight-bold px-3" onclick="openAddCatModal()">
       <i class="fas fa-plus-circle mr-1"></i>Thêm Danh Mục Mới
     </button>
   </div>
 </div>
 
 <div class="admin-card">
+  <div class="admin-card-header bg-white d-flex justify-content-between align-items-center">
+    <h5 class="admin-card-title mb-0 font-weight-bold text-dark">
+      <i class="fas fa-th-large mr-2 text-success"></i>Danh Sách Danh Mục Hiện Có (@totalCats danh mục)
+    </h5>
+    <span class="badge badge-light border text-muted">Chuẩn giáo trình LTW</span>
+  </div>
   <div class="table-responsive">
     <table class="table admin-table mb-0">
       <thead>
         <tr>
           <th style="width: 70px;">Mã</th>
-          <th style="width: 60px;">Icon</th>
+          <th style="width: 65px;" class="text-center">Icon</th>
           <th>Tên Danh Mục Đồ Cũ</th>
           <th>Mô Tả Danh Mục</th>
-          <th class="text-center">Tổng Hàng Hóa</th>
-          <th class="text-center" style="width: 140px;">Thao Tác</th>
+          <th class="text-center" style="width: 140px;">Tổng Hàng Hóa</th>
+          <th class="text-center" style="width: 150px;">Thao Tác</th>
         </tr>
       </thead>
       <tbody id="categories-tbody">
-        <!-- Render bởi JS -->
+        @if (Model != null && Model.Any())
+        {
+          foreach (var c in Model)
+          {
+            var count = productCounts.ContainsKey(c.Id) ? productCounts[c.Id] : 0;
+            <tr>
+              <td><strong class="text-muted">#@c.Id</strong></td>
+              <td class="text-center text-success">
+                <i class="@(string.IsNullOrEmpty(c.Icon) ? "fas fa-tag" : c.Icon) fa-lg"></i>
+              </td>
+              <td><strong class="text-dark">@c.Name</strong></td>
+              <td><small class="text-muted">@(string.IsNullOrEmpty(c.Description) ? "Không có mô tả" : c.Description)</small></td>
+              <td class="text-center">
+                <span class="badge badge-primary px-3 py-1 font-weight-bold">@count món</span>
+              </td>
+              <td class="text-center text-nowrap">
+                <button class="btn btn-outline-primary btn-sm px-2 mr-1" onclick="openEditCatModal(@c.Id, '@c.Name', '@c.Icon', '@(c.Description ?? "")')" title="Chỉnh sửa danh mục">
+                  <i class="fas fa-edit"></i> Sửa
+                </button>
+                <button class="btn btn-outline-danger btn-sm px-2" onclick="deleteCategory(@c.Id, @count, '@c.Name')" title="Xóa danh mục">
+                  <i class="fas fa-trash-alt"></i> Xóa
+                </button>
+              </td>
+            </tr>
+          }
+        }
+        else
+        {
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">Chưa có danh mục nào trong hệ thống!</td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>
@@ -45,24 +85,24 @@
       </div>
       <form id="category-form" onsubmit="handleSaveCat(event)">
         <div class="modal-body">
-          <input type="hidden" id="edit-cat-id">
+          <input type="hidden" id="edit-cat-id" name="Id" value="0">
           <div class="form-group">
-            <label for="cat-name" class="font-weight-bold">Tên danh mục <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="cat-name" placeholder="Ví dụ: Đồ gốm & Sưu tầm" minlength="2" required>
+            <label for="cat-name" class="font-weight-bold text-dark">Tên danh mục đồ cũ <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="cat-name" name="Name" placeholder="Ví dụ: Đồ gốm & Sưu tầm" minlength="2" maxlength="100" required>
           </div>
           <div class="form-group">
-            <label for="cat-icon" class="font-weight-bold">Class Icon Font Awesome <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="cat-icon" placeholder="fas fa-tag" value="fas fa-box" required>
-            <small class="text-muted">Ví dụ: fas fa-tshirt, fas fa-laptop, fas fa-book, fas fa-couch...</small>
+            <label for="cat-icon" class="font-weight-bold text-dark">Class Icon Font Awesome <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="cat-icon" name="Icon" placeholder="fas fa-tag" value="fas fa-box" required>
+            <small class="text-muted">Ví dụ: fas fa-tshirt, fas fa-laptop, fas fa-book, fas fa-couch, fas fa-tag...</small>
           </div>
           <div class="form-group">
-            <label for="cat-desc" class="font-weight-bold">Mô tả ngắn</label>
-            <textarea class="form-control" id="cat-desc" rows="2" placeholder="Mô tả các món đồ thuộc loại này..."></textarea>
+            <label for="cat-desc" class="font-weight-bold text-dark">Mô tả ngắn</label>
+            <textarea class="form-control" id="cat-desc" name="Description" rows="2" placeholder="Mô tả các món đồ cũ thuộc loại này..."></textarea>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-          <button type="submit" class="btn btn-success font-weight-bold">
+          <button type="submit" id="btnSaveCat" class="btn btn-success font-weight-bold">
             <i class="fas fa-save mr-1"></i>Lưu Danh Mục
           </button>
         </div>
@@ -73,107 +113,72 @@
 
 @section Scripts {
 <script>
-  $(document).ready(function() {
-    renderCategoriesTable();
-  });
-
-  function renderCategoriesTable() {
-    const cats = ThriftDB.getCategories();
-    const prods = ThriftDB.getProducts();
-    const tbody = $("#categories-tbody");
-    tbody.empty();
-
-    cats.forEach(c => {
-      // Đếm số lượng sản phẩm thuộc danh mục
-      const count = prods.filter(p => p.categoryId === c.id).length;
-
-      tbody.append(`
-        <tr>
-          <td><strong class="text-muted">#${c.id}</strong></td>
-          <td class="text-center text-success"><i class="${c.icon || 'fas fa-tag'} fa-lg"></i></td>
-          <td><strong class="text-dark">${c.name}</strong></td>
-          <td><small class="text-muted">${c.description || "Không có mô tả"}</small></td>
-          <td class="text-center">
-            <span class="badge badge-primary px-3 py-1 font-weight-bold">${count} món</span>
-          </td>
-          <td class="text-center text-nowrap">
-            <button class="btn btn-outline-primary btn-sm px-2 mr-1" onclick="openEditCatModal(${c.id})" title="Chỉnh sửa">
-              <i class="fas fa-edit"></i> Sửa
-            </button>
-            <button class="btn btn-outline-danger btn-sm px-2" onclick="deleteCategory(${c.id}, ${count})" title="Xóa danh mục">
-              <i class="fas fa-trash-alt"></i> Xóa
-            </button>
-          </td>
-        </tr>
-      `);
-    });
-  }
-
   function openAddCatModal() {
     $("#catModalTitle").text("Thêm Danh Mục Đồ Cũ Mới");
-    $("#edit-cat-id").val("");
+    $("#edit-cat-id").val("0");
     $("#category-form")[0].reset();
     $("#cat-icon").val("fas fa-box");
     $("#categoryModal").modal("show");
   }
 
-  function openEditCatModal(id) {
-    const c = ThriftDB.getCategoryById(id);
-    if (!c) return;
-
-    $("#catModalTitle").text("Chỉnh Sửa Danh Mục #" + c.id);
-    $("#edit-cat-id").val(c.id);
-    $("#cat-name").val(c.name);
-    $("#cat-icon").val(c.icon);
-    $("#cat-desc").val(c.description || "");
+  function openEditCatModal(id, name, icon, desc) {
+    $("#catModalTitle").text("Chỉnh Sửa Danh Mục #" + id);
+    $("#edit-cat-id").val(id);
+    $("#cat-name").val(name);
+    $("#cat-icon").val(icon || "fas fa-tag");
+    $("#cat-desc").val(desc || "");
     $("#categoryModal").modal("show");
   }
 
   function handleSaveCat(e) {
     e.preventDefault();
-    const id = $("#edit-cat-id").val();
-    const name = $("#cat-name").val().trim();
-    const icon = $("#cat-icon").val().trim() || "fas fa-tag";
-    const desc = $("#cat-desc").val().trim();
+    const btn = $("#btnSaveCat");
+    btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Đang lưu...');
 
-    const cats = ThriftDB.getCategories();
+    const formData = new FormData(document.getElementById("category-form"));
 
-    if (id) {
-      const c = cats.find(item => item.id === parseInt(id));
-      if (c) {
-        c.name = name;
-        c.icon = icon;
-        c.description = desc;
+    fetch('/Admin/SaveCategory', {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+      btn.prop("disabled", false).html('<i class="fas fa-save mr-1"></i>Lưu Danh Mục');
+      if (res.success) {
+        $("#categoryModal").modal("hide");
+        alert("THÀNH CÔNG!\n\n" + (res.message || "Đã lưu danh mục thành công!"));
+        location.reload();
+      } else {
+        alert("LỖI: " + (res.message || "Không thể lưu danh mục!"));
       }
-    } else {
-      const newCat = {
-        id: Date.now(),
-        name: name,
-        icon: icon,
-        description: desc
-      };
-      cats.push(newCat);
-    }
-
-    ThriftDB.saveCategories(cats);
-    $("#categoryModal").modal("hide");
-    alert("Đã lưu danh mục thành công!");
-    renderCategoriesTable();
+    })
+    .catch(err => {
+      btn.prop("disabled", false).html('<i class="fas fa-save mr-1"></i>Lưu Danh Mục');
+      alert("Lỗi kết nối máy chủ khi lưu danh mục!");
+    });
   }
 
-  // Kiểm tra ràng buộc trước khi xóa danh mục
-  function deleteCategory(id, count) {
+  // Kiểm tra ràng buộc khóa ngoại (Constraint) trước khi xóa danh mục theo checklist giáo trình
+  function deleteCategory(id, count, name) {
     if (count > 0) {
-      alert(`KHÔNG THỂ XÓA!\n\nDanh mục này đang có ${count} sản phẩm đồ cũ thuộc về nó. Vui lòng chuyển hoặc xóa các sản phẩm liên quan trước khi xóa danh mục để tránh lỗi dữ liệu!`);
+      alert(`KHÔNG THỂ XÓA!\n\nDanh mục "${name}" hiện đang có ${count} sản phẩm đồ cũ thuộc về nó.\n\nVui lòng chuyển hoặc xóa các sản phẩm liên quan trước khi xóa danh mục để tránh lỗi toàn vẹn dữ liệu (Foreign Key Constraint)!`);
       return;
     }
 
-    if (confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
-      let cats = ThriftDB.getCategories();
-      cats = cats.filter(c => c.id !== parseInt(id));
-      ThriftDB.saveCategories(cats);
-      alert("Đã xóa danh mục thành công!");
-      renderCategoriesTable();
+    if (confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn danh mục "${name}"?`)) {
+      fetch('/Admin/DeleteCategory?id=' + id, { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            alert("THÀNH CÔNG!\n\nĐã xóa danh mục thành công.");
+            location.reload();
+          } else {
+            alert(res.message || "Lỗi khi xóa danh mục!");
+          }
+        })
+        .catch(err => {
+          alert("Lỗi kết nối máy chủ khi xóa danh mục!");
+        });
     }
   }
 </script>

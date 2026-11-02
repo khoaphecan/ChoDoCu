@@ -4,20 +4,20 @@
     ViewData["Title"] = "Bảng Điều Khiển Quản Trị";
 }
 
-<div class="page-title-box">
-  <h1 class="page-title">Bảng Điều Khiển Quản Trị (Dashboard)</h1>
-  <div class="page-breadcrumb">ThriftShop Sàn Đồ Cũ / Quản lý trung gian giao dịch</div>
+<div class="page-title-box mb-4">
+  <h1 class="page-title font-weight-bold">Bảng Điều Khiển Quản Trị</h1>
+  <div class="page-breadcrumb text-muted">Hệ thống quản lý sàn mua bán đồ cũ Secondhand - ThriftShop</div>
 </div>
 
-<!-- 3 THẺ THỐNG KÊ TINH GỌN (CHỈ DUYỆT TIN, TIN ĐĂNG, VÀ USER) - RENDER SERVER-SIDE TỪ LINQ -->
+<!-- 4 THẺ THỐNG KÊ TỔNG QUAN TINH GỌN (CHIA ĐỀU 4 CỘT) -->
 <div class="row">
-  <!-- 1. Tin đồ cũ chờ Admin duyệt (CỐT LÕI ĐỀ 30) -->
-  <div class="col-md-4 mb-3">
+  <!-- 1. Tin đồ cũ chờ Admin duyệt (Cốt lõi Đề tài 30) -->
+  <div class="col-lg-3 col-sm-6 mb-3">
     <div class="stat-card border-warning">
       <div>
-        <div class="stat-card-title text-warning font-weight-bold">Tin Chờ Admin Duyệt</div>
+        <div class="stat-card-title text-warning font-weight-bold">Tin Chờ Duyệt</div>
         <div class="stat-card-value text-danger" id="stat-pending-posts">@(Model?.PendingCount ?? 0)</div>
-        <small><a asp-controller="Admin" asp-action="ApproveProducts" class="text-warning font-weight-bold">Bấm để duyệt ngay &raquo;</a></small>
+        <small><a asp-controller="Admin" asp-action="ApproveProducts" class="text-warning font-weight-bold">Duyệt ngay &raquo;</a></small>
       </div>
       <div class="stat-card-icon icon-pending">
         <i class="fas fa-clock"></i>
@@ -25,13 +25,27 @@
     </div>
   </div>
 
-  <!-- 2. Tin đồ cũ đang đăng bán trên sàn -->
-  <div class="col-md-4 mb-3">
-    <div class="stat-card">
+  <!-- 2. Danh mục sản phẩm (Theo yêu cầu checklist giáo trình) -->
+  <div class="col-lg-3 col-sm-6 mb-3">
+    <div class="stat-card border-success">
+      <div>
+        <div class="stat-card-title text-success font-weight-bold">Danh Mục Hàng</div>
+        <div class="stat-card-value text-success" id="stat-categories">@(Model?.CategoriesCount ?? 0)</div>
+        <small><a asp-controller="Admin" asp-action="Categories" class="text-success font-weight-bold">Quản lý danh mục &raquo;</a></small>
+      </div>
+      <div class="stat-card-icon icon-categories">
+        <i class="fas fa-th-large"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Tin đồ cũ đang mở bán trên sàn -->
+  <div class="col-lg-3 col-sm-6 mb-3">
+    <div class="stat-card border-primary">
       <div>
         <div class="stat-card-title text-primary font-weight-bold">Tin Đang Đăng Bán</div>
         <div class="stat-card-value text-primary" id="stat-products">@(Model?.ProductsCount ?? 0)</div>
-        <small><a asp-controller="Admin" asp-action="Products" class="text-primary font-weight-bold">Quản lý tin đăng &raquo;</a></small>
+        <small><a asp-controller="Admin" asp-action="Products" class="text-primary font-weight-bold">Xem tất cả tin &raquo;</a></small>
       </div>
       <div class="stat-card-icon icon-products">
         <i class="fas fa-tags"></i>
@@ -39,107 +53,87 @@
     </div>
   </div>
 
-  <!-- 3. Tổng số User (Khách hàng & Người bán) -->
-  <div class="col-md-4 mb-3">
-    <div class="stat-card">
+  <!-- 4. Tổng số thành viên & người bán -->
+  <div class="col-lg-3 col-sm-6 mb-3">
+    <div class="stat-card border-info">
       <div>
-        <div class="stat-card-title text-info font-weight-bold">Tổng Số User</div>
+        <div class="stat-card-title text-info font-weight-bold">Người Dùng</div>
         <div class="stat-card-value text-info" id="stat-users">@(Model?.UsersCount ?? 0)</div>
-        <small><a asp-controller="Admin" asp-action="Users" class="text-info font-weight-bold">Quản lý user &raquo;</a></small>
+        <small><a asp-controller="Admin" asp-action="Users" class="text-info font-weight-bold">Quản lý tài khoản &raquo;</a></small>
       </div>
-      <div class="stat-card-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+      <div class="stat-card-icon icon-users">
         <i class="fas fa-users"></i>
       </div>
     </div>
   </div>
 </div>
 
-<!-- BẢNG TRỌNG TÂM: TIN ĐỒ CŨ CHỜ ADMIN DUYỆT -->
-<div class="row">
-  <div class="col-12 mb-4">
-    <div class="admin-card">
-      <div class="admin-card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="admin-card-title text-danger mb-0">
-          <i class="fas fa-clipboard-check mr-2"></i>Tin Đồ Cũ Chờ Duyệt Gần Đây
-        </h5>
-        <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-warning font-weight-bold">
-          Xem tất cả tin chờ duyệt &raquo;
-        </a>
-      </div>
-      <div class="table-responsive">
-        <table class="table admin-table mb-0">
-          <thead>
-            <tr>
-              <th style="width: 40%;">Món Đồ Cũ</th>
-              <th>Người Bán</th>
-              <th>Danh Mục</th>
-              <th>Giá Thanh Lý</th>
-              <th class="text-center">Thao Tác</th>
-            </tr>
-          </thead>
-          <tbody id="dashboard-pending-tbody">
-            @if (Model != null && Model.RecentPending.Any())
-            {
-              @foreach (var p in Model.RecentPending)
-              {
-                <tr>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <img src="@p.Image" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; margin-right: 10px;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
-                      <div>
-                        <div class="font-weight-bold text-dark">@p.Name</div>
-                        <small class="text-muted">Độ mới: @p.Condition</small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>@p.SellerName</td>
-                  <td><span class="badge badge-light border">@p.CategoryName</span></td>
-                  <td class="text-danger font-weight-bold">@p.Price.ToString("N0") ₫</td>
-                  <td class="text-center">
-                    <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-warning">Kiểm duyệt</a>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+<!-- BẢNG TRỌNG TÂM: DANH SÁCH TIN ĐỒ CŨ ĐANG CHỜ KIỂM DUYỆT -->
+<div class="admin-card mt-2">
+  <div class="admin-card-header bg-white d-flex justify-content-between align-items-center">
+    <h5 class="admin-card-title text-danger mb-0 font-weight-bold">
+      <i class="fas fa-clipboard-check mr-2"></i>Tin Đồ Cũ Chờ Duyệt Gần Đây
+    </h5>
+    <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-warning font-weight-bold">
+      Xem tất cả tin chờ duyệt (@(Model?.PendingCount ?? 0)) &raquo;
+    </a>
   </div>
-</div>
-
-<!-- QUY TRÌNH VẬN HÀNH SÀN TRUNG GIAN ĐỒ CŨ 3 BƯỚC -->
-<div class="card border p-4 bg-white shadow-sm mb-4">
-  <h5 class="font-weight-bold text-dark mb-3">
-    <i class="fas fa-sync-alt text-primary mr-2"></i>Quy Trình Sàn Trung Gian Giao Dịch Đồ Cũ:
-  </h5>
-  <div class="row text-center">
-    <div class="col-md-4 mb-3">
-      <div class="p-3 border rounded bg-light h-100">
-        <span class="badge badge-primary px-3 py-1 mb-2 font-weight-bold">Bước 1</span>
-        <h6 class="font-weight-bold text-dark">Người dùng đăng bán</h6>
-        <small class="text-muted">Thành viên điền thông tin món đồ cũ, giá bán thanh lý, hình ảnh và mô tả tình trạng.</small>
-      </div>
-    </div>
-    <div class="col-md-4 mb-3">
-      <div class="p-3 border rounded bg-light h-100">
-        <span class="badge badge-warning px-3 py-1 mb-2 font-weight-bold">Bước 2</span>
-        <h6 class="font-weight-bold text-danger">Admin kiểm duyệt</h6>
-        <small class="text-muted">Ban quản trị kiểm tra hình ảnh và nội dung để phê duyệt mở bán hoặc từ chối tin vi phạm.</small>
-      </div>
-    </div>
-    <div class="col-md-4 mb-3">
-      <div class="p-3 border rounded bg-light h-100">
-        <span class="badge badge-success px-3 py-1 mb-2 font-weight-bold">Bước 3</span>
-        <h6 class="font-weight-bold text-success">Mở bán & Giao dịch</h6>
-        <small class="text-muted">Tin đồ cũ hiển thị trên sàn, người mua liên hệ và giao dịch trực tiếp an tâm.</small>
-      </div>
-    </div>
+  <div class="table-responsive">
+    <table class="table admin-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 40%;">Món Đồ Cũ</th>
+          <th>Người Bán</th>
+          <th>Danh Mục</th>
+          <th>Giá Thanh Lý</th>
+          <th class="text-center" style="width: 140px;">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody id="dashboard-pending-tbody">
+        @if (Model != null && Model.RecentPending.Any())
+        {
+          @foreach (var p in Model.RecentPending)
+          {
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img src="@p.Image" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; margin-right: 12px;" class="border" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
+                  <div>
+                    <div class="font-weight-bold text-dark">@p.Name</div>
+                    <small class="text-muted">Độ mới: @p.Condition</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <strong>@p.SellerName</strong>
+                <div class="small text-muted"><i class="fas fa-map-marker-alt mr-1"></i>@(p.SellerAddress ?? "TP.HCM")</div>
+              </td>
+              <td><span class="badge badge-light border">@p.CategoryName</span></td>
+              <td class="text-danger font-weight-bold">@p.Price.ToString("N0") ₫</td>
+              <td class="text-center">
+                <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-warning font-weight-bold px-3">
+                  <i class="fas fa-check mr-1"></i>Kiểm duyệt
+                </a>
+              </td>
+            </tr>
+          }
+        }
+        else
+        {
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">
+              <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+              Hiện tại không có tin nào đang chờ duyệt. Tất cả tin đăng đã được xử lý xong!
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 </div>
 
 @section Scripts {
 <script>
-  // Dữ liệu thống kê đã được render chuẩn từ LINQ Server-side: Model.PendingCount
+  // Dữ liệu thống kê được render trực tiếp từ LINQ Server-side
 </script>
 }

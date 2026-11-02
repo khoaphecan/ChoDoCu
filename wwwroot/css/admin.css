@@ -1,76 +1,34 @@
 /* ==============================================================
    ADMIN DASHBOARD CSS - THRIFTSHOP MANAGEMENT
-   GIAO DIỆN QUẢN TRỊ MÀU TỐI (DARK THEME), Ô VUÔNG, TỐI GIẢN
+   GIAO DIỆN QUẢN TRỊ ĐƠN GIẢN, TRỰC QUAN, HIỆN ĐẠI
    ============================================================== */
 
 :root {
-  --admin-sidebar-bg: #141720;
-  --admin-sidebar-hover: #1e2430;
-  --admin-sidebar-active: #252d3d;
-  --admin-topbar-bg: #181b24;
-  --admin-body-bg: #111319;
-  --admin-card-bg: #181b24;
-  --admin-card-header: #1e222e;
-  --admin-border: #272d3a;
+  --admin-sidebar-bg: #1e293b;
+  --admin-sidebar-hover: #334155;
+  --admin-sidebar-active: #0f172a;
+  --admin-topbar-bg: #ffffff;
+  --admin-body-bg: #f8fafc;
+  --admin-card-bg: #ffffff;
+  --admin-card-header: #ffffff;
+  --admin-border: #e2e8f0;
   
   --admin-primary: #ff3c00;
   --admin-danger: #ef4444;
   --admin-warning: #f59e0b;
-  --admin-info: #38bdf8;
+  --admin-success: #10b981;
+  --admin-info: #0284c7;
   
-  --admin-text: #f3f4f6;
-  --admin-muted: #94a3b8;
+  --admin-text: #1e293b;
+  --admin-muted: #64748b;
+  --admin-dark: #0f172a;
 }
 
 body.admin-body {
   background-color: var(--admin-body-bg);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: var(--admin-text);
-}
-
-/* Khử bo góc toàn bộ trong trang Admin */
-.btn,
-.form-control,
-.custom-select,
-.input-group-text,
-.card,
-.badge,
-.alert,
-.modal-content,
-.table-bordered,
-.pagination .page-link,
-.nav-tabs .nav-link {
-  border-radius: 0 !important;
-}
-
-.text-dark {
-  color: #f3f4f6 !important;
-}
-
-.bg-light, .bg-white {
-  background-color: var(--admin-card-bg) !important;
-  color: var(--admin-text) !important;
-}
-
-.nav-tabs {
-  border-bottom: 1px solid var(--admin-border);
-}
-
-.nav-tabs .nav-link {
-  color: var(--admin-muted);
-  border: 1px solid transparent;
-}
-
-.nav-tabs .nav-link:hover {
-  border-color: var(--admin-border) var(--admin-border) transparent;
-  color: var(--admin-text);
-}
-
-.nav-tabs .nav-link.active {
-  background-color: var(--admin-card-bg);
-  border-color: var(--admin-border) var(--admin-border) transparent;
-  color: var(--admin-primary) !important;
-  font-weight: 700;
+  font-size: 14px;
 }
 
 /* ================= LAYOUT WRAPPER ================= */
@@ -79,7 +37,7 @@ body.admin-body {
   min-height: 100vh;
 }
 
-/* ================= SIDEBAR (MÀU TỐI) ================= */
+/* ================= SIDEBAR (THANH ĐIỀU HƯỚNG TỐI GIẢN) ================= */
 .admin-sidebar {
   width: 250px;
   background-color: var(--admin-sidebar-bg);
@@ -87,13 +45,13 @@ body.admin-body {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--admin-border);
+  border-right: 1px solid #0f172a;
 }
 
 .sidebar-header {
-  padding: 18px 20px;
-  background-color: #0f1118;
-  border-bottom: 1px solid var(--admin-border);
+  padding: 16px 20px;
+  background-color: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-brand {
@@ -112,7 +70,7 @@ body.admin-body {
 
 .sidebar-menu {
   list-style: none;
-  padding: 10px 0;
+  padding: 12px 0;
   margin: 0;
   flex: 1;
 }
@@ -120,21 +78,22 @@ body.admin-body {
 .sidebar-menu .menu-header {
   font-size: 11px;
   text-transform: uppercase;
-  color: #64748b;
-  padding: 14px 20px 4px 20px;
+  color: #94a3b8;
+  padding: 16px 20px 6px 20px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 .sidebar-menu li a {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 11px 20px;
   color: #cbd5e1;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   border-left: 3px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .sidebar-menu li a:hover {
@@ -146,23 +105,23 @@ body.admin-body {
   background-color: var(--admin-sidebar-active);
   color: #ffffff;
   border-left-color: var(--admin-primary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sidebar-menu li a i {
   width: 22px;
   font-size: 15px;
-  margin-right: 8px;
+  margin-right: 10px;
 }
 
 .sidebar-menu .badge {
   margin-left: auto;
   font-size: 11px;
-  padding: 3px 6px;
-  border-radius: 0 !important;
+  padding: 3px 7px;
+  border-radius: 12px;
 }
 
-/* ================= MAIN CONTENT ================= */
+/* ================= MAIN CONTENT AREA ================= */
 .admin-main {
   flex: 1;
   display: flex;
@@ -176,7 +135,7 @@ body.admin-body {
   background-color: var(--admin-topbar-bg);
   height: 60px;
   border-bottom: 1px solid var(--admin-border);
-  padding: 0 20px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -185,18 +144,19 @@ body.admin-body {
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 14px;
 }
 
 .btn-client-preview {
-  font-size: 12px;
-  color: #34d399;
-  background-color: #1e2735;
-  border: 1px solid #2d3b4e;
+  font-size: 12.5px;
+  color: #0f172a;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
   padding: 6px 14px;
-  border-radius: 0;
+  border-radius: 6px;
   text-decoration: none !important;
   font-weight: 600;
+  transition: all 0.2s;
 }
 
 .btn-client-preview:hover {
@@ -208,16 +168,16 @@ body.admin-body {
 .admin-user-badge {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--admin-text);
+  color: var(--admin-dark);
 }
 
 .admin-avatar {
   width: 32px;
   height: 32px;
-  border-radius: 0;
+  border-radius: 50%;
   background-color: var(--admin-primary);
   color: #fff;
   display: flex;
@@ -227,235 +187,232 @@ body.admin-body {
   font-size: 12px;
 }
 
-/* Page Body */
+/* Page Content */
 .admin-page-content {
   padding: 24px;
   flex: 1;
 }
 
 .page-title-box {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .page-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--admin-text);
+  color: var(--admin-dark);
   margin: 0 0 4px 0;
 }
 
 .page-breadcrumb {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--admin-muted);
 }
 
-/* ================= STAT CARDS (Ô VUÔNG MÀU TỐI) ================= */
+/* ================= STAT CARDS (THẺ THỐNG KÊ GỌN GÀNG) ================= */
 .stat-card {
-  background: var(--admin-card-bg);
-  border-radius: 0;
-  padding: 18px;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 18px 20px;
   border: 1px solid var(--admin-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .stat-card-title {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--admin-muted);
   text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.stat-card-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--admin-text);
+  letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
 
+.stat-card-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--admin-dark);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
 .stat-card-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
 }
 
-.icon-revenue {
-  background-color: #064e3b;
-  color: #34d399;
-  border: 1px solid #047857;
+.icon-pending {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #d97706;
 }
 
-.icon-pending {
-  background-color: #78350f;
-  color: #fbbf24;
-  border: 1px solid #b45309;
+.icon-categories {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #059669;
 }
 
 .icon-products {
-  background-color: #0c4a6e;
-  color: #38bdf8;
-  border: 1px solid #0284c7;
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
 }
 
-.icon-orders {
-  background-color: #312e81;
-  color: #a5b4fc;
-  border: 1px solid #4338ca;
+.icon-users {
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
 }
 
-/* ================= ADMIN CARDS & TABLES (MÀU TỐI) ================= */
+/* ================= ADMIN CARDS & TABLES ================= */
 .admin-card {
-  background: var(--admin-card-bg);
+  background: #ffffff;
   border: 1px solid var(--admin-border);
-  border-radius: 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .admin-card-header {
-  padding: 14px 18px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--admin-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--admin-card-header);
+  background-color: #ffffff;
 }
 
 .admin-card-title {
   font-size: 15px;
   font-weight: 700;
-  color: var(--admin-text);
+  color: var(--admin-dark);
   margin: 0;
 }
 
 .admin-table {
   width: 100%;
   color: var(--admin-text);
+  margin-bottom: 0;
 }
 
 .admin-table thead th {
-  background-color: #1e222e;
-  color: #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
   font-size: 12px;
   text-transform: uppercase;
   font-weight: 700;
   border-bottom: 1px solid var(--admin-border);
   border-top: none;
-  padding: 10px 14px;
+  padding: 12px 16px;
   vertical-align: middle;
 }
 
 .admin-table tbody td {
-  padding: 10px 14px;
+  padding: 12px 16px;
   vertical-align: middle;
-  font-size: 13px;
-  border-bottom: 1px solid var(--admin-border);
-  background-color: var(--admin-card-bg);
+  font-size: 13.5px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
 }
 
 .admin-table tbody tr:hover td {
-  background-color: #212635;
+  background-color: #f8fafc;
 }
 
-/* Ghi đè Dark Theme cho các thành phần Admin */
-.card {
-  background-color: var(--admin-card-bg) !important;
-  border-color: var(--admin-border) !important;
-  color: var(--admin-text);
+/* Tabs */
+.nav-tabs {
+  border-bottom: 2px solid var(--admin-border);
 }
 
-.bg-white, .bg-light {
-  background-color: var(--admin-card-bg) !important;
-  color: var(--admin-text) !important;
+.nav-tabs .nav-link {
+  color: var(--admin-muted);
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
 }
 
-.text-dark {
-  color: #f1f5f9 !important;
+.nav-tabs .nav-link:hover {
+  color: var(--admin-dark);
+  border-color: transparent;
 }
 
-.text-muted {
-  color: var(--admin-muted) !important;
+.nav-tabs .nav-link.active {
+  color: var(--admin-primary) !important;
+  border-bottom-color: var(--admin-primary);
+  background: transparent;
+  font-weight: 700;
 }
 
-.table {
-  color: var(--admin-text);
-}
-
-.table-bordered {
-  border-color: var(--admin-border);
-}
-
-.table-bordered td, .table-bordered th {
-  border-color: var(--admin-border);
-}
-
-.form-control, .custom-select {
-  background-color: #202532;
-  border-color: var(--admin-border);
-  color: var(--admin-text);
-}
-
-.form-control:focus, .custom-select:focus {
-  background-color: #272d3d;
-  border-color: var(--admin-primary);
-  color: #ffffff;
-  box-shadow: none;
-}
-
+/* Modals */
 .modal-content {
-  background-color: var(--admin-card-bg);
   border: 1px solid var(--admin-border);
-  color: var(--admin-text);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  background-color: #ffffff;
 }
 
 .modal-header {
   border-bottom: 1px solid var(--admin-border);
-  background-color: var(--admin-card-header);
+  padding: 16px 20px;
+}
+
+.modal-body {
+  padding: 20px;
 }
 
 .modal-footer {
   border-top: 1px solid var(--admin-border);
-  background-color: var(--admin-card-header);
+  background-color: #f8fafc;
+  padding: 12px 20px;
 }
 
-.close {
-  color: #cbd5e1;
-  text-shadow: none;
-}
-
-.close:hover {
-  color: #ffffff;
-}
-
-/* Hóa đơn bán lẻ */
-.invoice-box {
-  background: var(--admin-card-bg);
-  border: 1px solid var(--admin-border);
-  padding: 24px;
+/* Forms */
+.form-control, .custom-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13.5px;
   color: var(--admin-text);
+  background-color: #ffffff;
 }
 
-.invoice-header {
-  border-bottom: 2px solid var(--admin-primary);
-  padding-bottom: 12px;
-  margin-bottom: 16px;
+.form-control:focus, .custom-select:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(255, 60, 0, 0.15);
+  outline: none;
 }
 
-.invoice-company-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--admin-primary);
+/* Buttons */
+.btn {
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  transition: all 0.15s ease-in-out;
 }
 
-/* ================= RESPONSIVE ADMIN (MÀN HÌNH NHỎ & MOBILE) ================= */
-@media (max-width: 767.98px) {
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .admin-wrapper {
     flex-direction: column;
   }
@@ -467,15 +424,14 @@ body.admin-body {
   .sidebar-menu {
     display: flex;
     flex-wrap: wrap;
-    padding: 6px 10px;
-    gap: 4px;
+    padding: 6px;
   }
   .sidebar-menu .menu-header {
     display: none;
   }
   .sidebar-menu li a {
-    padding: 6px 10px;
-    font-size: 12px;
+    padding: 8px 12px;
+    font-size: 12.5px;
     border-left: none;
     border-bottom: 2px solid transparent;
   }
@@ -484,17 +440,12 @@ body.admin-body {
     border-bottom-color: var(--admin-primary);
   }
   .admin-topbar {
-    padding: 10px 14px;
+    padding: 10px 16px;
     height: auto;
     min-height: 52px;
     flex-wrap: wrap;
-    gap: 10px;
   }
-  .admin-content {
-    padding: 12px;
-  }
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .admin-page-content {
+    padding: 14px;
   }
 }

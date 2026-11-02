@@ -41,6 +41,7 @@ namespace ThriftShop.Controllers
 
             // LINQ: Thống kê số lượng
             var pendingCount = _db.PendingPosts.Count(p => p.Status == "pending");
+            var categoriesCount = _db.Categories.Count();
             var productsCount = _db.Products.Count(p => p.Status == "approved" && !p.IsSold && !p.Deleted);
             var usersCount = _db.Users.Count();
 
@@ -59,6 +60,7 @@ namespace ThriftShop.Controllers
             var viewModel = new AdminDashboardViewModel
             {
                 PendingCount = pendingCount,
+                CategoriesCount = categoriesCount,
                 ProductsCount = productsCount,
                 UsersCount = usersCount,
                 RecentPending = recentPending,
@@ -199,14 +201,89 @@ namespace ThriftShop.Controllers
             return View(users);
         }
 
-        // GET: /Admin/Categories (Quản lý Danh mục)
+        // GET: /Admin/Categories (Quản lý Danh mục theo chuẩn checklist giáo trình tl)
         public IActionResult Categories()
         {
             var authCheck = CheckAdminPermission("/Admin/Categories");
             if (authCheck != null) return authCheck;
 
             var categories = _db.Categories.AsNoTracking().ToList();
+
+            // Tính số lượng sản phẩm thuộc từng danh mục để hiển thị và kiểm tra ràng buộc khóa ngoại (Constraint)
+            var prodCounts = _db.Products
+                .Where(p => !p.Deleted)
+                .GroupBy(p => p.CategoryId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            ViewBag.ProductCounts = prodCounts;
             return View(categories);
+        }
+
+        // POST: /Admin/SaveCategory (Thêm mới hoặc Chỉnh sửa danh mục vào SQL Server)
+        [HttpPost]
+        public IActionResult SaveCategory(Category model)
+        {
+            var authCheck = CheckAdminPermission("/Admin/Categories");
+            if (authCheck != null) return authCheck;
+
+            if (string.IsNullOrWhiteSpace(model.Name))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập tên danh mục!" });
+            }
+
+            if (model.Id > 0)
+            {
+                var existing = _db.Categories.Find(model.Id);
+                if (existing == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy danh mục cần sửa!" });
+                }
+
+                existing.Name = model.Name.Trim();
+                existing.Icon = string.IsNullOrWhiteSpace(model.Icon) ? "fas fa-tag" : model.Icon.Trim();
+                existing.Description = model.Description?.Trim();
+            }
+            else
+            {
+                var newCat = new Category
+                {
+                    Name = model.Name.Trim(),
+                    Icon = string.IsNullOrWhiteSpace(model.Icon) ? "fas fa-tag" : model.Icon.Trim(),
+                    Description = model.Description?.Trim()
+                };
+                _db.Categories.Add(newCat);
+            }
+
+            _db.SaveChanges();
+            return Json(new { success = true, message = "Lưu danh mục thành công!" });
+        }
+
+        // POST: /Admin/DeleteCategory (Xóa danh mục - Kiểm tra ràng buộc dữ liệu theo checklist tl)
+        [HttpPost]
+        public IActionResult DeleteCategory(int id)
+        {
+            var authCheck = CheckAdminPermission("/Admin/Categories");
+            if (authCheck != null) return authCheck;
+
+            // Kiểm tra ràng buộc khóa ngoại (Foreign Key Constraint): Nếu còn sản phẩm thì chặn xóa
+            var productCount = _db.Products.Count(p => p.CategoryId == id && !p.Deleted);
+            if (productCount > 0)
+            {
+                return Json(new { 
+                    success = false, 
+                    message = $"KHÔNG THỂ XÓA! Danh mục này hiện đang có {productCount} sản phẩm đồ cũ thuộc về nó. Vui lòng chuyển hoặc xóa các sản phẩm liên quan trước." 
+                });
+            }
+
+            var cat = _db.Categories.Find(id);
+            if (cat == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy danh mục để xóa!" });
+            }
+
+            _db.Categories.Remove(cat);
+            _db.SaveChanges();
+            return Json(new { success = true, message = "Đã xóa danh mục thành công!" });
         }
 
         // GET: /Admin/Inventory (Quản lý Tồn kho)

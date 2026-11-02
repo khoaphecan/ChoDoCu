@@ -27,6 +27,7 @@ namespace ThriftShop.Models
     public class AdminDashboardViewModel
     {
         public int PendingCount { get; set; }
+        public int CategoriesCount { get; set; }
         public int ProductsCount { get; set; }
         public int UsersCount { get; set; }
         public List<PendingPost> RecentPending { get; set; } = new();

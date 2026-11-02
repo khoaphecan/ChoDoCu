@@ -88,6 +88,11 @@ function renderAdminSidebar(activeMenu) {
             <span class="badge badge-warning" id="admin-pending-badge">${pendingCount}</span>
           </a>
         </li>
+        <li class="${activeMenu === 'categories' ? 'active' : ''}">
+          <a href="categories.html">
+            <i class="fas fa-th-large text-success"></i>Quản Lý Danh Mục
+          </a>
+        </li>
         <li class="${activeMenu === 'products' ? 'active' : ''}">
           <a href="products.html">
             <i class="fas fa-boxes"></i>Quản Lý Tin Đăng

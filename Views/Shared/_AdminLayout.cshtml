@@ -31,37 +31,42 @@
                 <a asp-controller="Admin" asp-action="Index" class="sidebar-brand">
                     <i class="fas fa-recycle text-success mr-2"></i>
                     <span>Thrift<span style="color:#ff3c00;">Shop</span></span>
+                    <small class="badge badge-light border text-muted ml-auto font-weight-normal" style="font-size: 10px;">Admin</small>
                 </a>
             </div>
+            @{
+                var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? "";
+            }
             <ul class="sidebar-menu">
-                <li class="menu-header">Tổng Quan</li>
-                <li>
+                <li class="menu-header">Chức Năng Quản Trị</li>
+                <li class="@(currentAction == "Index" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Index">
                         <i class="fas fa-tachometer-alt"></i>Bảng Điều Khiển
                     </a>
                 </li>
-
-                <li class="menu-header">Kiểm Duyệt</li>
-                <li>
-                    <a asp-controller="Admin" asp-action="ApproveProducts" class="text-warning font-weight-bold">
-                        <i class="fas fa-clipboard-check"></i>Duyệt Tin Đăng
+                <li class="@(currentAction == "ApproveProducts" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="ApproveProducts">
+                        <i class="fas fa-clipboard-check text-warning"></i>Duyệt Tin Đăng
                         <span class="badge badge-warning" id="admin-pending-badge">@realServerPendingCount</span>
                     </a>
                 </li>
-
-                <li class="menu-header">Quản Lý Sàn Đồ Cũ</li>
-                <li>
+                <li class="@(currentAction == "Categories" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Categories">
+                        <i class="fas fa-th-large text-success"></i>Quản Lý Danh Mục
+                    </a>
+                </li>
+                <li class="@(currentAction == "Products" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Products">
-                        <i class="fas fa-tags"></i>Quản Lý Tin Đăng
+                        <i class="fas fa-tags text-primary"></i>Quản Lý Tin Đăng
                     </a>
                 </li>
-                <li>
+                <li class="@(currentAction == "Users" ? "active" : "")">
                     <a asp-controller="Admin" asp-action="Users">
-                        <i class="fas fa-users-cog"></i>Quản Lý User
+                        <i class="fas fa-users-cog text-info"></i>Quản Lý Người Dùng
                     </a>
                 </li>
 
-                <li class="menu-header">Hệ Thống</li>
+                <li class="menu-header">Lối Tắt Hệ Thống</li>
                 <li>
                     <a asp-controller="Home" asp-action="Index" target="_blank" class="text-info">
                         <i class="fas fa-external-link-alt"></i>Xem Trang Khách Hàng
