@@ -1,8 +1,10 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThriftShop.Common;
 using ThriftShop.Data;
 using ThriftShop.Models;
+using ThriftShop.Models.DTOs;
 
 namespace ThriftShop.Controllers
 {
@@ -15,101 +17,123 @@ namespace ThriftShop.Controllers
             _db = db;
         }
 
-        // GET: /Cart (Hộp thư Liên hệ & Chat trao đổi theo sản phẩm - Bắt buộc đăng nhập)
+        // GET: /Cart (Trang Giỏ hàng & Trao đổi Chat với người bán)
         public IActionResult Index(int? productId)
         {
-            if (!HttpContext.Session.IsLoggedIn())
+            var prodId = productId ?? 1;
+            var product = _db.Products.AsNoTracking().FirstOrDefault(p => p.Id == prodId);
+            if (product == null)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để mở hộp thư Liên hệ & Chat!";
-                return RedirectToAction("Login", "Account", new { returnUrl = productId.HasValue ? $"/Cart?productId={productId}" : "/Cart" });
-            }
-
-            ViewBag.ActiveProductId = productId;
-            if (productId.HasValue)
-            {
-                var prod = _db.Products.AsNoTracking().FirstOrDefault(p => p.Id == productId.Value);
-                if (prod != null)
+                var post = _db.PendingPosts.AsNoTracking().FirstOrDefault(p => p.Id == prodId);
+                if (post != null)
                 {
-                    if (prod.SellerId > 0)
+                    product = new Product
                     {
-                        var seller = _db.Users.AsNoTracking().FirstOrDefault(u => u.Id == prod.SellerId);
-                        if (seller != null)
-                        {
-                            if (string.IsNullOrEmpty(prod.SellerName)) prod.SellerName = seller.Name;
-                            if (string.IsNullOrEmpty(prod.SellerAvatar) || prod.SellerAvatar.Contains("ui-avatars.com")) prod.SellerAvatar = seller.Avatar;
-                            if (!string.IsNullOrEmpty(seller.Phone)) prod.SellerPhone = seller.Phone;
-                        }
-                        if (string.IsNullOrEmpty(prod.SellerAvatar) || prod.SellerAvatar.Contains("ui-avatars.com"))
-                        {
-                            prod.SellerAvatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80";
-                        }
-                    }
-                    ViewBag.ActiveProduct = prod;
+                        Id = post.Id,
+                        Name = post.Name,
+                        CategoryId = post.CategoryId,
+                        CategoryName = post.CategoryName,
+                        Price = post.Price,
+                        OriginalPrice = post.OriginalPrice,
+                        Description = post.Description,
+                        Image = post.Image,
+                        ImagesJson = post.ImagesJson,
+                        VideosJson = post.VideosJson,
+                        SellerId = post.SellerId,
+                        SellerName = post.SellerName,
+                        SellerPhone = post.SellerPhone,
+                        SellerEmail = post.SellerEmail,
+                        SellerAddress = post.SellerAddress,
+                        SellerAvatar = post.SellerAvatar,
+                        Status = post.Status,
+                        IsSold = post.IsSold
+                    };
                 }
             }
 
+            ViewBag.ActiveProductId = prodId;
+            ViewBag.ActiveProduct = product;
             return View();
         }
 
-        // POST: /Cart/SendMessage (Gửi tin nhắn chat)
+        // POST: /Cart/SendMessage?productId=...&message=...
         [HttpPost]
         public IActionResult SendMessage(int productId, string message)
         {
-            var userId = HttpContext.Session.GetUserId();
-            var userName = HttpContext.Session.GetUserName() ?? "Bạn";
-            var userAvatar = HttpContext.Session.GetUserAvatar();
-
-            if (!userId.HasValue || string.IsNullOrWhiteSpace(message))
+            try
             {
-                return Json(new { success = false, message = "Dữ liệu không hợp lệ hoặc chưa đăng nhập!" });
+                var userId = HttpContext.Session.GetUserId();
+                var userName = HttpContext.Session.GetUserName() ?? "Người mua";
+                var userAvatar = HttpContext.Session.GetUserAvatar();
+
+                if (!userId.HasValue)
+                {
+                    return Json(new { success = false, message = "Vui lòng đăng nhập để gửi tin nhắn trao đổi!" });
+                }
+
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    return Json(new { success = false, message = "Nội dung tin nhắn không được để trống!" });
+                }
+
+                var product = _db.Products.Find(productId);
+                int receiverId = product?.SellerId ?? 1;
+                string receiverName = product?.SellerName ?? "Người bán";
+
+                var chatMsg = new ChatMessage
+                {
+                    ProductId = productId,
+                    SenderId = userId.Value,
+                    SenderName = userName,
+                    SenderAvatar = userAvatar,
+                    ReceiverId = receiverId,
+                    ReceiverName = receiverName,
+                    Message = message.Trim(),
+                    SentAt = DateTime.Now
+                };
+
+                _db.ChatMessages.Add(chatMsg);
+                _db.SaveChanges();
+
+                return Json(new { success = true, msg = chatMsg });
             }
-
-            var product = _db.Products.Find(productId);
-            var receiverId = product != null ? product.SellerId : 0;
-            var receiverName = product != null ? product.SellerName : "Người bán";
-
-            var chatMsg = new ChatMessage
+            catch (Exception ex)
             {
-                ProductId = productId,
-                SenderId = userId.Value,
-                SenderName = userName,
-                SenderAvatar = userAvatar,
-                ReceiverId = receiverId,
-                ReceiverName = receiverName,
-                Message = message.Trim(),
-                SentAt = DateTime.Now
-            };
-
-            _db.ChatMessages.Add(chatMsg);
-            _db.SaveChanges();
-
-            return Json(new { success = true, msg = chatMsg });
+                return Json(new { success = false, message = "Lỗi gửi tin nhắn: " + ex.Message });
+            }
         }
 
-        // POST: /Cart/DeleteChat (Xóa lịch sử trao đổi của sản phẩm)
+        // POST: /Cart/DeleteChat?productId=...
         [HttpPost]
         public IActionResult DeleteChat(int? productId)
         {
-            var userId = HttpContext.Session.GetUserId();
-            if (!userId.HasValue)
+            try
             {
-                return Json(new { success = false, message = "Chưa đăng nhập!" });
-            }
-
-            if (productId.HasValue && productId.Value > 0)
-            {
-                var msgs = _db.ChatMessages
-                    .Where(m => m.ProductId == productId.Value && (m.SenderId == userId.Value || m.ReceiverId == userId.Value))
-                    .ToList();
-
-                if (msgs.Any())
+                var userId = HttpContext.Session.GetUserId();
+                if (!userId.HasValue)
                 {
-                    _db.ChatMessages.RemoveRange(msgs);
-                    _db.SaveChanges();
+                    return Json(new { success = false, message = "Chưa đăng nhập!" });
                 }
-            }
 
-            return Json(new { success = true, message = "Đã xóa đoạn chat thành công!" });
+                if (productId.HasValue && productId.Value > 0)
+                {
+                    var msgs = _db.ChatMessages
+                        .Where(m => m.ProductId == productId.Value && (m.SenderId == userId.Value || m.ReceiverId == userId.Value))
+                        .ToList();
+
+                    if (msgs.Any())
+                    {
+                        _db.ChatMessages.RemoveRange(msgs);
+                        _db.SaveChanges();
+                    }
+                }
+
+                return Json(new { success = true, message = "Đã xóa đoạn chat thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi xóa đoạn chat: " + ex.Message });
+            }
         }
 
         // GET: /Cart/Checkout (Trang thanh toán đơn hàng)
@@ -126,76 +150,55 @@ namespace ThriftShop.Controllers
             return View(user);
         }
 
-        // POST: /Cart/Checkout (Xử lý lưu đơn hàng vào CSDL SQL Server)
+        // POST: /Cart/Checkout ([FromForm] CheckoutRequestDto)
         [HttpPost]
-        public IActionResult Checkout(string custName, string custPhone, string? custEmail, string custAddress, string? paymentMethod, string? notes, string itemsJson)
+        public IActionResult Checkout([FromForm] CheckoutRequestDto dto)
         {
-            var userId = HttpContext.Session.GetUserId();
-            if (!userId.HasValue)
-            {
-                return Json(new { success = false, message = "Vui lòng đăng nhập để đặt hàng!" });
-            }
-
-            if (string.IsNullOrWhiteSpace(custName) || string.IsNullOrWhiteSpace(custPhone) || string.IsNullOrWhiteSpace(custAddress))
-            {
-                return Json(new { success = false, message = "Vui lòng điền đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng!" });
-            }
-
-            // Issue 4: Kiểm tra và từ chối giỏ hàng rỗng hoặc JSON lỗi
-            if (string.IsNullOrWhiteSpace(itemsJson))
-            {
-                return Json(new { success = false, message = "Giỏ hàng rỗng! Vui lòng chọn sản phẩm trước khi thanh toán." });
-            }
-
-            System.Text.Json.JsonDocument doc;
             try
             {
-                doc = System.Text.Json.JsonDocument.Parse(itemsJson);
-            }
-            catch
-            {
-                return Json(new { success = false, message = "Dữ liệu giỏ hàng không đúng định dạng!" });
-            }
-
-            using (doc)
-            {
-                if (doc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
+                var userId = HttpContext.Session.GetUserId();
+                if (!userId.HasValue)
                 {
-                    return Json(new { success = false, message = "Giỏ hàng rỗng! Vui lòng chọn ít nhất 1 món đồ." });
+                    return Json(new { success = false, message = "Vui lòng đăng nhập để tiến hành đặt hàng!" });
                 }
 
-                // Issue 6: Sinh mã đơn hàng duy nhất có kiểm tra trùng lặp
-                string orderId;
-                do
+                if (!ModelState.IsValid)
                 {
-                    orderId = $"DH{DateTime.Now:yyMMdd}{Random.Shared.Next(1000, 9999)}";
-                } while (_db.Orders.Any(o => o.Id == orderId));
+                    var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage;
+                    return Json(new { success = false, message = firstError ?? "Thông tin nhận hàng không hợp lệ!" });
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.ItemsJson) || dto.ItemsJson.Trim() == "[]")
+                {
+                    return Json(new { success = false, message = "Giỏ hàng của bạn đang trống! Vui lòng chọn món đồ trước khi đặt." });
+                }
+
+                using var doc = JsonDocument.Parse(dto.ItemsJson);
+                var itemsArray = doc.RootElement;
+                if (itemsArray.ValueKind != JsonValueKind.Array || itemsArray.GetArrayLength() == 0)
+                {
+                    return Json(new { success = false, message = "Danh sách sản phẩm giỏ hàng không hợp lệ!" });
+                }
 
                 var order = new Order
                 {
-                    Id = orderId,
-                    CreatedAt = DateTime.Now,
-                    OrderDate = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
-                    CustomerId = userId.Value,
-                    CustomerName = custName.Trim(),
-                    CustomerPhone = custPhone.Trim(),
-                    CustomerEmail = custEmail?.Trim() ?? "",
-                    ShippingAddress = custAddress.Trim(),
-                    PaymentMethod = paymentMethod ?? "COD - Thanh toán khi nhận hàng",
-                    // Issue 2: Không tự động đánh dấu đã thanh toán khi chưa đối soát ngân hàng
-                    PaymentStatus = paymentMethod != null && paymentMethod.Contains("VietQR") ? "Chờ chuyển khoản (QR)" : "Chưa thanh toán (COD)",
-                    OrderStatus = "pending",
-                    OrderStatusText = "Chờ duyệt đơn",
-                    ItemsJson = itemsJson,
-                    Notes = notes?.Trim() ?? "Đồng kiểm khi nhận hàng"
+                    CustName = dto.CustName.Trim(),
+                    CustPhone = dto.CustPhone.Trim(),
+                    CustEmail = dto.CustEmail?.Trim() ?? string.Empty,
+                    CustAddress = dto.CustAddress.Trim(),
+                    PaymentMethod = dto.PaymentMethod ?? "COD - Thanh toán khi nhận hàng",
+                    Status = "pending",
+                    OrderDate = DateTime.Now,
+                    UserId = userId.Value,
+                    Notes = dto.Notes?.Trim() ?? "Đồng kiểm ngoại hình khi nhận hàng"
                 };
 
                 decimal calculatedTotal = 0;
 
-                // Issue 2 & 3: Tính toán đơn giá trực tiếp từ CSDL và kiểm soát tồn kho
-                foreach (var elem in doc.RootElement.EnumerateArray())
+                foreach (var elem in itemsArray.EnumerateArray())
                 {
-                    int pId = elem.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : (elem.TryGetProperty("productId", out var pidProp) ? pidProp.GetInt32() : 0);
+                    int pId = elem.TryGetProperty("id", out var idProp) ? idProp.GetInt32()
+                            : (elem.TryGetProperty("productId", out var pidProp) ? pidProp.GetInt32() : 0);
                     int qty = elem.TryGetProperty("quantity", out var qProp) ? qProp.GetInt32() : 1;
                     if (qty <= 0) qty = 1;
 
@@ -205,17 +208,15 @@ namespace ThriftShop.Controllers
                         return Json(new { success = false, message = $"Món đồ (mã #{pId}) không còn tồn tại hoặc đã bị gỡ khỏi sàn!" });
                     }
 
-                    // Issue 3: Kiểm tra tồn kho & trạng thái đã bán
                     if (prod.IsSold || prod.Stock < qty)
                     {
-                        return Json(new { success = false, message = $"Món đồ '{prod.Name}' đã hết hàng hoặc không đủ số lượng tồn kho (còn lại: {prod.Stock})!" });
+                        return Json(new { success = false, message = $"Món đồ '{prod.Name}' đã hết hàng hoặc không đủ tồn kho (còn: {prod.Stock})!" });
                     }
 
-                    // Tính giá theo CSDL (chống gian lận client sửa giá)
                     decimal lineTotal = prod.Price * qty;
                     calculatedTotal += lineTotal;
 
-                    // Giảm tồn kho món đồ
+                    // Cập nhật tồn kho sản phẩm
                     prod.Stock -= qty;
                     if (prod.Stock <= 0)
                     {
@@ -223,7 +224,7 @@ namespace ThriftShop.Controllers
                         prod.IsSold = true;
                         prod.Status = "sold";
 
-                        // Nếu liên kết với PendingPost thì đồng bộ trạng thái đã bán
+                        // Đồng bộ trạng thái đã bán sang PendingPost nếu có liên kết
                         if (prod.PendingPostId.HasValue)
                         {
                             var linkedPost = _db.PendingPosts.FirstOrDefault(p => p.Id == prod.PendingPostId.Value);
@@ -237,34 +238,35 @@ namespace ThriftShop.Controllers
 
                     var item = new OrderItem
                     {
-                        OrderId = order.Id,
                         ProductId = prod.Id,
                         ProductName = prod.Name,
                         Image = prod.Image,
-                        Condition = prod.Condition ?? "95% - Rất mới",
-                        Price = prod.Price, // Giá chuẩn từ SQL Server
-                        Quantity = qty
+                        Price = prod.Price,
+                        Quantity = qty,
+                        Subtotal = lineTotal
                     };
-                    order.Items.Add(item);
+                    order.OrderItems.Add(item);
                 }
 
-                if (order.Items.Count == 0)
+                if (order.OrderItems.Count == 0)
                 {
                     return Json(new { success = false, message = "Không có sản phẩm hợp lệ trong giỏ hàng!" });
                 }
 
-                order.Subtotal = calculatedTotal;
-                order.ShippingFee = 0;
-                order.TotalAmount = calculatedTotal;
+                order.TotalAmount = calculatedTotal > 0 ? calculatedTotal : dto.TotalAmount;
 
                 _db.Orders.Add(order);
                 _db.SaveChanges();
 
-                return Json(new { success = true, orderId = order.Id });
+                return Json(new { success = true, orderId = order.OrderCode });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi máy chủ khi tạo đơn hàng: " + ex.Message });
             }
         }
 
-        // GET: /Cart/OrderSuccess (Trang thông báo đặt hàng thành công - Issue 7)
+        // GET: /Cart/OrderSuccess?orderId=DH000123
         public IActionResult OrderSuccess(string? orderId)
         {
             if (string.IsNullOrWhiteSpace(orderId))
@@ -272,23 +274,32 @@ namespace ThriftShop.Controllers
                 return RedirectToAction("Index", "Orders");
             }
 
-            var order = _db.Orders.Include(o => o.Items).FirstOrDefault(o => o.Id == orderId);
+            int numericId = 0;
+            if (orderId.StartsWith("DH", StringComparison.OrdinalIgnoreCase))
+            {
+                int.TryParse(orderId.Substring(2), out numericId);
+            }
+            else
+            {
+                int.TryParse(orderId, out numericId);
+            }
+
+            var order = _db.Orders.Include(o => o.OrderItems).FirstOrDefault(o => o.Id == numericId);
             if (order == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy thông tin đơn hàng này!";
                 return RedirectToAction("Index", "Orders");
             }
 
-            // Kiểm tra phân quyền: Chỉ chủ đơn hàng (hoặc Admin) mới xem được
             var userId = HttpContext.Session.GetUserId();
             var isAdmin = HttpContext.Session.IsAdmin();
-            if (!isAdmin && userId.HasValue && order.CustomerId != userId.Value)
+            if (!isAdmin && userId.HasValue && order.UserId != userId.Value)
             {
                 TempData["ErrorMessage"] = "Bạn không có quyền xem thông tin đơn hàng này!";
                 return RedirectToAction("Index", "Orders");
             }
 
-            ViewBag.OrderId = order.Id;
+            ViewBag.OrderId = order.OrderCode;
             return View(order);
         }
     }

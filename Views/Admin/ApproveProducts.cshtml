@@ -52,10 +52,9 @@
     <table class="table table-bordered table-striped mb-0" style="font-size: 13px;">
       <thead class="thead-light">
         <tr>
-          <th style="width: 34%;">Món Đồ Cũ & Danh Mục</th>
-          <th style="width: 20%;">Người Đăng Bán</th>
+          <th style="width: 38%;">Món Đồ Cũ & Danh Mục</th>
+          <th style="width: 24%;">Người Đăng Bán</th>
           <th>Giá Thanh Lý</th>
-          <th class="text-center">Độ Mới</th>
           <th class="text-center">Trạng Thái</th>
           <th class="text-center" style="width: 200px;">Hành Động</th>
         </tr>
@@ -154,9 +153,6 @@
             categoryName: safeVal(p.CategoryName, safeVal(p.categoryName, "Đồ cũ")),
             price: Number(safeVal(p.Price, safeVal(p.price, 0))) || 0,
             originalPrice: Number(safeVal(p.OriginalPrice, safeVal(p.originalPrice, 0))) || 0,
-            condition: safeVal(p.Condition, safeVal(p.condition, "95% - Rất tốt")),
-            conditionPercent: Number(safeVal(p.ConditionPercent, safeVal(p.conditionPercent, 95))) || 95,
-            conditionDetails: safeVal(p.ConditionDetails, safeVal(p.conditionDetails, "Đồ cũ còn dùng tốt, không có khuyết điểm nghiêm trọng.")),
             description: safeVal(p.Description, safeVal(p.description, "Không có mô tả chi tiết thêm.")),
             image: safeVal(p.Image, safeVal(p.image, "https://images.unsplash.com/photo-1544816155-12df9643f363?w=300")),
             imagesJson: safeVal(p.ImagesJson, safeVal(p.imagesJson, "")),
@@ -267,9 +263,6 @@
             <small class="text-muted" style="text-decoration: line-through;">Gốc: ${pOrigPriceStr}</small>
           </td>
           <td class="text-center">
-            <span class="badge badge-secondary">${p.condition}</span>
-          </td>
-          <td class="text-center">
             ${statusBadge}
           </td>
           <td class="text-center text-nowrap">
@@ -345,8 +338,6 @@
     const pName = safeVal(rawPost.Name, safeVal(rawPost.name, 'Món đồ cũ'));
     const pImg = safeVal(rawPost.Image, safeVal(rawPost.image, 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=300'));
     const pCategory = safeVal(rawPost.CategoryName, safeVal(rawPost.categoryName, 'Đồ cũ'));
-    const pCond = safeVal(rawPost.Condition, safeVal(rawPost.condition, '95% - Rất tốt'));
-    const pCondDetails = safeVal(rawPost.ConditionDetails, safeVal(rawPost.conditionDetails, 'Đồ cũ đã qua sử dụng, hoạt động bình thường, không có lỗi ẩn.'));
     const pDesc = safeVal(rawPost.Description, safeVal(rawPost.description, 'Không có mô tả chi tiết thêm.'));
     const pSellerName = safeVal(rawPost.SellerName, safeVal(rawPost.sellerName, 'Thành viên'));
     const pSellerPhone = safeVal(rawPost.SellerPhone, safeVal(rawPost.sellerPhone, 'Chưa cập nhật'));
@@ -393,16 +384,9 @@
             ${discountPercent > 0 ? `<span class="badge badge-secondary ml-2">Giảm ${discountPercent}%</span>` : ''}
           </div>
 
-          <div class="mb-2">
-            <strong>Độ mới ngoại quan:</strong> <span class="badge badge-secondary">${pCond}</span>
-          </div>
-          <div class="mb-2">
-            <strong>Ghi chú khuyết điểm thực tế:</strong>
-            <div class="p-2 border bg-white small mt-1">${pCondDetails}</div>
-          </div>
-          <div class="mb-2">
-            <strong>Mô tả chi tiết:</strong>
-            <div class="p-2 border bg-white small mt-1" style="max-height: 120px; overflow-y: auto;">${pDesc}</div>
+          <div class="mb-3">
+            <strong>Mô tả tình trạng & khuyết điểm thực tế:</strong>
+            <div class="p-2 border bg-white small mt-1" style="max-height: 160px; overflow-y: auto; line-height: 1.6; white-space: pre-line;">${pDesc}</div>
           </div>
           <hr class="my-2">
           <div class="small text-muted">

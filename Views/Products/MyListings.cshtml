@@ -273,9 +273,9 @@
         showToast('Đã cập nhật bài đăng! Tin được chuyển sang Chờ Admin duyệt lại lần nữa.');
     });
 
-    // 3. Xử lý đánh dấu Đã bán (Ẩn khỏi mọi người)
+    // 3. Xử lý đánh dấu Đã bán (Ẩn khỏi mọi người nhưng giữ trong mục Tin của tôi & bảo toàn đoạn chat)
     function handleMarkAsSold(id) {
-        if (confirm('Đánh dấu món đồ này là "ĐÃ BÁN"? Món đồ sẽ được ẩn khỏi trang chủ và tìm kiếm, nhưng vẫn lưu trong mục Tin của bạn.')) {
+        if (confirm('Đánh dấu món đồ này là "ĐÃ BÁN"? Món đồ sẽ được ẩn khỏi trang chủ và tìm kiếm, nhưng vẫn lưu trong mục Tin của bạn và bảo toàn toàn bộ lịch sử chat đối chiếu.')) {
             fetch('/Products/MarkSold?id=' + id, { method: 'POST' })
                 .then(r => r.json())
                 .then(res => {
@@ -291,15 +291,15 @@
         }
     }
 
-    // 4. Xóa bài hẳn khỏi hệ thống
+    // 4. Xóa bài đăng (Soft Delete: Ẩn khỏi trang chủ & tìm kiếm nhưng bảo toàn lịch sử chat)
     function handleDeletePostPermanently(id) {
-        if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn XÓA BÀI HẲN khỏi toàn bộ hệ thống? Thao tác này không thể hoàn tác!')) {
+        if (confirm('Bạn có chắc chắn muốn XÓA TIN ĐĂNG này? Món đồ sẽ bị gỡ khỏi sàn nhưng toàn bộ lịch sử trao đổi qua chat với khách mua vẫn được lưu lại an toàn.')) {
             fetch('/Products/DeletePermanently?id=' + id, { method: 'POST' })
                 .then(r => r.json())
                 .then(res => {
                     if (res.success) {
                         if (typeof ThriftDB !== 'undefined') ThriftDB.deletePostPermanently(id);
-                        showToast('Đã xóa bài đăng vĩnh viễn khỏi hệ thống!', 'success');
+                        showToast('Đã xóa tin đăng! Tin đã được gỡ khỏi sàn.', 'success');
                         setTimeout(() => location.reload(), 400);
                     } else {
                         alert(res.message || 'Lỗi thao tác');

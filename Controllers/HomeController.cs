@@ -23,7 +23,7 @@ namespace ThriftShop.Controllers
 
             // 1. LINQ: Lấy sản phẩm đang mở bán (Đã duyệt, chưa bán, chưa xoá, còn tồn kho)
             var query = _db.Products.AsNoTracking()
-                .Where(p => p.Status == "approved" && !p.IsSold && !p.Deleted && p.Stock > 0);
+                .Where(p => p.Status != null && p.Status.ToLower() == "approved" && !p.IsSold && !p.Deleted && p.Stock > 0);
 
             // 2. LINQ: Lọc theo danh mục
             if (catFilter != null && catFilter.Length > 0)

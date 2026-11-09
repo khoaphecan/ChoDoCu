@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ThriftShop.Models
 {
     /// <summary>
-    /// Model Người dùng (User / Customer / Admin)
+    /// Entity Người dùng (User / Customer / Admin)
     /// </summary>
     public class User
     {
@@ -12,30 +13,54 @@ namespace ThriftShop.Models
         [Required(ErrorMessage = "Vui lòng nhập họ và tên")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Họ tên từ 2 đến 100 ký tự")]
         [Display(Name = "Họ và Tên")]
-        public string Name { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập email")]
         [EmailAddress(ErrorMessage = "Địa chỉ email không đúng định dạng")]
+        [StringLength(150, ErrorMessage = "Email tối đa 150 ký tự")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
-        [StringLength(100, MinimumLength = 4, ErrorMessage = "Mật khẩu tối thiểu 4 ký tự")]
-        public string Password { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu hash")]
+        public string PasswordHash { get; set; } = string.Empty;
 
         [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [StringLength(20, ErrorMessage = "Số điện thoại tối đa 20 ký tự")]
         public string? Phone { get; set; }
 
+        [StringLength(255, ErrorMessage = "Địa chỉ tối đa 255 ký tự")]
         public string? Address { get; set; }
 
+        [StringLength(255, ErrorMessage = "Link ảnh đại diện tối đa 255 ký tự")]
         public string? Avatar { get; set; }
 
+        [StringLength(500, ErrorMessage = "Tiểu sử tối đa 500 ký tự")]
         public string? Bio { get; set; }
 
+        [StringLength(20)]
         public string Role { get; set; } = "customer"; // 'customer' | 'admin'
+
+        // Thuộc tính Helper tương thích ngược với các View/Controller cũ
+        [NotMapped]
+        public string Name
+        {
+            get => FullName;
+            set => FullName = value;
+        }
+
+        [NotMapped]
+        public string Password
+        {
+            get => PasswordHash;
+            set => PasswordHash = value;
+        }
+
+        // Navigation properties
+        public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 
     /// <summary>
-    /// ViewModel Đăng Nhập (Chuong 09 DataAnnotations)
+    /// ViewModel Đăng Nhập cho Razor View (Account/Login.cshtml)
     /// </summary>
     public class LoginViewModel
     {
@@ -54,7 +79,7 @@ namespace ThriftShop.Models
     }
 
     /// <summary>
-    /// ViewModel Đăng Ký (Chuong 09 DataAnnotations)
+    /// ViewModel Đăng Ký cho Razor View (Account/Register.cshtml)
     /// </summary>
     public class RegisterViewModel
     {

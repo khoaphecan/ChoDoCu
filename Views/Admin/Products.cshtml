@@ -200,7 +200,7 @@
           </td>
           <td>
             <strong class="d-block text-dark">${p.name}</strong>
-            <small class="text-muted"><span class="badge badge-light border">${p.condition}</span></small>
+            ${p.condition ? `<small class="text-muted"><span class="badge badge-light border">${p.condition}</span></small>` : ''}
           </td>
           <td><span class="badge badge-light border">${p.categoryName}</span></td>
           <td><strong>${ThriftDB.formatCurrency(p.price)}</strong></td>

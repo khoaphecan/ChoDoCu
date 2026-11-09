@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ThriftShop.Common;
 using ThriftShop.Data;
 using ThriftShop.Models;
+using ThriftShop.Models.DTOs;
 
 namespace ThriftShop.Controllers
 {
@@ -15,7 +16,7 @@ namespace ThriftShop.Controllers
             _db = db;
         }
 
-        // GET: /Orders (Lịch sử đơn hàng của tôi / My Orders - Yêu cầu đăng nhập)
+        // GET: /Orders
         public IActionResult Index(string? search, string? status)
         {
             var userId = HttpContext.Session.GetUserId();
@@ -27,54 +28,79 @@ namespace ThriftShop.Controllers
                 return RedirectToAction("Login", "Account", new { returnUrl = "/Orders" });
             }
 
-            var query = _db.Orders.Include(o => o.Items).AsNoTracking();
+            var query = _db.Orders.Include(o => o.OrderItems).AsNoTracking();
 
-            // Nếu không phải Admin thì bắt buộc chỉ xem đơn hàng của chính mình (Issue 1)
             if (!isAdmin)
             {
-                query = query.Where(o => o.CustomerId == userId.Value);
+                query = query.Where(o => o.UserId == userId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(status) && status != "all")
             {
-                query = query.Where(o => o.OrderStatus == status);
+                query = query.Where(o => o.Status.ToLower() == status.Trim().ToLower());
             }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var q = search.Trim().ToLower();
-                query = query.Where(o => o.Id.ToLower().Contains(q) || (o.CustomerName != null && o.CustomerName.ToLower().Contains(q)));
+                query = query.Where(o => o.CustName.ToLower().Contains(q) || o.CustPhone.Contains(q));
             }
 
-            // Sắp xếp đơn hàng mới nhất theo DateTime CreatedAt chuẩn thời gian (Issue 5)
-            var orders = query.OrderByDescending(o => o.CreatedAt).ToList();
+            var orders = query.OrderByDescending(o => o.OrderDate).ToList();
             return View(orders);
         }
 
-        // GET: /Orders/GetMyOrders (API JSON cho client-side - Yêu cầu đăng nhập)
+        // GET: /Orders/GetMyOrders
+        // Trả về JSON mảng OrderSummaryDto cho frontend fetch
         [HttpGet]
         public IActionResult GetMyOrders()
         {
-            var userId = HttpContext.Session.GetUserId();
-            var isAdmin = HttpContext.Session.IsAdmin();
-
-            if (!userId.HasValue)
+            try
             {
-                return Json(new List<Order>());
-            }
+                var userId = HttpContext.Session.GetUserId();
+                var isAdmin = HttpContext.Session.IsAdmin();
 
-            var query = _db.Orders.Include(o => o.Items).AsNoTracking();
-            if (!isAdmin)
+                if (!userId.HasValue)
+                {
+                    return Json(new List<OrderSummaryDto>());
+                }
+
+                var query = _db.Orders.Include(o => o.OrderItems).AsNoTracking();
+                if (!isAdmin)
+                {
+                    query = query.Where(o => o.UserId == userId.Value);
+                }
+
+                var rawOrders = query.OrderByDescending(o => o.OrderDate).ToList();
+
+                var dtoList = rawOrders.Select(o => new OrderSummaryDto
+                {
+                    Id = o.OrderCode,
+                    OrderDate = o.OrderDate.ToString("dd/MM/yyyy HH:mm"),
+                    OrderStatus = (o.Status ?? "pending").ToLower(),
+                    CustomerName = o.CustName,
+                    CustomerPhone = o.CustPhone,
+                    ShippingAddress = o.CustAddress,
+                    TotalAmount = o.TotalAmount,
+                    Items = o.OrderItems.Select(oi => new OrderItemDto
+                    {
+                        ProductId = oi.ProductId,
+                        ProductName = oi.ProductName,
+                        Image = oi.Image,
+                        Price = oi.Price,
+                        Quantity = oi.Quantity
+                    }).ToList()
+                }).ToList();
+
+                return Json(dtoList);
+            }
+            catch (Exception ex)
             {
-                query = query.Where(o => o.CustomerId == userId.Value);
+                return Json(new { error = ex.Message });
             }
-
-            // Sắp xếp theo CreatedAt thời gian thực (Issue 5)
-            var list = query.OrderByDescending(o => o.CreatedAt).ToList();
-            return Json(list);
         }
 
-        // GET: /Orders/Details/DH100234 (Chi tiết đơn hàng - Kiểm tra quyền sở hữu)
+        // GET: /Orders/Details/DH000123
         public IActionResult Details(string? id)
         {
             var userId = HttpContext.Session.GetUserId();
@@ -88,17 +114,23 @@ namespace ThriftShop.Controllers
 
             if (string.IsNullOrWhiteSpace(id))
             {
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
 
-            var order = _db.Orders.Include(o => o.Items).FirstOrDefault(o => o.Id == id);
-            if (order == null || (!isAdmin && order.CustomerId != userId.Value))
+            int numericId = 0;
+            if (id.StartsWith("DH", StringComparison.OrdinalIgnoreCase))
+                int.TryParse(id.Substring(2), out numericId);
+            else
+                int.TryParse(id, out numericId);
+
+            var order = _db.Orders.Include(o => o.OrderItems).FirstOrDefault(o => o.Id == numericId);
+            if (order == null || (!isAdmin && order.UserId != userId.Value))
             {
                 TempData["ErrorMessage"] = "Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn hàng này!";
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.OrderId = id;
+            ViewBag.OrderId = order.OrderCode;
             return View("Index", new List<Order> { order });
         }
     }

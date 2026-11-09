@@ -128,10 +128,7 @@ namespace ThriftShop.Data
                         CategoryName = "Thời trang",
                         Price = 420000,
                         OriginalPrice = 1650000,
-                        Condition = "92% - Tốt",
-                        ConditionPercent = 92,
-                        ConditionDetails = "Khuy áo nguyên bản, hơi sờn nhẹ gấu tay áo (chất vintage), không rách, đã giặt sấy thơm tho sạch sẽ.",
-                        Description = "Áo jean Levis nguyên bản form boxy chuẩn vintage thập niên 90. Chất vải denim dày dặn, có bạc màu tự nhiên rất phong cách. Lớp lót lông cừu ấm áp không bị rách.",
+                        Description = "Áo jean Levis nguyên bản form boxy chuẩn vintage thập niên 90. Chất vải denim dày dặn, có bạc màu tự nhiên rất phong cách. Lớp lót lông cừu ấm áp không bị rách.  (Tình trạng: Độ mới: 92% - Tốt - Khuy áo nguyên bản, hơi sờn nhẹ gấu tay áo (chất vintage), không rách, đã giặt sấy thơm tho sạch sẽ.)",
                         Image = "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80\",\"https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80\",\"https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&q=80\"]",
                         Stock = 1,
@@ -144,7 +141,7 @@ namespace ThriftShop.Data
                         Featured = true,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "01/10/2026 10:30"
+                        CreatedAt = DateTime.ParseExact("01/10/2026 10:30", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -153,10 +150,7 @@ namespace ThriftShop.Data
                         CategoryName = "Đồ điện tử",
                         Price = 3600000,
                         OriginalPrice = 6990000,
-                        Condition = "95% - Rất mới",
-                        ConditionPercent = 95,
-                        ConditionDetails = "Đệm tai và headband còn nguyên vẹn không tróc da. Đầy đủ phụ kiện: hộp cứng bảo vệ, cáp Type-C, jack 3.5mm và adapter máy bay zin.",
-                        Description = "Tai nghe chống ồn chủ động đỉnh cao Sony WH-1000XM4. Mua chính hãng Sony Store Việt Nam, ít dùng do chuyển sang dùng in-ear. Pin còn nghe liên tục trên 28 tiếng chống ồn.",
+                        Description = "Tai nghe chống ồn chủ động đỉnh cao Sony WH-1000XM4. Mua chính hãng Sony Store Việt Nam, ít dùng do chuyển sang dùng in-ear. Pin còn nghe liên tục trên 28 tiếng chống ồn.  (Tình trạng: Độ mới: 95% - Rất mới - Đệm tai và headband còn nguyên vẹn không tróc da. Đầy đủ phụ kiện: hộp cứng bảo vệ, cáp Type-C, jack 3.5mm và adapter máy bay zin.)",
                         Image = "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80\",\"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80\",\"https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&q=80\"]",
                         Stock = 1,
@@ -169,7 +163,7 @@ namespace ThriftShop.Data
                         Featured = true,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "02/10/2026 14:15"
+                        CreatedAt = DateTime.ParseExact("02/10/2026 14:15", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -178,10 +172,7 @@ namespace ThriftShop.Data
                         CategoryName = "Thời trang",
                         Price = 1850000,
                         OriginalPrice = 4800000,
-                        Condition = "90% - Tốt",
-                        ConditionPercent = 90,
-                        ConditionDetails = "Đế giày mòn nhẹ gót (đã dán sole bảo vệ lúc mới mua), da mũi giày có nếp nhăn tự nhiên, tặng kèm dây giày cam thay thế.",
-                        Description = "Đôi Jordan 1 Retro bản High OG phối màu Chicago kinh điển. Giày chính hãng mua tại cửa hàng Nike Landmark 81, có box thay thế sạch sẽ.",
+                        Description = "Đôi Jordan 1 Retro bản High OG phối màu Chicago kinh điển. Giày chính hãng mua tại cửa hàng Nike Landmark 81, có box thay thế sạch sẽ.  (Tình trạng: Độ mới: 90% - Tốt - Đế giày mòn nhẹ gót (đã dán sole bảo vệ lúc mới mua), da mũi giày có nếp nhăn tự nhiên, tặng kèm dây giày cam thay thế.)",
                         Image = "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&q=80\",\"https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&q=80\",\"https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=600&q=80\"]",
                         Stock = 1,
@@ -194,7 +185,7 @@ namespace ThriftShop.Data
                         Featured = true,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "03/10/2026 09:00"
+                        CreatedAt = DateTime.ParseExact("03/10/2026 09:00", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -203,10 +194,7 @@ namespace ThriftShop.Data
                         CategoryName = "Đồ điện tử",
                         Price = 1450000,
                         OriginalPrice = 2890000,
-                        Condition = "94% - Rất mới",
-                        ConditionPercent = 94,
-                        ConditionDetails = "Màn hình E-ink không một vết xước, vỏ lưng cao su không chảy keo, pin dùng 3 tuần đọc mỗi ngày 1 tiếng.",
-                        Description = "Kindle Paperwhite Gen 4 chống nước IPX8, màn hình 300ppi sắc nét như trang sách thật. Máy đã cài đặt sẵn từ điển Anh-Việt, hỗ trợ đọc file PRC, MOBI, EPUB, PDF.",
+                        Description = "Kindle Paperwhite Gen 4 chống nước IPX8, màn hình 300ppi sắc nét như trang sách thật. Máy đã cài đặt sẵn từ điển Anh-Việt, hỗ trợ đọc file PRC, MOBI, EPUB, PDF.  (Tình trạng: Độ mới: 94% - Rất mới - Màn hình E-ink không một vết xước, vỏ lưng cao su không chảy keo, pin dùng 3 tuần đọc mỗi ngày 1 tiếng.)",
                         Image = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80\",\"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80\",\"https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80\"]",
                         Stock = 1,
@@ -219,7 +207,7 @@ namespace ThriftShop.Data
                         Featured = true,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "04/10/2026 11:20"
+                        CreatedAt = DateTime.ParseExact("04/10/2026 11:20", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -228,10 +216,7 @@ namespace ThriftShop.Data
                         CategoryName = "Đồ gia dụng",
                         Price = 850000,
                         OriginalPrice = 2200000,
-                        Condition = "90% - Tốt",
-                        ConditionPercent = 90,
-                        ConditionDetails = "Khay chống dính còn rất tốt không bong tróc, bảng điều khiển cảm ứng nhạy bén, dây nguồn zin.",
-                        Description = "Nồi chiên không dầu Philips công nghệ Rapid Air giảm 90% lượng dầu mỡ. Dung tích 4.1L đủ nướng gà nguyên con hoặc làm bánh cho cả gia đình.",
+                        Description = "Nồi chiên không dầu Philips công nghệ Rapid Air giảm 90% lượng dầu mỡ. Dung tích 4.1L đủ nướng gà nguyên con hoặc làm bánh cho cả gia đình.  (Tình trạng: Độ mới: 90% - Tốt - Khay chống dính còn rất tốt không bong tróc, bảng điều khiển cảm ứng nhạy bén, dây nguồn zin.)",
                         Image = "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80\",\"https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80\",\"https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80\"]",
                         Stock = 1,
@@ -244,7 +229,7 @@ namespace ThriftShop.Data
                         Featured = false,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "05/10/2026 16:45"
+                        CreatedAt = DateTime.ParseExact("05/10/2026 16:45", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -253,10 +238,7 @@ namespace ThriftShop.Data
                         CategoryName = "Văn phòng phẩm",
                         Price = 290000,
                         OriginalPrice = 650000,
-                        Condition = "96% - Như mới",
-                        ConditionPercent = 96,
-                        ConditionDetails = "Sách bọc màng co nilon bảo quản cẩn thận, giấy không ố vàng, không quăn mép, đầy đủ bookmark tặng kèm.",
-                        Description = "Trọn bộ truyện tranh Naruto chính hãng NXB Kim Đồng bản in chất lượng cao. Bộ sưu tập cá nhân ít đọc, giữ gìn kỹ càng trong tủ kính.",
+                        Description = "Trọn bộ truyện tranh Naruto chính hãng NXB Kim Đồng bản in chất lượng cao. Bộ sưu tập cá nhân ít đọc, giữ gìn kỹ càng trong tủ kính.  (Tình trạng: Độ mới: 96% - Như mới - Sách bọc màng co nilon bảo quản cẩn thận, giấy không ố vàng, không quăn mép, đầy đủ bookmark tặng kèm.)",
                         Image = "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80\",\"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80\",\"https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80\"]",
                         Stock = 1,
@@ -269,7 +251,7 @@ namespace ThriftShop.Data
                         Featured = false,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "06/10/2026 08:30"
+                        CreatedAt = DateTime.ParseExact("06/10/2026 08:30", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -278,10 +260,7 @@ namespace ThriftShop.Data
                         CategoryName = "Đồ gia dụng",
                         Price = 320000,
                         OriginalPrice = 850000,
-                        Condition = "93% - Rất tốt",
-                        ConditionPercent = 93,
-                        ConditionDetails = "Mọi chế độ sáng và cổng sạc USB tích hợp hoạt động bình thường, chân đế nặng chắc chắn không lỏng lẻo.",
-                        Description = "Đèn LED Taotronics bảo vệ thị lực, có 5 tông màu ánh sáng từ vàng ấm đến trắng sáng và 7 mức cường độ sáng cảm ứng.",
+                        Description = "Đèn LED Taotronics bảo vệ thị lực, có 5 tông màu ánh sáng từ vàng ấm đến trắng sáng và 7 mức cường độ sáng cảm ứng.  (Tình trạng: Độ mới: 93% - Rất tốt - Mọi chế độ sáng và cổng sạc USB tích hợp hoạt động bình thường, chân đế nặng chắc chắn không lỏng lẻo.)",
                         Image = "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&q=80\",\"https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=600&q=80\",\"https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80\"]",
                         Stock = 1,
@@ -294,7 +273,7 @@ namespace ThriftShop.Data
                         Featured = false,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "07/10/2026 13:10"
+                        CreatedAt = DateTime.ParseExact("07/10/2026 13:10", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -303,10 +282,7 @@ namespace ThriftShop.Data
                         CategoryName = "Văn phòng phẩm",
                         Price = 280000,
                         OriginalPrice = 680000,
-                        Condition = "95% - Rất mới",
-                        ConditionPercent = 95,
-                        ConditionDetails = "Ngòi bút F trơn mượt không cào giấy, bơm mực piston chính hãng đi kèm, vỏ bút không trầy xước.",
-                        Description = "Bút máy cao cấp Parker Jotter sản xuất tại Pháp. Thiết kế mũi tên đặc trưng, vỏ kim loại sáng bóng thanh lịch, phù hợp ký hợp đồng hoặc làm quà tặng.",
+                        Description = "Bút máy cao cấp Parker Jotter sản xuất tại Pháp. Thiết kế mũi tên đặc trưng, vỏ kim loại sáng bóng thanh lịch, phù hợp ký hợp đồng hoặc làm quà tặng.  (Tình trạng: Độ mới: 95% - Rất mới - Ngòi bút F trơn mượt không cào giấy, bơm mực piston chính hãng đi kèm, vỏ bút không trầy xước.)",
                         Image = "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=600&q=80\",\"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80\",\"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80\"]",
                         Stock = 1,
@@ -319,7 +295,7 @@ namespace ThriftShop.Data
                         Featured = false,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "08/10/2026 15:00"
+                        CreatedAt = DateTime.ParseExact("08/10/2026 15:00", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -328,10 +304,7 @@ namespace ThriftShop.Data
                         CategoryName = "Khác",
                         Price = 390000,
                         OriginalPrice = 950000,
-                        Condition = "94% - Rất tốt",
-                        ConditionPercent = 94,
-                        ConditionDetails = "Gỗ khô vang âm chuẩn, khóa đàn chắc chắn giữ dây tốt, dây Aquila chính hãng Ý, tặng bao da 3 lớp.",
-                        Description = "Cây ukulele size Concert 23 inch dễ bấm cho người mới tập hoặc mang đi du lịch dã ngoại. Âm thanh ấm áp, mộc mạc và tươi vui.",
+                        Description = "Cây ukulele size Concert 23 inch dễ bấm cho người mới tập hoặc mang đi du lịch dã ngoại. Âm thanh ấm áp, mộc mạc và tươi vui.  (Tình trạng: Độ mới: 94% - Rất tốt - Gỗ khô vang âm chuẩn, khóa đàn chắc chắn giữ dây tốt, dây Aquila chính hãng Ý, tặng bao da 3 lớp.)",
                         Image = "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80\",\"https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80\",\"https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&q=80\"]",
                         Stock = 1,
@@ -344,7 +317,7 @@ namespace ThriftShop.Data
                         Featured = false,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "09/10/2026 17:20"
+                        CreatedAt = DateTime.ParseExact("09/10/2026 17:20", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -353,10 +326,7 @@ namespace ThriftShop.Data
                         CategoryName = "Khác",
                         Price = 450000,
                         OriginalPrice = 1100000,
-                        Condition = "98% - Like New",
-                        ConditionPercent = 98,
-                        ConditionDetails = "Mô hình trưng tủ kính không bụi bẩn, không trầy sơn, đủ hộp và đế chống zin của hãng.",
-                        Description = "Mô hình nhân vật Luffy trạng thái Gear 4 Snakeman siêu ngầu. Chi tiết sơn sắc nét, cơ bắp sống động, hiệu ứng khói chân thực.",
+                        Description = "Mô hình nhân vật Luffy trạng thái Gear 4 Snakeman siêu ngầu. Chi tiết sơn sắc nét, cơ bắp sống động, hiệu ứng khói chân thực.  (Tình trạng: Độ mới: 98% - Like New - Mô hình trưng tủ kính không bụi bẩn, không trầy sơn, đủ hộp và đế chống zin của hãng.)",
                         Image = "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&q=80\",\"https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80\",\"https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80\"]",
                         Stock = 1,
@@ -369,7 +339,7 @@ namespace ThriftShop.Data
                         Featured = false,
                         Status = "approved",
                         IsSold = false,
-                        CreatedAt = "10/10/2026 12:00"
+                        CreatedAt = DateTime.ParseExact("10/10/2026 12:00", "dd/MM/yyyy HH:mm", null)
                     }
                 };
                 context.Products.AddRange(products);
@@ -388,10 +358,7 @@ namespace ThriftShop.Data
                         CategoryName = "Đồ điện tử",
                         Price = 1150000,
                         OriginalPrice = 2100000,
-                        Condition = "95% - Rất tốt",
-                        ConditionPercent = 95,
-                        ConditionDetails = "Gateron Red Switch êm ái gõ văn phòng, pin kết nối bluetooth 3 thiết bị ngon lành, kèm cáp Type-C zin và keycap puller.",
-                        Description = "Bàn phím cơ nhỏ gọn layout 75% cho cả Mac và Windows. Ít dùng do công ty cấp máy mới, còn nguyên tem bảo hành phongvu.",
+                        Description = "Bàn phím cơ nhỏ gọn layout 75% cho cả Mac và Windows. Ít dùng do công ty cấp máy mới, còn nguyên tem bảo hành phongvu.  (Tình trạng: Độ mới: 95% - Rất tốt - Gateron Red Switch êm ái gõ văn phòng, pin kết nối bluetooth 3 thiết bị ngon lành, kèm cáp Type-C zin và keycap puller.)",
                         Image = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80\",\"https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80\",\"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80\"]",
                         Stock = 1,
@@ -402,7 +369,7 @@ namespace ThriftShop.Data
                         SellerAddress = "Quận 1, TP. Hồ Chí Minh",
                         SellerAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
                         Status = "pending",
-                        CreatedAt = "12/10/2026 14:00"
+                        CreatedAt = DateTime.ParseExact("12/10/2026 14:00", "dd/MM/yyyy HH:mm", null)
                     },
                     new()
                     {
@@ -411,10 +378,7 @@ namespace ThriftShop.Data
                         CategoryName = "Thời trang",
                         Price = 350000,
                         OriginalPrice = 1200000,
-                        Condition = "90% - Tốt",
-                        ConditionPercent = 90,
-                        ConditionDetails = "Chất len dệt kim mỏng nhẹ mặc mùa thu mát mẻ, bo chun tay áo còn co giãn tốt, không thủng rách.",
-                        Description = "Sweater Ralph Lauren xách tay Nhật. Form oversize thoải mái unisex cả nam nữ đều mặc đẹp.",
+                        Description = "Sweater Ralph Lauren xách tay Nhật. Form oversize thoải mái unisex cả nam nữ đều mặc đẹp.  (Tình trạng: Độ mới: 90% - Tốt - Chất len dệt kim mỏng nhẹ mặc mùa thu mát mẻ, bo chun tay áo còn co giãn tốt, không thủng rách.)",
                         Image = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80",
                         ImagesJson = "[\"https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80\",\"https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80\",\"https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80\"]",
                         Stock = 1,
@@ -425,7 +389,7 @@ namespace ThriftShop.Data
                         SellerAddress = "Quận 3, TP.HCM",
                         SellerAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
                         Status = "pending",
-                        CreatedAt = "12/10/2026 15:30"
+                        CreatedAt = DateTime.ParseExact("12/10/2026 15:30", "dd/MM/yyyy HH:mm", null)
                     }
                 };
                 context.PendingPosts.AddRange(pendingPosts);
@@ -437,32 +401,26 @@ namespace ThriftShop.Data
             {
                 var sampleOrder = new Order
                 {
-                    Id = "DH100234",
-                    CreatedAt = DateTime.Now.AddDays(-1),
-                    OrderDate = "12/10/2026 10:15",
-                    CustomerId = userList.FirstOrDefault(u => u.Email == "user@thriftshop.vn")?.Id ?? 2,
-                    CustomerName = "Nguyễn Anh Khoa",
-                    CustomerPhone = "0901234567",
-                    CustomerEmail = "user@thriftshop.vn",
-                    ShippingAddress = "Quận 1, TP. Hồ Chí Minh",
+                    CustName = "Nguyễn Anh Khoa",
+                    CustPhone = "0901234567",
+                    CustEmail = "user@thriftshop.vn",
+                    CustAddress = "Quận 1, TP. Hồ Chí Minh",
                     PaymentMethod = "COD - Thanh toán khi nhận hàng",
-                    PaymentStatus = "Chưa thanh toán",
-                    OrderStatus = "pending",
-                    OrderStatusText = "Chờ duyệt đơn",
-                    Subtotal = 450000,
-                    ShippingFee = 0,
+                    Status = "pending",
+                    OrderDate = DateTime.Now.AddDays(-1),
                     TotalAmount = 450000,
                     Notes = "Đồng kiểm ngoại hình khi nhận hàng",
-                    Items = new List<OrderItem>
+                    UserId = userList.FirstOrDefault(u => u.Email == "user@thriftshop.vn")?.Id ?? 2,
+                    OrderItems = new List<OrderItem>
                     {
                         new()
                         {
                             ProductId = 1,
                             ProductName = "Bàn phím cơ DareU EK87 Tenkeyless Blue Switch cũ",
                             Image = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80",
-                            Condition = "95% - Rất tốt",
                             Price = 450000,
-                            Quantity = 1
+                            Quantity = 1,
+                            Subtotal = 450000
                         }
                     }
                 };

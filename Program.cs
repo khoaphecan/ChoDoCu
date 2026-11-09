@@ -26,7 +26,12 @@ builder.Services.AddDbContext<ThriftDbContext>(options =>
 });
 
 // Đăng ký dịch vụ MVC Controllers và Razor Views (theo giáo trình Chuong 05-07)
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 var app = builder.Build();
 

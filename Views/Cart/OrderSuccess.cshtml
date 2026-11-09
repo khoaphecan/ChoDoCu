@@ -1,7 +1,7 @@
 @model ThriftShop.Models.Order
 @{
     ViewData["Title"] = "Đặt Hàng Thành Công - ThriftShop";
-    var orderId = Model?.Id ?? (string?)ViewBag.OrderId;
+    var orderId = Model?.OrderCode ?? (string?)ViewBag.OrderId;
 }
 
 <div class="container" style="margin-top: 50px; margin-bottom: 70px;">

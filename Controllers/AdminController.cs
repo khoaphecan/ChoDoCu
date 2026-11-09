@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ThriftShop.Common;
 using ThriftShop.Data;
 using ThriftShop.Models;
+using ThriftShop.Models.DTOs;
 
 namespace ThriftShop.Controllers
 {
@@ -33,13 +34,12 @@ namespace ThriftShop.Controllers
             return null;
         }
 
-        // GET: /Admin (Dashboard thống kê tối giản: Duyệt tin, Quản lý tin, Quản lý User)
+        // GET: /Admin
         public IActionResult Index()
         {
             var authCheck = CheckAdminPermission("/Admin");
             if (authCheck != null) return authCheck;
 
-            // LINQ: Thống kê số lượng
             var pendingCount = _db.PendingPosts.Count(p => p.Status == "pending");
             var categoriesCount = _db.Categories.Count();
             var productsCount = _db.Products.Count(p => p.Status == "approved" && !p.IsSold && !p.Deleted);
@@ -70,13 +70,12 @@ namespace ThriftShop.Controllers
             return View(viewModel);
         }
 
-        // GET: /Admin/ApproveProducts (Kiểm duyệt tin đăng bán đồ cũ - Cốt lõi Đề tài 30)
+        // GET: /Admin/ApproveProducts
         public IActionResult ApproveProducts()
         {
             var authCheck = CheckAdminPermission("/Admin/ApproveProducts");
             if (authCheck != null) return authCheck;
 
-            // Lấy toàn bộ danh sách tin để Admin lọc theo các tabs: Chờ duyệt, Đã duyệt, Bị từ chối
             var allPosts = _db.PendingPosts.AsNoTracking()
                 .OrderByDescending(p => p.Id)
                 .ToList();
@@ -84,111 +83,119 @@ namespace ThriftShop.Controllers
             return View(allPosts);
         }
 
-        // POST: /Admin/ApprovePost (Duyệt tin -> chuyển thành sản phẩm chính thức mở bán)
+        // POST: /Admin/ApprovePost?id=123
         [HttpPost]
         public IActionResult ApprovePost(int id)
         {
-            var authCheck = CheckAdminPermission("/Admin/ApproveProducts");
-            if (authCheck != null) return authCheck;
-
-            var post = _db.PendingPosts.FirstOrDefault(p => p.Id == id);
-            if (post == null) return Json(new { success = false, message = "Không tìm thấy tin đăng!" });
-
-            // Kiểm tra tránh duyệt lại tạo sản phẩm trùng
-            if (post.Status == "approved")
+            try
             {
-                return Json(new { success = false, message = "Tin đăng này đã được duyệt mở bán trước đó!" });
-            }
+                var authCheck = CheckAdminPermission("/Admin/ApproveProducts");
+                if (authCheck != null) return Json(new { success = false, message = "Bạn không có quyền quản trị viên!" });
 
-            post.Status = "approved";
+                var post = _db.PendingPosts.FirstOrDefault(p => p.Id == id);
+                if (post == null) return Json(new { success = false, message = "Không tìm thấy tin đăng!" });
 
-            // Kiểm tra xem sản phẩm đã từng tồn tại chưa (tránh tạo trùng lặp)
-            var existingProduct = _db.Products.FirstOrDefault(p => p.PendingPostId == post.Id);
-            if (existingProduct != null)
-            {
-                existingProduct.Status = "approved";
-                existingProduct.IsSold = false;
-                existingProduct.Deleted = false;
-                existingProduct.Price = post.Price;
-                existingProduct.Name = post.Name;
-                existingProduct.Description = post.Description;
-            }
-            else
-            {
-                var product = new Product
+                if (post.Status == "approved")
                 {
-                    PendingPostId = post.Id,
-                    Name = post.Name,
-                    CategoryId = post.CategoryId,
-                    CategoryName = post.CategoryName,
-                    Price = post.Price,
-                    OriginalPrice = post.OriginalPrice,
-                    Condition = post.Condition,
-                    ConditionPercent = post.ConditionPercent,
-                    ConditionDetails = post.ConditionDetails,
-                    Description = post.Description,
-                    Image = post.Image,
-                    ImagesJson = post.ImagesJson,
-                    VideosJson = post.VideosJson,
-                    Stock = post.Stock,
-                    SellerId = post.SellerId,
-                    SellerName = post.SellerName,
-                    SellerPhone = post.SellerPhone,
-                    SellerEmail = post.SellerEmail,
-                    SellerAddress = post.SellerAddress,
-                    SellerAvatar = post.SellerAvatar,
-                    Status = "approved",
-                    IsSold = false,
-                    CreatedAt = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
-                };
-                _db.Products.Add(product);
+                    return Json(new { success = false, message = "Tin đăng này đã được duyệt mở bán trước đó!" });
+                }
+
+                post.Status = "approved";
+
+                var existingProduct = _db.Products.FirstOrDefault(p => p.PendingPostId == post.Id);
+                if (existingProduct != null)
+                {
+                    existingProduct.Status = "approved";
+                    existingProduct.IsSold = false;
+                    existingProduct.Deleted = false;
+                    existingProduct.Price = post.Price;
+                    existingProduct.Name = post.Name;
+                    existingProduct.Description = post.Description;
+                }
+                else
+                {
+                    var product = new Product
+                    {
+                        PendingPostId = post.Id,
+                        Name = post.Name,
+                        CategoryId = post.CategoryId,
+                        CategoryName = post.CategoryName,
+                        Price = post.Price,
+                        OriginalPrice = post.OriginalPrice,
+                        Description = post.Description,
+                        Image = post.Image,
+                        ImagesJson = post.ImagesJson,
+                        VideosJson = post.VideosJson,
+                        Stock = post.Stock,
+                        SellerId = post.SellerId,
+                        SellerName = post.SellerName,
+                        SellerPhone = post.SellerPhone,
+                        SellerEmail = post.SellerEmail,
+                        SellerAddress = post.SellerAddress,
+                        SellerAvatar = post.SellerAvatar,
+                        Status = "approved",
+                        IsSold = false,
+                        CreatedAt = DateTime.Now
+                    };
+                    _db.Products.Add(product);
+                }
+
+                _db.SaveChanges();
+                TempData["SuccessMessage"] = $"Đã duyệt thành công tin: '{post.Name}'. Món đồ đã được mở bán công khai trên sàn!";
+                return Json(new { success = true, message = "Đã duyệt bài đăng" });
             }
-
-            _db.SaveChanges();
-
-            TempData["SuccessMessage"] = $"Đã duyệt thành công tin: '{post.Name}'. Món đồ đã được mở bán công khai trên sàn!";
-            return Json(new { success = true });
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi duyệt bài: " + ex.Message });
+            }
         }
 
-        // POST: /Admin/RejectPost (Từ chối tin kèm lý do)
+        // POST: /Admin/RejectPost?id=123&reason=...
         [HttpPost]
         public IActionResult RejectPost(int id, string? reason)
         {
-            var authCheck = CheckAdminPermission("/Admin/ApproveProducts");
-            if (authCheck != null) return authCheck;
-
-            var post = _db.PendingPosts.FirstOrDefault(p => p.Id == id);
-            if (post == null) return Json(new { success = false, message = "Không tìm thấy tin đăng!" });
-
-            post.Status = "rejected";
-            post.RejectReason = string.IsNullOrWhiteSpace(reason) ? "Thông tin món đồ chưa rõ ràng hoặc hình ảnh mờ." : reason.Trim();
-
-            // Nếu sản phẩm đã từng lên sàn thì ẩn đi
-            var linkedProduct = _db.Products.FirstOrDefault(p => p.PendingPostId == post.Id);
-            if (linkedProduct != null)
+            try
             {
-                linkedProduct.Status = "rejected";
-            }
+                var authCheck = CheckAdminPermission("/Admin/ApproveProducts");
+                if (authCheck != null) return Json(new { success = false, message = "Bạn không có quyền quản trị viên!" });
 
-            _db.SaveChanges();
-            TempData["SuccessMessage"] = $"Đã từ chối tin đăng: '{post.Name}'. Lý do đã được gửi lại cho người bán.";
-            return Json(new { success = true });
+                var post = _db.PendingPosts.FirstOrDefault(p => p.Id == id);
+                if (post == null) return Json(new { success = false, message = "Không tìm thấy tin đăng!" });
+
+                post.Status = "rejected";
+                post.RejectReason = string.IsNullOrWhiteSpace(reason) ? "Không đạt tiêu chuẩn kiểm duyệt sàn đồ cũ." : reason.Trim();
+
+                var linkedProduct = _db.Products.FirstOrDefault(p => p.PendingPostId == post.Id);
+                if (linkedProduct != null)
+                {
+                    _db.Products.Remove(linkedProduct);
+                }
+
+                _db.SaveChanges();
+                return Json(new { success = true, message = "Đã từ chối bài đăng" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi từ chối bài: " + ex.Message });
+            }
         }
 
-        // GET: /Admin/Products (Quản lý tin đăng trên sàn)
+        // GET: /Admin/Products
         public IActionResult Products()
         {
             var authCheck = CheckAdminPermission("/Admin/Products");
             if (authCheck != null) return authCheck;
 
             var products = _db.Products.AsNoTracking()
+                .Where(p => !p.Deleted)
                 .OrderByDescending(p => p.Id)
                 .ToList();
 
+            ViewBag.Categories = _db.Categories.AsNoTracking().ToList();
             return View(products);
         }
 
-        // GET: /Admin/Users (Quản lý User)
+        // GET: /Admin/Users
         public IActionResult Users()
         {
             var authCheck = CheckAdminPermission("/Admin/Users");
@@ -201,7 +208,7 @@ namespace ThriftShop.Controllers
             return View(users);
         }
 
-        // GET: /Admin/Categories (Quản lý Danh mục theo chuẩn checklist giáo trình tl)
+        // GET: /Admin/Categories
         public IActionResult Categories()
         {
             var authCheck = CheckAdminPermission("/Admin/Categories");
@@ -209,7 +216,6 @@ namespace ThriftShop.Controllers
 
             var categories = _db.Categories.AsNoTracking().ToList();
 
-            // Tính số lượng sản phẩm thuộc từng danh mục để hiển thị và kiểm tra ràng buộc khóa ngoại (Constraint)
             var prodCounts = _db.Products
                 .Where(p => !p.Deleted)
                 .GroupBy(p => p.CategoryId)
@@ -219,93 +225,96 @@ namespace ThriftShop.Controllers
             return View(categories);
         }
 
-        // POST: /Admin/SaveCategory (Thêm mới hoặc Chỉnh sửa danh mục vào SQL Server)
+        // POST: /Admin/SaveCategory ([FromForm] SaveCategoryDto)
         [HttpPost]
-        public IActionResult SaveCategory(Category model)
+        public IActionResult SaveCategory([FromForm] SaveCategoryDto dto)
         {
-            var authCheck = CheckAdminPermission("/Admin/Categories");
-            if (authCheck != null) return authCheck;
-
-            if (string.IsNullOrWhiteSpace(model.Name))
+            try
             {
-                return Json(new { success = false, message = "Vui lòng nhập tên danh mục!" });
-            }
+                var authCheck = CheckAdminPermission("/Admin/Categories");
+                if (authCheck != null) return Json(new { success = false, message = "Bạn không có quyền quản trị viên!" });
 
-            if (model.Id > 0)
-            {
-                var existing = _db.Categories.Find(model.Id);
-                if (existing == null)
+                if (!ModelState.IsValid)
                 {
-                    return Json(new { success = false, message = "Không tìm thấy danh mục cần sửa!" });
+                    var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage;
+                    return Json(new { success = false, message = firstError ?? "Dữ liệu danh mục không hợp lệ!" });
                 }
 
-                existing.Name = model.Name.Trim();
-                existing.Icon = string.IsNullOrWhiteSpace(model.Icon) ? "fas fa-tag" : model.Icon.Trim();
-                existing.Description = model.Description?.Trim();
-            }
-            else
-            {
-                var newCat = new Category
+                if (dto.Id > 0)
                 {
-                    Name = model.Name.Trim(),
-                    Icon = string.IsNullOrWhiteSpace(model.Icon) ? "fas fa-tag" : model.Icon.Trim(),
-                    Description = model.Description?.Trim()
-                };
-                _db.Categories.Add(newCat);
-            }
+                    var existing = _db.Categories.Find(dto.Id);
+                    if (existing == null)
+                    {
+                        return Json(new { success = false, message = "Không tìm thấy danh mục cần sửa!" });
+                    }
 
-            _db.SaveChanges();
-            return Json(new { success = true, message = "Lưu danh mục thành công!" });
+                    existing.Name = dto.Name.Trim();
+                    existing.Icon = string.IsNullOrWhiteSpace(dto.Icon) ? "fas fa-tag" : dto.Icon.Trim();
+                    existing.Description = dto.Description?.Trim();
+                }
+                else
+                {
+                    var newCat = new Category
+                    {
+                        Name = dto.Name.Trim(),
+                        Icon = string.IsNullOrWhiteSpace(dto.Icon) ? "fas fa-tag" : dto.Icon.Trim(),
+                        Description = dto.Description?.Trim()
+                    };
+                    _db.Categories.Add(newCat);
+                }
+
+                _db.SaveChanges();
+                return Json(new { success = true, message = "Đã lưu danh mục thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi lưu danh mục: " + ex.Message });
+            }
         }
 
-        // POST: /Admin/DeleteCategory (Xóa danh mục - Kiểm tra ràng buộc dữ liệu theo checklist tl)
+        // POST: /Admin/DeleteCategory?id=123
         [HttpPost]
         public IActionResult DeleteCategory(int id)
         {
-            var authCheck = CheckAdminPermission("/Admin/Categories");
-            if (authCheck != null) return authCheck;
-
-            // Kiểm tra ràng buộc khóa ngoại (Foreign Key Constraint): Nếu còn sản phẩm thì chặn xóa
-            var productCount = _db.Products.Count(p => p.CategoryId == id && !p.Deleted);
-            if (productCount > 0)
+            try
             {
-                return Json(new { 
-                    success = false, 
-                    message = $"KHÔNG THỂ XÓA! Danh mục này hiện đang có {productCount} sản phẩm đồ cũ thuộc về nó. Vui lòng chuyển hoặc xóa các sản phẩm liên quan trước." 
-                });
-            }
+                var authCheck = CheckAdminPermission("/Admin/Categories");
+                if (authCheck != null) return Json(new { success = false, message = "Bạn không có quyền quản trị viên!" });
 
-            var cat = _db.Categories.Find(id);
-            if (cat == null)
+                var productCount = _db.Products.Count(p => p.CategoryId == id && !p.Deleted);
+                if (productCount > 0)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"KHÔNG THỂ XÓA! Danh mục này hiện đang có {productCount} sản phẩm đồ cũ thuộc về nó. Vui lòng chuyển hoặc xóa các sản phẩm liên quan trước."
+                    });
+                }
+
+                var cat = _db.Categories.Find(id);
+                if (cat == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy danh mục để xóa!" });
+                }
+
+                _db.Categories.Remove(cat);
+                _db.SaveChanges();
+                return Json(new { success = true, message = "Đã xóa danh mục thành công!" });
+            }
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "Không tìm thấy danh mục để xóa!" });
+                return Json(new { success = false, message = "Lỗi khi xóa danh mục: " + ex.Message });
             }
-
-            _db.Categories.Remove(cat);
-            _db.SaveChanges();
-            return Json(new { success = true, message = "Đã xóa danh mục thành công!" });
         }
 
-        // GET: /Admin/Inventory (Quản lý Tồn kho)
-        public IActionResult Inventory()
-        {
-            var authCheck = CheckAdminPermission("/Admin/Inventory");
-            if (authCheck != null) return authCheck;
-
-            var inventory = _db.Products.AsNoTracking()
-                .OrderByDescending(p => p.Id)
-                .ToList();
-            return View(inventory);
-        }
-
-        // GET: /Admin/Orders (Quản lý Đơn hàng)
+        // GET: /Admin/Orders
         public IActionResult Orders()
         {
             var authCheck = CheckAdminPermission("/Admin/Orders");
             if (authCheck != null) return authCheck;
 
-            var orders = _db.Orders.Include(o => o.Items).AsNoTracking()
-                .OrderByDescending(o => o.CreatedAt)
+            var orders = _db.Orders.Include(o => o.OrderItems).AsNoTracking()
+                .OrderByDescending(o => o.OrderDate)
                 .ToList();
             return View(orders);
         }

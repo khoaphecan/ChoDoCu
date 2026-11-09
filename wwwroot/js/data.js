@@ -1528,7 +1528,7 @@ const ThriftDB = {
   },
 
   // === QUẢN LÝ TIN ĐĂNG BÁN CỦA TÔI (CHỈNH SỬA DUYỆT LẠI, ĐÃ BÁN, XÓA HẲN) ===
-  // 1. Đánh dấu ĐÃ BÁN (Ẩn khỏi sàn nhưng vẫn giữ trong mục Tin đăng của tôi)
+  // 1. Đánh dấu ĐÃ BÁN (Ẩn khỏi sàn nhưng vẫn giữ trong mục Tin đăng của tôi & bảo toàn đoạn chat)
   markPostSold(postId) {
     const id = parseInt(postId);
     const pending = this.getPendingPosts();
@@ -1543,10 +1543,24 @@ const ThriftDB = {
     let prods = JSON.parse(localStorage.getItem("thrift_products")) || [];
     prods = prods.filter(p => p.id !== id);
     this.saveProducts(prods);
+
+    // C2C: Bảo toàn toàn bộ lịch sử đoạn chat, gắn nhãn [Đã bán] vào sản phẩm trong hộp thư
+    try {
+      let chats = JSON.parse(localStorage.getItem("thrift_chats")) || [];
+      chats.forEach(c => {
+        if (c.product && (String(c.product.id) === String(id) || String(c.productId) === String(id))) {
+          c.product.isSold = true;
+          c.product.status = 'sold';
+          c.product.statusText = '[Đã bán]';
+        }
+      });
+      this.saveChats(chats);
+    } catch(e) {}
+
     return true;
   },
 
-  // 2. Xóa bài đăng vĩnh viễn (Xóa hẳn khỏi hệ thống)
+  // 2. Xóa bài đăng (Ẩn khỏi sàn, nhưng bảo toàn dữ liệu đoạn chat cho 2 bên tra cứu)
   deletePostPermanently(postId) {
     const id = parseInt(postId);
     let pending = this.getPendingPosts();
@@ -1556,6 +1570,20 @@ const ThriftDB = {
     let prods = JSON.parse(localStorage.getItem("thrift_products")) || [];
     prods = prods.filter(p => p.id !== id);
     this.saveProducts(prods);
+
+    // C2C: Bảo toàn toàn bộ lịch sử đoạn chat, gắn nhãn [Tin đã đóng] vào sản phẩm trong hộp thư
+    try {
+      let chats = JSON.parse(localStorage.getItem("thrift_chats")) || [];
+      chats.forEach(c => {
+        if (c.product && (String(c.product.id) === String(id) || String(c.productId) === String(id))) {
+          c.product.isDeleted = true;
+          c.product.status = 'deleted';
+          c.product.statusText = '[Tin đã đóng]';
+        }
+      });
+      this.saveChats(chats);
+    } catch(e) {}
+
     return true;
   },
 

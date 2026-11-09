@@ -2,11 +2,21 @@
 @{
     ViewData["Title"] = "Liên Hệ & Hộp Thư Chat - ThriftShop";
     var activeProduct = ViewBag.ActiveProduct as ThriftShop.Models.Product;
+    var isSoldProd = activeProduct != null && (activeProduct.IsSold || (activeProduct.Status != null && activeProduct.Status.ToLower() == "sold"));
+    var isDeletedProd = activeProduct != null && (activeProduct.Deleted || (activeProduct.Status != null && activeProduct.Status.ToLower() == "deleted"));
+    var statusText = isSoldProd ? "[Đã bán]" :
+                     isDeletedProd ? "[Tin đã đóng]" :
+                     "(Tin đang mở bán · Còn hàng)";
+
     var activeProductJson = activeProduct != null ? System.Text.Json.JsonSerializer.Serialize(new {
         id = activeProduct.Id,
         name = activeProduct.Name,
         price = activeProduct.Price,
         image = activeProduct.Image,
+        isSold = isSoldProd,
+        isDeleted = isDeletedProd,
+        status = activeProduct.Status ?? "approved",
+        statusText = statusText,
         sellerId = activeProduct.SellerId,
         sellerName = !string.IsNullOrWhiteSpace(activeProduct.SellerName) ? activeProduct.SellerName : "Người bán ThriftShop",
         sellerAvatar = (!string.IsNullOrWhiteSpace(activeProduct.SellerAvatar) && !activeProduct.SellerAvatar.Contains("ui-avatars.com")) ? activeProduct.SellerAvatar : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
@@ -865,7 +875,11 @@
                         </div>
                         <div class="chat-item-snippet" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${c.unread ? '<span class="chat-unread-dot"></span> ' : ''}
-                            ${c.product ? `<span style="font-weight: 600; color: #ff3c00;">[${c.product.name}]</span> ` : ''}${c.lastMessage || 'Chưa có tin nhắn'}
+                            ${c.product ? `
+                                ${(c.product.isSold || c.product.status === 'sold' || (c.product.statusText && c.product.statusText.includes('Đã bán'))) ? '<span style="background: #e2e8f0; color: #475569; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px;">[Đã bán]</span>' : ''}
+                                ${(c.product.isDeleted || c.product.status === 'deleted' || (c.product.statusText && c.product.statusText.includes('đóng'))) ? '<span style="background: #fee2e2; color: #dc2626; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px;">[Đã đóng]</span>' : ''}
+                                <span style="font-weight: 600; color: #ff3c00;">[${c.product.name}]</span> 
+                            ` : ''}${c.lastMessage || 'Chưa có tin nhắn'}
                         </div>
                     </div>
                 </div>
@@ -975,7 +989,18 @@
             const priceVal = Number(chat.product.price) || 0;
             if (priceEl) priceEl.textContent = priceVal.toLocaleString('vi-VN') + ' ₫';
             const statusEl = document.getElementById('pinnedProdStatus');
-            if (statusEl) statusEl.textContent = chat.product.statusText || '(Tin đang mở bán · Còn hàng)';
+            const isSold = chat.product.isSold || chat.product.status === 'sold' || (chat.product.statusText && chat.product.statusText.includes('Đã bán'));
+            const isDeleted = chat.product.isDeleted || chat.product.status === 'deleted' || (chat.product.statusText && chat.product.statusText.includes('đóng'));
+            
+            if (statusEl) {
+                if (isSold) {
+                    statusEl.innerHTML = '<span style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;"><i class="fas fa-handshake mr-1"></i>[Đã bán]</span> <span style="font-size: 12px; color: #64748b;">(Món đồ đã giao dịch xong)</span>';
+                } else if (isDeleted) {
+                    statusEl.innerHTML = '<span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;"><i class="fas fa-ban mr-1"></i>[Tin đã đóng]</span> <span style="font-size: 12px; color: #dc2626;">(Tin đăng đã được gỡ bỏ)</span>';
+                } else {
+                    statusEl.innerHTML = '<span style="color: #16a34a; font-size: 12px; font-weight: 600;"><i class="fas fa-check-circle mr-1"></i>(Tin đang mở bán · Còn hàng)</span>';
+                }
+            }
             const linkEl = document.getElementById('pinnedProdLink');
             if (linkEl) linkEl.href = `/Products/Details/${chat.product.id}`;
         } else {

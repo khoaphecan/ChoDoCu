@@ -2,7 +2,12 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Quản Lý Đơn Hàng";
-    var ordersJson = System.Text.Json.JsonSerializer.Serialize(Model ?? Enumerable.Empty<ThriftShop.Models.Order>());
+    var serializerOpts = new System.Text.Json.JsonSerializerOptions
+    {
+        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+    var ordersJson = System.Text.Json.JsonSerializer.Serialize(Model ?? Enumerable.Empty<ThriftShop.Models.Order>(), serializerOpts);
 }
 
 <div class="page-title-box d-flex justify-content-between align-items-center">
@@ -268,7 +273,7 @@
           <td class="text-center">${idx + 1}</td>
           <td>
             <strong>${it.productName}</strong><br>
-            <small class="text-muted">Tình trạng: ${it.condition}</small>
+            ${it.condition ? `<small class="text-muted">Tình trạng: ${it.condition}</small>` : ''}
           </td>
           <td class="text-center">${ThriftDB.formatCurrency(it.price)}</td>
           <td class="text-center">${it.quantity}</td>
