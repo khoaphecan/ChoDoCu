@@ -1,107 +1,81 @@
-@model ThriftShop.Models.AdminDashboardViewModel
+@model IEnumerable<ThriftShop.Models.CategoryStatsVM>
 @{
-    Layout = "_AdminLayout";
-    ViewData["Title"] = "Bảng Điều Khiển Quản Trị";
+    ViewBag.Title = "Thống Kê";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="page-title-box">
-  <h1 class="page-title">Bảng Điều Khiển Quản Trị</h1>
-  <div class="page-breadcrumb">Quản lý hệ thống sàn đồ cũ ThriftShop</div>
-</div>
+<h2 class="bg-success">THỐNG KÊ HÀNG HÓA TỪNG LOẠI</h2>
 
-<!-- 4 Ô THỐNG KÊ CƠ BẢN ĐƠN SẮC -->
-<div class="row mb-3">
-  <div class="col-md-3 col-6">
-    <div class="simple-stat-box">
-      <div class="simple-stat-title">Tin Chờ Duyệt</div>
-      <div class="simple-stat-num" id="stat-pending-posts">@(Model?.PendingCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="ApproveProducts" class="text-dark">Kiểm duyệt ngay &raquo;</a></small>
-    </div>
-  </div>
-
-  <div class="col-md-3 col-6">
-    <div class="simple-stat-box">
-      <div class="simple-stat-title">Danh Mục Hàng</div>
-      <div class="simple-stat-num" id="stat-categories">@(Model?.CategoriesCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="Categories" class="text-dark">Quản lý danh mục &raquo;</a></small>
-    </div>
-  </div>
-
-  <div class="col-md-3 col-6">
-    <div class="simple-stat-box">
-      <div class="simple-stat-title">Tin Đang Bán</div>
-      <div class="simple-stat-num" id="stat-products">@(Model?.ProductsCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="Products" class="text-dark">Xem danh sách &raquo;</a></small>
-    </div>
-  </div>
-
-  <div class="col-md-3 col-6">
-    <div class="simple-stat-box">
-      <div class="simple-stat-title">Tổng Người Dùng</div>
-      <div class="simple-stat-num" id="stat-users">@(Model?.UsersCount ?? 0)</div>
-      <small><a asp-controller="Admin" asp-action="Users" class="text-dark">Quản lý tài khoản &raquo;</a></small>
-    </div>
-  </div>
-</div>
-
-<!-- BẢNG TIN ĐĂNG CHỜ DUYỆT -->
-<div class="card mb-4">
-  <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
-    <strong class="text-dark">Tin đồ cũ đang chờ kiểm duyệt gần đây</strong>
-    <a asp-controller="Admin" asp-action="ApproveProducts" class="small text-dark font-weight-bold">Xem tất cả (@(Model?.PendingCount ?? 0)) &raquo;</a>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped mb-0" style="font-size: 13px;">
-      <thead class="thead-light">
+<table class="table table-bordered table-hover">
+    <thead class="table-success" style="background-color: #d8ebd2;">
         <tr>
-          <th>Tên món đồ</th>
-          <th>Người đăng</th>
-          <th>Danh mục</th>
-          <th>Giá thanh lý</th>
-          <th class="text-center" style="width: 120px;">Thao tác</th>
+            <th class="font-weight-bold">LOẠI HÀNG</th>
+            <th class="font-weight-bold text-center">SỐ LƯỢNG</th>
+            <th class="font-weight-bold text-right">GIÁ CAO NHẤT</th>
+            <th class="font-weight-bold text-right">GIÁ THẤP NHẤT</th>
+            <th class="font-weight-bold text-right">GIÁ TRUNG BÌNH</th>
         </tr>
-      </thead>
-      <tbody>
-        @if (Model != null && Model.RecentPending.Any())
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
         {
-          @foreach (var p in Model.RecentPending)
-          {
             <tr>
-              <td>
-                <div class="d-flex align-items-center">
-                  <img src="@p.Image" style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px; border: 1px solid #ccc;" onerror="this.src='https://images.unsplash.com/photo-1544816155-12df9643f363?w=100'">
-                  <div>
-                    <strong>@p.Name</strong>
-                    <div class="text-muted" style="font-size: 11px;">Mã tin: #@p.Id</div>
-                  </div>
-                </div>
-              </td>
-              <td>@p.SellerName</td>
-              <td>@p.CategoryName</td>
-              <td class="font-weight-bold">@p.Price.ToString("N0") ₫</td>
-              <td class="text-center">
-                <a asp-controller="Admin" asp-action="ApproveProducts" class="btn btn-sm btn-outline-dark">
-                  Duyệt tin
-                </a>
-              </td>
+                <td>@item.CategoryName</td>
+                <td class="text-center">@item.ProductCount</td>
+                <td class="text-right">@item.MaxPrice.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))</td>
+                <td class="text-right">@item.MinPrice.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))</td>
+                <td class="text-right">@item.AvgPrice.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))</td>
             </tr>
-          }
         }
-        else
-        {
-          <tr>
-            <td colspan="5" class="text-center py-3 text-muted">
-              Không có tin nào đang chờ duyệt.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+    </tbody>
+</table>
+
+<div class="mb-4">
+    <button type="button" class="btn btn-outline-secondary" onclick="toggleChart()">Xem biểu đồ</button>
+</div>
+
+<div id="chartSection" style="margin-top: 30px;">
+    <h2 class="bg-success">BIỂU ĐỒ THỐNG KÊ</h2>
+    <div id="piechart" style="width: 100%; height: 500px;"></div>
 </div>
 
 @section Scripts {
-<script>
-  // Dữ liệu được nạp trực tiếp từ LINQ Controller
-</script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Loại hàng');
+            data.addColumn('number', 'Số lượng');
+
+            data.addRows([
+                @foreach (var item in Model)
+                {
+                    <text>['@Html.Raw(item.CategoryName)', @item.ProductCount],</text>
+                }
+            ]);
+
+            var options = {
+                title: 'TỶ LỆ HÀNG HÓA',
+                is3D: true,
+                fontSize: 14,
+                chartArea: { width: '80%', height: '80%' }
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+            chart.draw(data, options);
+        }
+
+        function toggleChart() {
+            var section = document.getElementById('chartSection');
+            if (section.style.display === "none") {
+                section.style.display = "block";
+                drawChart();
+            } else {
+                section.style.display = "none";
+            }
+        }
+    </script>
 }

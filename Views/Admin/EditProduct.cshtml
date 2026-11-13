@@ -1,0 +1,84 @@
+@model ThriftShop.Models.Product
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Cập Nhật Sản Phẩm";
+    var categories = ViewBag.Categories as List<ThriftShop.Models.Category> ?? new List<ThriftShop.Models.Category>();
+}
+
+<h2 class="bg-success">CẬP NHẬT SẢN PHẨM</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="EditProduct" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="form-group">
+                <label asp-for="Name">Tên sản phẩm</label>
+                <input asp-for="Name" class="form-control" required />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CategoryId">Danh mục</label>
+                <select asp-for="CategoryId" class="form-control" required>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Id" selected="@(c.Id == Model.CategoryId)">@c.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="Price">Đơn giá (đ)</label>
+                    <input type="number" name="Price" id="Price" step="any" min="0" max="999999999999" class="form-control" required
+                           value="@Model.Price.ToString("0", System.Globalization.CultureInfo.InvariantCulture)" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-6">
+                    <label asp-for="OriginalPrice">Giá gốc (đ)</label>
+                    <input type="number" name="OriginalPrice" id="OriginalPrice" step="any" min="0" max="999999999999" class="form-control"
+                           value="@Model.OriginalPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture)" />
+                    <span asp-validation-for="OriginalPrice" class="text-danger"></span>
+                </div>
+                <input type="hidden" asp-for="Stock" />
+            </div>
+
+            <div class="form-group">
+                <label for="Image">Hình ảnh sản phẩm (Link URL)</label>
+                <input type="text" name="Image" id="Image" class="form-control"
+                       value="@(Model.Image?.StartsWith("data:") == true ? "" : Model.Image)"
+                       placeholder="@(Model.Image?.StartsWith("data:") == true ? "Đang dùng ảnh thực tế người bán (để trống để giữ nguyên, hoặc dán link URL mới)" : "Nhập link URL hình ảnh mới hoặc để trống...")" />
+                <small class="form-text text-muted">
+                    @if (Model.Image?.StartsWith("data:") == true)
+                    {
+                        <span class="text-success"><i class="fas fa-check-circle"></i> Sản phẩm đang sử dụng ảnh thực tế (Base64) do người bán đăng tải. Để trống ô trên nếu muốn tiếp tục giữ ảnh này.</span>
+                    }
+                    else
+                    {
+                        <span>Dán link ảnh URL mới hoặc để trống nếu muốn giữ nguyên ảnh hiện tại.</span>
+                    }
+                </small>
+                @if (!string.IsNullOrEmpty(Model.DisplayImage))
+                {
+                    <div class="mt-2 p-2 border rounded bg-light d-inline-block">
+                        <div class="small font-weight-bold mb-1 text-secondary">Ảnh hiện tại:</div>
+                        <img src="@Model.DisplayImage" style="max-height: 120px; max-width: 200px; object-fit: contain; border-radius: 4px;" alt="Preview" />
+                    </div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description">Mô tả</label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+                <a asp-action="Products" class="btn btn-primary">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>

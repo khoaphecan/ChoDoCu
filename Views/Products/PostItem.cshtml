@@ -63,12 +63,12 @@
             <div class="form-row-2">
                 <div class="form-group">
                     <label asp-for="Price">Giá thanh lý mong muốn (VNĐ) (*)</label>
-                    <input asp-for="Price" type="number" id="postPrice" placeholder="VD: 450000" required>
+                    <input asp-for="Price" type="number" step="any" min="0" max="999999999999" id="postPrice" placeholder="VD: 450000" required>
                     <span asp-validation-for="Price" class="text-danger small"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="OriginalPrice">Giá mua ban đầu lúc mới (VNĐ)</label>
-                    <input asp-for="OriginalPrice" type="number" id="postOriginalPrice" placeholder="VD: 1500000">
+                    <input asp-for="OriginalPrice" type="number" step="any" min="0" max="999999999999" id="postOriginalPrice" placeholder="VD: 1500000">
                 </div>
             </div>
 
@@ -113,10 +113,6 @@
                     <button type="button" class="btn btn-outline-secondary" onclick="toggleUrlInputBox()" style="border-radius: 8px; font-weight: 600; font-size: 13.5px; padding: 8px 16px;">
                         <i class="fas fa-link mr-1"></i> Thêm bằng link URL
                     </button>
-
-                    <button type="button" class="btn btn-outline-info" onclick="addSampleMedia()" style="border-radius: 8px; font-weight: 600; font-size: 13.5px; padding: 8px 16px;">
-                        <i class="fas fa-magic mr-1"></i> Chọn 3 ảnh mẫu nhanh
-                    </button>
                 </div>
 
                 <!-- Khung nhập URL -->
@@ -152,20 +148,6 @@
 <script>
     // Danh sách media đã thêm (gồm ảnh và video)
     let uploadedMediaList = [];
-
-    function addSampleMedia() {
-        const samples = [
-            { id: 's1', type: 'image', url: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80', name: 'Ảnh chính góc thẳng' },
-            { id: 's2', type: 'image', url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80', name: 'Ảnh chi tiết mặt lưng' },
-            { id: 's3', type: 'image', url: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&q=80', name: 'Ảnh chụp cận tem mác' }
-        ];
-        samples.forEach(s => {
-            if (!uploadedMediaList.some(m => m.url === s.url)) {
-                uploadedMediaList.push(s);
-            }
-        });
-        renderMediaPreview();
-    }
 
     function toggleUrlInputBox() {
         const box = document.getElementById('urlInputContainer');
@@ -236,7 +218,7 @@
         } else {
             badge.style.background = '#fee2e2';
             badge.style.color = '#ef4444';
-            badge.innerHTML = `⚠️ Cần thêm ít nhất ${3 - imageCount} ảnh (Hiện có: ${imageCount}/3)`;
+            badge.innerHTML = `⚠️ Tối thiểu 3 ảnh (Hiện có: ${imageCount} ảnh)`;
         }
 
         // Tạo hidden inputs để POST lên Controller
@@ -280,7 +262,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        addSampleMedia();
+        renderMediaPreview();
     });
 
     document.getElementById('postItemForm').addEventListener('submit', function (e) {

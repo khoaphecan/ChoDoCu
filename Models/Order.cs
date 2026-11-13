@@ -80,6 +80,9 @@ namespace ThriftShop.Models
         }
 
         [NotMapped]
+        public string ShippingMethod { get; set; } = "Giao hàng bưu tá / Đồng kiểm COD";
+
+        [NotMapped]
         public string OrderStatus
         {
             get => Status;

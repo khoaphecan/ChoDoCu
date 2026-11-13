@@ -1,22 +1,36 @@
 @model ThriftShop.Models.HomeViewModel
 @{
     ViewData["Title"] = "ThriftShop - Mua Bán Đồ Cũ Secondhand Uy Tín";
+    int currentUserId = 0;
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                       ?? Context.Session.GetInt32("UserId")?.ToString();
+    int.TryParse(userIdClaim, out currentUserId);
+
+    bool isSearchingOrFiltering = !string.IsNullOrWhiteSpace(Context.Request.Query["search"]) 
+                               || !string.IsNullOrWhiteSpace(Context.Request.Query["q"])
+                               || !string.IsNullOrWhiteSpace(Context.Request.Query["categoryId"])
+                               || !string.IsNullOrWhiteSpace(Context.Request.Query["catFilter"])
+                               || !string.IsNullOrWhiteSpace(Context.Request.Query["minPrice"])
+                               || !string.IsNullOrWhiteSpace(Context.Request.Query["maxPrice"]);
 }
 
-<!-- 1. HERO BANNER (KHUNG GIAO DIỆN CAMERA917 - CHỦ ĐỀ THRIFT SHOP / SECONDHAND) -->
-<section class="hero">
-    <div class="overlay"></div>
-    <div class="hero-content">
-        <h1>♻ Sàn Đồ Cũ 2nd</h1>
-        <p>Nền tảng thanh lý & mua bán đồ cũ Secondhand uy tín. Mọi món đồ đăng bán đều được Admin kiểm định chất lượng và tình trạng thực tế trước khi mở bán.</p>
-        <div class="hero-badges-group">
-            <span class="hero-note">Kiểm định chất lượng 100%</span>
-            <a asp-controller="Products" asp-action="PostItem" class="hero-note-secondary">
-                <i class="fas fa-plus-circle mr-1"></i> + Đăng bán đồ cũ ngay
-            </a>
+@if (!isSearchingOrFiltering)
+{
+    <!-- 1. HERO BANNER (KHUNG GIAO DIỆN CAMERA917 - CHỦ ĐỀ THRIFT SHOP / SECONDHAND) -->
+    <section class="hero" id="homeHeroBanner">
+        <div class="overlay"></div>
+        <div class="hero-content">
+            <h1>♻ Sàn Đồ Cũ 2nd</h1>
+            <p>Nền tảng thanh lý & mua bán đồ cũ Secondhand uy tín. Mọi món đồ đăng bán đều được Admin kiểm định chất lượng và tình trạng thực tế trước khi mở bán.</p>
+            <div class="hero-badges-group">
+                <span class="hero-note">Kiểm định chất lượng 100%</span>
+                <a asp-controller="Products" asp-action="PostItem" class="hero-note-secondary">
+                    <i class="fas fa-plus-circle mr-1"></i> + Đăng bán đồ cũ ngay
+                </a>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+}
 
 
 <!-- 3. KHU VỰC CHÍNH: BỘ LỌC 2ND (BÊN TRÁI) VÀ SẢN PHẨM MODERN (BÊN PHẢI) -->
@@ -94,10 +108,10 @@
             {
                 @foreach (var p in Model.Products)
                 {
-                    <div class="card-dark-item">
+                    <div class="card-dark-item" data-product-name="@p.Name">
                         <div style="position: relative;">
                             <a href="/Products/Details/@p.Id" class="card-dark-image" style="display: block; cursor: pointer; text-decoration: none;" title="Xem chi tiết @p.Name">
-                                <img src="@p.Image" alt="@p.Name" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
+                                <img src="@p.DisplayImage" alt="@p.Name" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
                             </a>
                             <button class="btn-card-fav" onclick="toggleProductFavorite(@p.Id, event)" title="Yêu thích món đồ" data-fav-id="@p.Id">
                                 <i class="far fa-heart"></i>
@@ -119,8 +133,20 @@
                                 }
                             </div>
                             <div class="card-dark-actions">
-                                <a href="/Products/Details/@p.Id" class="btn-card-detail">Chi tiết</a>
-                                <button class="btn-card-add" onclick="openChatWithSeller(@p.Id)" title="Nhắn tin với người bán">Chat</button>
+                                @if (currentUserId > 0 && p.SellerId == currentUserId)
+                                {
+                                    <a href="/Products/Details/@p.Id" class="btn-card-detail" style="flex: 1; text-align: center;">
+                                        Chi tiết (Tin của bạn)
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="/Products/Details/@p.Id" class="btn-card-detail">Chi tiết</a>
+                                    <a asp-controller="Chat" asp-action="StartChat" asp-route-productId="@p.Id"
+                                       class="btn-card-add btn-chat-card"
+                                       style="position: relative; z-index: 2; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;"
+                                       title="Nhắn tin với người bán">Chat</a>
+                                }
                             </div>
                         </div>
                     </div>
@@ -203,6 +229,7 @@
 
 @section Scripts {
 <script>
+    const currentUserId = @currentUserId;
     const MAX_PRICE = 10000000;
     const PAGE_SIZE = 9;
     let currentPage = 1;
@@ -287,7 +314,9 @@
         const sortVal = document.getElementById('sortFilter') ? document.getElementById('sortFilter').value : 'newest';
 
         const params = new URLSearchParams();
-        if (searchQuery) params.set('search', searchQuery);
+        const searchInp = document.getElementById('globalSearchInput') || document.getElementById('searchInput');
+        const sVal = (searchInp ? searchInp.value : searchQuery).trim();
+        if (sVal) params.set('search', sVal);
         checkedCats.forEach(c => params.append('catFilter', c));
         if (minPrice > 0) params.set('minPrice', minPrice);
         if (maxPrice < MAX_PRICE) params.set('maxPrice', maxPrice);
@@ -312,7 +341,7 @@
         const searchParam = urlParams.get('search');
         if (searchParam) {
             searchQuery = searchParam.trim();
-            const searchInput = document.getElementById('searchInput');
+            const searchInput = document.getElementById('globalSearchInput') || document.getElementById('searchInput');
             if (searchInput) searchInput.value = searchQuery;
         }
 

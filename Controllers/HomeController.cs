@@ -21,9 +21,9 @@ namespace ThriftShop.Controllers
             const int pageSize = 9;
             if (page < 1) page = 1;
 
-            // 1. LINQ: Lấy sản phẩm đang mở bán (Đã duyệt, chưa bán, chưa xoá, còn tồn kho)
+            // 1. LINQ: Lấy sản phẩm đang mở bán (Đã duyệt, chưa bán, chưa xoá)
             var query = _db.Products.AsNoTracking()
-                .Where(p => p.Status != null && p.Status.ToLower() == "approved" && !p.IsSold && !p.Deleted && p.Stock > 0);
+                .Where(p => !p.Deleted && !p.IsSold && p.Status == "approved");
 
             // 2. LINQ: Lọc theo danh mục
             if (catFilter != null && catFilter.Length > 0)
@@ -41,13 +41,11 @@ namespace ThriftShop.Controllers
                 query = query.Where(p => p.Price <= maxPrice.Value);
             }
 
-            // 4. LINQ: Tìm kiếm từ khoá
+            // 4. LINQ: Tìm kiếm từ khoá (CHỈ SO KHỚP CHÍNH XÁC TRÊN TÊN SẢN PHẨM Name)
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var q = search.Trim().ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(q) 
-                                      || (p.Description != null && p.Description.ToLower().Contains(q))
-                                      || p.CategoryName.ToLower().Contains(q));
+                string kw = search.Trim().ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(kw));
             }
 
             // 5. LINQ: Sắp xếp
@@ -90,18 +88,6 @@ namespace ThriftShop.Controllers
 
         // GET: /Home/Warranty (Chính sách bảo đảm đồ cũ uy tín)
         public IActionResult Warranty()
-        {
-            return View();
-        }
-
-        // GET: /Home/Barter (Chuyển hướng sang Danh mục đồ cũ)
-        public IActionResult Barter()
-        {
-            return RedirectToAction("Index", "Products");
-        }
-
-        // GET: /Home/Repair (Dịch vụ phục chế / spa đồ cũ)
-        public IActionResult Repair()
         {
             return View();
         }

@@ -1,0 +1,39 @@
+@model ThriftShop.Models.Category
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Xóa Danh Mục";
+    var prodCount = Model.Products?.Count ?? 0;
+}
+
+<h2 class="bg-success">XÓA DANH MỤC</h2>
+
+<h4 class="alert alert-danger">Bạn thực sự muốn xóa danh mục này à?</h4>
+
+@if (prodCount > 0)
+{
+    <div class="alert alert-warning">
+        <strong>Lưu ý:</strong> Danh mục này hiện đang có <strong>@prodCount</strong> sản phẩm trực thuộc. Để bảo toàn tính toàn vẹn dữ liệu, hệ thống sẽ không cho phép xóa danh mục này.
+    </div>
+}
+
+<div class="card p-4 border mb-4" style="max-width: 700px;">
+    <dl class="row mb-0">
+        <dt class="col-sm-4 font-weight-bold">Mã Danh Mục:</dt>
+        <dd class="col-sm-8">#@Model.Id</dd>
+
+        <dt class="col-sm-4 font-weight-bold">Tên Danh Mục:</dt>
+        <dd class="col-sm-8"><strong>@Model.Name</strong></dd>
+
+        <dt class="col-sm-4 font-weight-bold">Mô Tả:</dt>
+        <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Description) ? "Không có" : Model.Description)</dd>
+    </dl>
+</div>
+
+<form asp-controller="Admin" asp-action="DeleteCategory" method="post" class="form-actions no-color mt-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="submit" value="Xóa" class="btn btn-primary" @(prodCount > 0 ? "disabled" : "") />
+    <a asp-controller="Admin" asp-action="Categories" class="btn btn-primary ml-2">
+        Quay lại danh sách
+    </a>
+</form>

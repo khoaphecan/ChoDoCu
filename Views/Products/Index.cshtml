@@ -1,5 +1,9 @@
 @{
     ViewData["Title"] = "Kho Hàng Đồ Cũ Secondhand - ThriftShop";
+    int currentUserId = 0;
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                       ?? Context.Session.GetInt32("UserId")?.ToString();
+    int.TryParse(userIdClaim, out currentUserId);
 }
 
 <div class="shop-layout-container" style="margin-top: 35px;">
@@ -84,6 +88,7 @@
 
 @section Scripts {
 <script>
+    const currentUserId = @currentUserId;
     const MAX_PRICE = 10000000;
     const PAGE_SIZE = 9;
     let currentPage = 1;
@@ -223,14 +228,12 @@
         const maxPrice = parseInt(document.getElementById('priceRangeMax').value) || MAX_PRICE;
         products = products.filter(p => p.price >= minPrice && p.price <= maxPrice);
 
-        // 3. Lọc theo từ khóa tìm kiếm nếu có
+        // 3. Lọc theo từ khóa tìm kiếm nếu có (Chỉ so khớp theo tên sản phẩm)
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             products = products.filter(p => {
                 const name = (p.name || '').toLowerCase();
-                const desc = (p.description || '').toLowerCase();
-                const cat = (p.categoryName || '').toLowerCase();
-                return name.includes(q) || desc.includes(q) || cat.includes(q);
+                return name.includes(q);
             });
         }
 
@@ -276,6 +279,13 @@
 
         grid.innerHTML = pageItems.map(p => {
             const isFav = typeof ThriftDB !== 'undefined' && typeof ThriftDB.isFavorite === 'function' && ThriftDB.isFavorite(p.id);
+            const pSellerId = Number(p.sellerId || p.SellerId || 0);
+            const isMyProduct = (currentUserId > 0 && pSellerId === currentUserId);
+            const actionButtons = isMyProduct
+                ? `<a href="/Products/Details/${p.id}" class="btn-card-detail" style="flex: 1; text-align: center;">Chi tiết (Tin của bạn)</a>`
+                : `<a href="/Products/Details/${p.id}" class="btn-card-detail">Chi tiết</a>
+                   <a href="/Chat/StartChat?productId=${p.id}" class="btn-card-add btn-chat-card" style="position: relative; z-index: 2; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Nhắn tin với người bán">Chat</a>`;
+
             return `
                 <div class="card-dark-item">
                     <div style="position: relative;">
@@ -299,8 +309,7 @@
                             ${p.originalPrice && p.originalPrice > p.price ? `<span class="card-dark-old-price">${ThriftDB.formatCurrency(p.originalPrice)}</span>` : ''}
                         </div>
                         <div class="card-dark-actions">
-                            <a href="/Products/Details/${p.id}" class="btn-card-detail">Chi tiết</a>
-                            <button class="btn-card-add" onclick="openChatWithSeller(${p.id})" title="Nhắn tin với người bán">Chat</button>
+                            ${actionButtons}
                         </div>
                     </div>
                 </div>
@@ -351,7 +360,7 @@
         const searchParam = urlParams.get('search');
         if (searchParam) {
             searchQuery = searchParam.trim();
-            const searchInput = document.getElementById('searchInput');
+            const searchInput = document.getElementById('globalSearchInput') || document.getElementById('searchInput');
             if (searchInput) searchInput.value = searchQuery;
             const sortFilter = document.getElementById('sortFilter');
             if (sortFilter) sortFilter.value = 'newest';

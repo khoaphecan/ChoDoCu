@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThriftShop.Common;
 using ThriftShop.Data;
+using ThriftShop.Filters;
 using ThriftShop.Models;
 using ThriftShop.Models.DTOs;
 
@@ -28,11 +29,15 @@ namespace ThriftShop.Controllers
         {
             if (!id.HasValue) return RedirectToAction("Index", "Home");
 
-            var product = _db.Products.AsNoTracking().FirstOrDefault(p => p.Id == id.Value);
+            var product = _db.Products.IgnoreQueryFilters().AsNoTracking()
+                .Include(p => p.Category)
+                .Include(p => p.Seller)
+                .FirstOrDefault(p => p.Id == id.Value);
+
             if (product == null)
             {
                 // Cố gắng tìm trong bảng PendingPosts nếu bài đăng chưa được đồng bộ hoặc tạo từ PendingPost
-                var pending = _db.PendingPosts.AsNoTracking().FirstOrDefault(p => p.Id == id.Value);
+                var pending = _db.PendingPosts.IgnoreQueryFilters().AsNoTracking().FirstOrDefault(p => p.Id == id.Value);
                 if (pending != null)
                 {
                     product = new Product
@@ -67,12 +72,12 @@ namespace ThriftShop.Controllers
             }
 
             var related = _db.Products.AsNoTracking()
-                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id && p.Status == "approved" && !p.IsSold && !p.Deleted && p.Stock > 0)
+                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id && p.Status == "approved" && !p.IsSold && !p.Deleted)
                 .Take(4)
                 .ToList();
 
-            User? seller = null;
-            if (product.SellerId > 0)
+            User? seller = product.Seller;
+            if (seller == null && product.SellerId > 0)
             {
                 seller = _db.Users.AsNoTracking().FirstOrDefault(u => u.Id == product.SellerId);
             }
@@ -108,6 +113,7 @@ namespace ThriftShop.Controllers
         }
 
         // GET: /Products/PostItem
+        [UserAuthorize]
         public IActionResult PostItem()
         {
             if (!HttpContext.Session.IsLoggedIn())
@@ -123,6 +129,7 @@ namespace ThriftShop.Controllers
         // POST: /Products/PostItem ([FromForm] PostItemRequestDto)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [UserAuthorize]
         public IActionResult PostItem([FromForm] PostItemRequestDto dto, string[]? images, string[]? videos)
         {
             try
@@ -177,6 +184,8 @@ namespace ThriftShop.Controllers
                 var user = _db.Users.Find(userId.Value);
                 var cat = _db.Categories.Find(dto.CategoryId);
 
+                var processedImages = ImageHelper.ProcessImagesList(validImages);
+
                 var pendingPost = new PendingPost
                 {
                     Name = dto.Name.Trim(),
@@ -185,8 +194,8 @@ namespace ThriftShop.Controllers
                     Price = dto.Price,
                     OriginalPrice = dto.OriginalPrice,
                     Description = dto.Description.Trim(),
-                    Image = validImages.First(),
-                    ImagesJson = JsonSerializer.Serialize(validImages),
+                    Image = processedImages.FirstOrDefault() ?? "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
+                    ImagesJson = JsonSerializer.Serialize(processedImages),
                     Stock = 1,
                     SellerId = user?.Id ?? userId.Value,
                     SellerName = user?.FullName ?? HttpContext.Session.GetUserName() ?? "Người bán",
@@ -219,10 +228,27 @@ namespace ThriftShop.Controllers
         }
 
         // GET: /Products/MyListings
+        [UserAuthorize]
         public IActionResult MyListings()
         {
             var userId = HttpContext.Session.GetUserId();
             var userEmail = HttpContext.Session.GetUserEmail();
+
+            if (!userId.HasValue)
+            {
+                var idClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(idClaim, out int uid))
+                {
+                    userId = uid;
+                    HttpContext.Session.SetInt32(ThriftShop.Common.SessionExtensions.SessionIdKey, uid);
+                    var u = _db.Users.Find(uid);
+                    if (u != null)
+                    {
+                        HttpContext.Session.SetUser(u);
+                        userEmail = u.Email;
+                    }
+                }
+            }
 
             if (!userId.HasValue)
             {
@@ -237,11 +263,46 @@ namespace ThriftShop.Controllers
                 .OrderByDescending(p => p.Id)
                 .ToList();
 
-            return View(myListings);
+            // Đồng bộ trạng thái Deleted từ bảng Products (nếu Admin đã xóa mềm sản phẩm liên kết)
+            var deletedPostIds = _db.Products.IgnoreQueryFilters().AsNoTracking()
+                .Where(p => p.Deleted && (p.SellerId == userId.Value || (p.SellerEmail != null && userEmail != null && p.SellerEmail.ToLower() == userEmail.ToLower())))
+                .Select(p => p.PendingPostId ?? p.Id)
+                .ToHashSet();
+
+            foreach (var p in myListings)
+            {
+                if (deletedPostIds.Contains(p.Id))
+                {
+                    p.Deleted = true;
+                }
+            }
+
+            // Cập nhật lại các biến đếm thống kê trên 4 thẻ đầu trang theo đúng logic:
+            // PendingCount: !p.Deleted && !p.IsSold && p.Status == "pending"
+            // ApprovedCount: !p.Deleted && !p.IsSold && p.Status == "approved" (KHÔNG đếm tin đã bị xóa p.Deleted == true)
+            // SoldCount: !p.Deleted && p.IsSold
+            // RejectedCount: !p.Deleted && p.Status == "rejected"
+            ViewBag.PendingCount = myListings.Count(p => !p.Deleted && !p.IsSold && p.Status == "pending");
+            ViewBag.ApprovedCount = myListings.Count(p => !p.Deleted && !p.IsSold && p.Status == "approved");
+            ViewBag.SoldCount = myListings.Count(p => !p.Deleted && (p.IsSold || p.Status == "sold"));
+            ViewBag.RejectedCount = myListings.Count(p => !p.Deleted && p.Status == "rejected");
+
+            return View("MyListings", myListings);
         }
+
+        // GET: /Products/MyPosts (Alias)
+        [UserAuthorize]
+        [HttpGet]
+        public IActionResult MyPosts() => MyListings();
+
+        // GET: /Products/MyProducts (Alias)
+        [UserAuthorize]
+        [HttpGet]
+        public IActionResult MyProducts() => MyListings();
 
         // POST: /Products/MarkSold?id=123
         [HttpPost]
+        [UserAuthorize]
         public IActionResult MarkSold(int id)
         {
             try
@@ -298,8 +359,8 @@ namespace ThriftShop.Controllers
         }
 
         // POST: /Products/DeletePermanently?id=123
-        // CHỢ TỐT C2C: Dùng Soft-Delete (Status = "deleted"), KHÔNG XÓA CỨNG để bảo toàn dữ liệu ChatMessage
         [HttpPost]
+        [UserAuthorize]
         public IActionResult DeletePermanently(int id)
         {
             try
@@ -355,6 +416,7 @@ namespace ThriftShop.Controllers
         }
 
         // GET: /Products/Favorites
+        [UserAuthorize]
         public IActionResult Favorites()
         {
             var userId = HttpContext.Session.GetUserId();

@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ThriftShop.Models
 {
     public class ChatMessage
     {
         public int Id { get; set; }
-        public int ProductId { get; set; }
+        public int? ConversationId { get; set; }
+        public int? ProductId { get; set; }
         public int SenderId { get; set; }
         public string SenderName { get; set; } = string.Empty;
         public string? SenderAvatar { get; set; }
@@ -13,11 +15,23 @@ namespace ThriftShop.Models
         public string ReceiverName { get; set; } = string.Empty;
         public string? ReceiverAvatar { get; set; }
         
-        [Required]
         public string Message { get; set; } = string.Empty;
+
+        // Alias Content tương thích với yêu cầu hệ thống
+        [NotMapped]
+        public string Content
+        {
+            get => Message;
+            set => Message = value ?? string.Empty;
+        }
+
+        public string? ImageUrl { get; set; }
+
         public DateTime SentAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt => SentAt;
         public bool IsRead { get; set; } = false;
 
+        public virtual Conversation? Conversation { get; set; }
         public virtual Product? Product { get; set; }
     }
 }

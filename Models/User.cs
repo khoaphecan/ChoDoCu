@@ -30,7 +30,6 @@ namespace ThriftShop.Models
         [StringLength(255, ErrorMessage = "Địa chỉ tối đa 255 ký tự")]
         public string? Address { get; set; }
 
-        [StringLength(255, ErrorMessage = "Link ảnh đại diện tối đa 255 ký tự")]
         public string? Avatar { get; set; }
 
         [StringLength(500, ErrorMessage = "Tiểu sử tối đa 500 ký tự")]
@@ -52,6 +51,13 @@ namespace ThriftShop.Models
         {
             get => PasswordHash;
             set => PasswordHash = value;
+        }
+
+        [NotMapped]
+        public string Username
+        {
+            get => Email;
+            set => Email = value ?? string.Empty;
         }
 
         // Navigation properties

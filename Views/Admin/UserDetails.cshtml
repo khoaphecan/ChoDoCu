@@ -1,0 +1,71 @@
+@model ThriftShop.Models.User
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi Tiết Khách Hàng";
+    var orders = (ViewBag.Orders as IEnumerable<ThriftShop.Models.Order>) ?? Model.Orders?.ToList() ?? new List<ThriftShop.Models.Order>();
+}
+
+<h2 class="bg-success">CHI TIẾT KHÁCH HÀNG</h2>
+
+<div class="card mb-4 border">
+    <div class="card-header bg-info font-weight-bold" style="background-color: #d8ebd2 !important; color: #2d572c;">
+        Thông Tin Khách Hàng
+    </div>
+    <div class="card-body" style="background-color: #fbfdfa;">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 font-weight-bold">Mã khách hàng:</dt>
+            <dd class="col-sm-9">#@Model.Id</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Tài khoản:</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Họ và tên:</dt>
+            <dd class="col-sm-9">@Model.FullName</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Email:</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Điện thoại:</dt>
+            <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.Phone) ? "Chưa cập nhật" : Model.Phone)</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Địa chỉ:</dt>
+            <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.Address) ? "Chưa cập nhật" : Model.Address)</dd>
+        </dl>
+    </div>
+</div>
+
+<h3 class="mt-4 mb-3" style="color: #2d572c;">LỊCH SỬ ĐƠN HÀNG CỦA KHÁCH HÀNG</h3>
+@if (orders != null && orders.Any())
+{
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="table-success" style="background-color: #d8ebd2;">
+            <tr>
+                <th class="bg-success" style="width: 140px;">Mã đơn</th>
+                <th class="bg-success" style="width: 180px;">Ngày đặt</th>
+                <th class="bg-success" style="width: 160px;">Tổng tiền</th>
+                <th class="bg-success" style="width: 180px;">Trạng thái thanh toán</th>
+                <th class="bg-success">Địa chỉ giao hàng</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in orders)
+            {
+                <tr>
+                    <td>@order.OrderCode</td>
+                    <td>@(order.OrderDate.ToString("dd/MM/yyyy HH:mm"))</td>
+                    <td class="font-weight-bold text-danger">@order.TotalAmount.ToString("N0") đ</td>
+                    <td><span class="badge badge-secondary px-2 py-1">@(order.PaymentMethod ?? "COD")</span></td>
+                    <td>@order.CustAddress</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="alert alert-info">Khách hàng này chưa có đơn hàng nào.</p>
+}
+
+<div class="mt-3">
+    <a asp-action="Users" class="btn btn-outline-secondary">Quay lại danh sách</a>
+</div>

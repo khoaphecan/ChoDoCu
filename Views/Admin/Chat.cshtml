@@ -1,0 +1,130 @@
+@model IEnumerable<ThriftShop.Models.Conversation>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Trung Tâm Hỗ Trợ Khách Hàng (CSKH)";
+    var adminIds = ViewBag.AdminIds as List<int> ?? new List<int> { ViewBag.AdminId != null ? (int)ViewBag.AdminId : 1 };
+    int adminId = ViewBag.AdminId != null ? (int)ViewBag.AdminId : 1;
+}
+
+<h2 class="bg-success">TRUNG TÂM HỖ TRỢ KHÁCH HÀNG (CSKH)</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
+    </div>
+}
+
+<!-- KHUNG GỬI THÔNG BÁO ĐƠN GIẢN (CARD PHẲNG) -->
+<div class="card mb-3 border">
+    <div class="card-header font-weight-bold" style="background-color: #d8ebd2; color: #2d572c;">
+        <i class="fas fa-bullhorn mr-1"></i> Gửi Thông Báo Toàn Bộ Thành Viên
+    </div>
+    <div class="card-body">
+        <form asp-action="BroadcastMessage" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group mb-2">
+                <textarea name="content" class="form-control" rows="2" placeholder="Nhập thông báo gửi toàn bộ thành viên..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane mr-1"></i> Phát thông báo
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- KHUNG TRA CỨU / NHẮN TIN RIÊNG THEO THÀNH VIÊN -->
+<div class="card mb-3 border">
+    <div class="card-body py-2 px-3 bg-light d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <form method="get" asp-action="Chat" class="d-flex align-items-center gap-2">
+            <span class="font-weight-bold small text-muted">Tra cứu theo người dùng:</span>
+            <select name="userId" class="form-select form-select-sm" style="min-width: 250px;" onchange="this.form.submit()">
+                <option value="">-- Tất cả thành viên --</option>
+                @if (ViewBag.Users != null)
+                {
+                    foreach (var u in (IEnumerable<dynamic>)ViewBag.Users)
+                    {
+                        <option value="@u.Id" selected="@(ViewBag.SelectedUserId == u.Id)">@u.FullName (@u.Phone)</option>
+                    }
+                }
+            </select>
+            @if (ViewBag.SelectedUserId != null)
+            {
+                <a asp-action="Chat" class="btn btn-outline-secondary btn-sm ml-2">Xem tất cả</a>
+            }
+        </form>
+        @if (ViewBag.SelectedUserId != null)
+        {
+            <a href="/Admin/ChatWithUser?userId=@ViewBag.SelectedUserId" class="btn btn-success btn-sm">
+                <i class="fas fa-comment-dots mr-1"></i> Nhắn tin riêng cho thành viên này
+            </a>
+        }
+    </div>
+</div>
+
+<!-- BẢNG DANH SÁCH CÁC PHIÊN HỖ TRỢ CSKH -->
+<table class="table table-bordered table-hover">
+    <thead class="table-success" style="background-color: #d8ebd2;">
+        <tr>
+            <th class="bg-success">Khách hàng</th>
+            <th class="bg-success">Yêu cầu hỗ trợ gần nhất</th>
+            <th class="bg-success text-center" style="width: 170px;">Thời gian</th>
+            <th class="bg-success text-center" style="width: 200px;">Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                var partner = adminIds.Contains(item.BuyerId) ? item.Seller : item.Buyer;
+                string partnerName = partner?.FullName ?? partner?.Email ?? "Khách cần hỗ trợ";
+                string partnerContact = partner?.Phone ?? partner?.Email ?? "";
+
+                var lastMsg = item.Messages?.OrderByDescending(m => m.SentAt).FirstOrDefault();
+                string lastText = lastMsg?.Message ?? "(Chưa có tin nhắn)";
+                if (lastText.StartsWith("[IMG]:")) lastText = "📷 [Hình ảnh]";
+                else if (lastText.StartsWith("[VIDEO]:")) lastText = "🎥 [Video]";
+
+                string timeText = lastMsg != null ? lastMsg.SentAt.ToString("dd/MM/yyyy HH:mm") : item.UpdatedAt.ToString("dd/MM/yyyy HH:mm");
+
+                <tr>
+                    <td>
+                        <div class="font-weight-bold">@partnerName</div>
+                        @if (!string.IsNullOrEmpty(partnerContact))
+                        {
+                            <small class="text-muted">@partnerContact</small>
+                        }
+                    </td>
+                    <td>
+                        <span class="text-truncate d-inline-block" style="max-width: 450px;" title="@lastText">@lastText</span>
+                    </td>
+                    <td class="text-center text-muted" style="font-size: 13px;">
+                        @timeText
+                    </td>
+                    <td class="text-center">
+                        <a href="/Admin/ChatDetails/@item.Id" class="btn btn-primary btn-sm">Xem & Trả lời</a>
+                        <form asp-action="DeleteConversation" asp-route-id="@item.Id" method="post" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phiên hỗ trợ CSKH này không?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger btn-sm">Xóa phiên</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" class="text-center text-muted py-4">Chưa có phiên hỗ trợ CSKH nào.</td>
+            </tr>
+        }
+    </tbody>
+</table>

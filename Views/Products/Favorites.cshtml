@@ -1,19 +1,23 @@
+@model IEnumerable<ThriftShop.Models.Product>
 @{
     ViewData["Title"] = "Tin Đã Yêu Thích - ThriftShop";
-}
+    int currentUserId = 0;
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                       ?? Context.Session.GetInt32("UserId")?.ToString();
+    int.TryParse(userIdClaim, out currentUserId);
 
-<!-- Route Guard: Chuyển hướng ngay nếu chưa đăng nhập -->
-<script>
-    (function() {
-        try {
-            var u = localStorage.getItem("thrift_current_user");
-            if (!u || u === "null" || u === "undefined") {
-                var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.replace('/Account/Login?returnUrl=' + returnUrl);
-            }
-        } catch(e) {}
-    })();
-</script>
+    var serverFavsJson = System.Text.Json.JsonSerializer.Serialize((Model ?? Enumerable.Empty<ThriftShop.Models.Product>()).Select(p => new {
+        id = p.Id,
+        name = p.Name,
+        price = p.Price,
+        originalPrice = p.OriginalPrice,
+        image = p.DisplayImage,
+        categoryName = p.CategoryName,
+        sellerId = p.SellerId,
+        sellerName = p.SellerName,
+        sellerAddress = p.SellerAddress
+    }));
+}
 
 <style>
     .fav-page-container {
@@ -140,17 +144,20 @@
 
 @section Scripts {
 <script>
-    function loadFavoritePage() {
-        if (typeof ThriftDB === 'undefined' || !ThriftDB.isLoggedIn()) {
-            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
-            return;
-        }
+    const currentUserId = @currentUserId;
+    const serverFavs = @Html.Raw(serverFavsJson);
 
+    function loadFavoritePage() {
         const container = document.getElementById('favoritesListContainer');
         const countBadge = document.getElementById('favCountBadge');
         if (!container) return;
 
-        const favProds = ThriftDB.getFavoriteProducts();
+        let favProds = serverFavs;
+        if ((!favProds || favProds.length === 0) && typeof ThriftDB !== 'undefined') {
+            favProds = ThriftDB.getFavoriteProducts();
+        }
+        if (!favProds) favProds = [];
+
         if (countBadge) {
             countBadge.textContent = `${favProds.length} tin`;
         }
@@ -170,6 +177,13 @@
         container.innerHTML = `
             <div class="fav-grid">
                 ${favProds.map(p => {
+                    const pSellerId = Number(p.sellerId || p.SellerId || 0);
+                    const isMyProduct = (currentUserId > 0 && pSellerId === currentUserId);
+                    const actionButtons = isMyProduct 
+                        ? `<a href="/Products/Details/${p.id}" class="btn-card-detail" style="flex: 1; text-align: center;">Chi tiết (Tin của bạn)</a>`
+                        : `<a href="/Products/Details/${p.id}" class="btn-card-detail">Chi tiết</a>
+                           <a href="/Chat/StartChat?productId=${p.id}" class="btn-card-add btn-chat-card" style="position: relative; z-index: 2; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Nhắn tin với người bán">Chat</a>`;
+
                     return `
                         <div class="card-dark-item" id="fav-card-${p.id}">
                             <div style="position: relative;">
@@ -193,8 +207,7 @@
                                     ${p.originalPrice && p.originalPrice > p.price ? `<span class="card-dark-old-price">${ThriftDB.formatCurrency(p.originalPrice)}</span>` : ''}
                                 </div>
                                 <div class="card-dark-actions">
-                                    <a href="/Products/Details/${p.id}" class="btn-card-detail">Chi tiết</a>
-                                    <button class="btn-card-add" onclick="openChatWithSeller(${p.id})" title="Nhắn tin với người bán">Chat</button>
+                                    ${actionButtons}
                                 </div>
                             </div>
                         </div>
@@ -209,13 +222,29 @@
             event.preventDefault();
             event.stopPropagation();
         }
+        fetch('/Products/ToggleFavorite?productId=' + productId, { method: 'POST' });
         if (typeof ThriftDB !== 'undefined') {
             ThriftDB.toggleFavorite(productId);
-            if (typeof showToast === 'function') {
-                showToast("Đã bỏ món đồ khỏi danh sách yêu thích", "info");
-            }
-            loadFavoritePage();
         }
+        if (typeof showToast === 'function') {
+            showToast("Đã bỏ món đồ khỏi danh sách yêu thích", "info");
+        }
+        const card = document.getElementById(`fav-card-${productId}`);
+        if (card) {
+            card.remove();
+            const remaining = document.querySelectorAll('.card-dark-item').length;
+            const countBadge = document.getElementById('favCountBadge');
+            if (countBadge) countBadge.textContent = `${remaining} tin`;
+            if (remaining === 0) {
+                location.reload();
+            }
+        } else {
+            location.reload();
+        }
+    }
+
+    function openChatWithSeller(prodId) {
+        window.location.href = '/Cart?productId=' + prodId;
     }
 
     document.addEventListener('DOMContentLoaded', loadFavoritePage);

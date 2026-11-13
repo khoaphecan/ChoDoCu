@@ -17,6 +17,7 @@ namespace ThriftShop.Data
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Favorite> Favorites => Set<Favorite>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<Conversation> Conversations => Set<Conversation>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,7 +46,7 @@ namespace ThriftShop.Data
                 entity.Property(u => u.PasswordHash).IsRequired();
                 entity.Property(u => u.Phone).HasMaxLength(20);
                 entity.Property(u => u.Address).HasMaxLength(255);
-                entity.Property(u => u.Avatar).HasMaxLength(255);
+                entity.Property(u => u.Avatar);
                 entity.Property(u => u.Bio).HasMaxLength(500);
                 entity.Property(u => u.Role).HasMaxLength(20).HasDefaultValue("customer");
             });
@@ -85,6 +86,9 @@ namespace ThriftShop.Data
                       .WithMany(u => u.Products)
                       .HasForeignKey(p => p.SellerId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                // Global Query Filter: Tự động loại trừ các sản phẩm đã xóa mềm
+                entity.HasQueryFilter(p => !p.Deleted);
             });
 
             // ==========================================
@@ -102,6 +106,7 @@ namespace ThriftShop.Data
                 entity.Property(p => p.SellerAvatar).HasMaxLength(255);
                 entity.Property(p => p.Status).HasMaxLength(30).HasDefaultValue("pending");
                 entity.Property(p => p.RejectReason).HasMaxLength(255);
+                entity.Property(p => p.Deleted).HasDefaultValue(false);
 
                 // Cấu hình kiểu dữ liệu decimal(18,2) cho giá tiền
                 entity.Property(p => p.Price)
@@ -123,6 +128,9 @@ namespace ThriftShop.Data
                       .WithMany()
                       .HasForeignKey(p => p.SellerId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                // Global Query Filter: Tự động loại trừ các bài đăng đã xóa mềm
+                entity.HasQueryFilter(p => p.Status != "deleted");
             });
 
             // ==========================================
@@ -198,15 +206,49 @@ namespace ThriftShop.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.Entity<ChatMessage>(entity =>
+            // ==========================================
+            // 7. CẤU HÌNH CONVERSATION & CHATMESSAGE
+            // ==========================================
+            modelBuilder.Entity<Conversation>(entity =>
             {
                 entity.HasKey(c => c.Id);
-                entity.Property(c => c.Message).IsRequired().HasMaxLength(1000);
 
                 entity.HasOne(c => c.Product)
                       .WithMany()
                       .HasForeignKey(c => c.ProductId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(c => c.Buyer)
+                      .WithMany()
+                      .HasForeignKey(c => c.BuyerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.Seller)
+                      .WithMany()
+                      .HasForeignKey(c => c.SellerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Message).IsRequired(false).HasColumnType("nvarchar(max)");
+                entity.Property(c => c.ImageUrl).IsRequired(false).HasColumnType("nvarchar(max)");
+                entity.Property(c => c.SenderAvatar).IsRequired(false).HasColumnType("nvarchar(max)");
+                entity.Property(c => c.ReceiverAvatar).IsRequired(false).HasColumnType("nvarchar(max)");
+
+                entity.HasOne(c => c.Conversation)
+                      .WithMany(cv => cv.Messages)
+                      .HasForeignKey(c => c.ConversationId)
+                      .IsRequired(false)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(c => c.Product)
+                      .WithMany()
+                      .HasForeignKey(c => c.ProductId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

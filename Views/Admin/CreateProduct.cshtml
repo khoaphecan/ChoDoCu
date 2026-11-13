@@ -1,0 +1,67 @@
+@model ThriftShop.Models.Product
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Thêm Sản Phẩm Mới";
+    var categories = ViewBag.Categories as List<ThriftShop.Models.Category> ?? new List<ThriftShop.Models.Category>();
+}
+
+<h2 class="bg-success">THÊM SẢN PHẨM</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="CreateProduct" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="form-group">
+                <label asp-for="Name">Tên sản phẩm</label>
+                <input asp-for="Name" class="form-control" required />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CategoryId">Danh mục</label>
+                <select asp-for="CategoryId" class="form-control" required>
+                    <option value="">-- Chọn danh mục --</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="Price">Đơn giá (đ)</label>
+                    <input type="number" name="Price" id="Price" step="any" min="0" max="999999999999" class="form-control" required
+                           value="@(Model != null && Model.Price > 0 ? Model.Price.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-6">
+                    <label asp-for="OriginalPrice">Giá gốc (đ)</label>
+                    <input type="number" name="OriginalPrice" id="OriginalPrice" step="any" min="0" max="999999999999" class="form-control"
+                           value="@(Model != null && Model.OriginalPrice > 0 ? Model.OriginalPrice.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                    <span asp-validation-for="OriginalPrice" class="text-danger"></span>
+                </div>
+                <input type="hidden" asp-for="Stock" value="1" />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Image">Link hình ảnh (URL)</label>
+                <input asp-for="Image" type="text" class="form-control" placeholder="https://... (hoặc để trống để dùng ảnh mặc định)" />
+                <span asp-validation-for="Image" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description">Mô tả</label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+                <a asp-action="Products" class="btn btn-primary">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>

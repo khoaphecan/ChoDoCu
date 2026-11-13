@@ -9,7 +9,7 @@ namespace ThriftShop.Data
         {
             context.Database.EnsureCreated();
 
-            // Đảm bảo cập nhật bảng Orders nếu CSDL đã tồn tại từ trước (Giải quyết Issue 5 & 8)
+            // Đảm bảo cấu trúc bảng Orders & Conversations nếu CSDL đã tồn tại từ trước
             try
             {
                 context.Database.ExecuteSqlRaw(@"
@@ -19,6 +19,74 @@ namespace ThriftShop.Data
                         BEGIN
                             ALTER TABLE Orders ADD CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE();
                         END
+                    END
+
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Conversations')
+                    BEGIN
+                        CREATE TABLE Conversations (
+                            Id INT IDENTITY(1,1) PRIMARY KEY,
+                            ProductId INT NULL,
+                            BuyerId INT NOT NULL,
+                            SellerId INT NOT NULL,
+                            BuyerClearedAt DATETIME2 NULL,
+                            SellerClearedAt DATETIME2 NULL,
+                            CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+                        );
+                    END
+
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'ConversationId')
+                    BEGIN
+                        ALTER TABLE ChatMessages ADD ConversationId INT NULL;
+                    END
+
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'ProductId' AND IS_NULLABLE = 'NO')
+                    BEGIN
+                        ALTER TABLE ChatMessages ALTER COLUMN ProductId INT NULL;
+                    END
+
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'Avatar' AND CHARACTER_MAXIMUM_LENGTH <> -1)
+                    BEGIN
+                        ALTER TABLE Users ALTER COLUMN Avatar NVARCHAR(MAX) NULL;
+                    END
+
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ChatMessages')
+                    BEGIN
+                        IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'Message' AND CHARACTER_MAXIMUM_LENGTH <> -1)
+                        BEGIN
+                            ALTER TABLE ChatMessages ALTER COLUMN Message NVARCHAR(MAX) NULL;
+                        END
+                        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'ImageUrl')
+                        BEGIN
+                            ALTER TABLE ChatMessages ADD ImageUrl NVARCHAR(MAX) NULL;
+                        END
+                        ELSE
+                        BEGIN
+                            ALTER TABLE ChatMessages ALTER COLUMN ImageUrl NVARCHAR(MAX) NULL;
+                        END
+                        IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'SenderAvatar' AND CHARACTER_MAXIMUM_LENGTH <> -1)
+                        BEGIN
+                            ALTER TABLE ChatMessages ALTER COLUMN SenderAvatar NVARCHAR(MAX) NULL;
+                        END
+                        IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'ReceiverAvatar' AND CHARACTER_MAXIMUM_LENGTH <> -1)
+                        BEGIN
+                            ALTER TABLE ChatMessages ALTER COLUMN ReceiverAvatar NVARCHAR(MAX) NULL;
+                        END
+                    END
+
+                    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Conversations_Users_BuyerId')
+                    BEGIN
+                        ALTER TABLE Conversations ADD CONSTRAINT FK_Conversations_Users_BuyerId FOREIGN KEY (BuyerId) REFERENCES Users(Id);
+                    END
+
+                    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Conversations_Users_SellerId')
+                    BEGIN
+                        ALTER TABLE Conversations ADD CONSTRAINT FK_Conversations_Users_SellerId FOREIGN KEY (SellerId) REFERENCES Users(Id);
+                    END
+
+                    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ChatMessages_Conversations_ConversationId')
+                    BEGIN
+                        ALTER TABLE ChatMessages ADD CONSTRAINT FK_ChatMessages_Conversations_ConversationId FOREIGN KEY (ConversationId) REFERENCES Conversations(Id) ON DELETE CASCADE;
                     END
                 ");
             }
@@ -39,392 +107,21 @@ namespace ThriftShop.Data
                 context.SaveChanges();
             }
 
-            var catList = context.Categories.ToList();
-            int catDienTu = catList.FirstOrDefault(c => c.Name == "Đồ điện tử")?.Id ?? 1;
-            int catGiaDung = catList.FirstOrDefault(c => c.Name == "Đồ gia dụng")?.Id ?? 2;
-            int catVPP = catList.FirstOrDefault(c => c.Name == "Văn phòng phẩm")?.Id ?? 3;
-            int catThoiTrang = catList.FirstOrDefault(c => c.Name == "Thời trang")?.Id ?? 4;
-            int catKhac = catList.FirstOrDefault(c => c.Name == "Khác")?.Id ?? 5;
-
-            // 2. SEED USERS (Admin và Khách hàng)
+            // 2. SEED USERS (Chỉ giữ / tạo duy nhất tài khoản Quản trị viên mặc định nếu CSDL trống)
             if (!context.Users.Any())
             {
-                var users = new List<User>
+                var admin = new User
                 {
-                    new()
-                    {
-                        Name = "Ban Quản Trị ThriftShop",
-                        Email = "admin@thriftshop.vn",
-                        Password = "admin",
-                        Phone = "19006868",
-                        Address = "TP. Hồ Chí Minh",
-                        Avatar = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&q=80",
-                        Bio = "Ban Quản Trị & Kiểm Duyệt Sàn Đồ Cũ ThriftShop",
-                        Role = "admin"
-                    },
-                    new()
-                    {
-                        Name = "Người Dùng Mẫu",
-                        Email = "user@thriftshop.vn",
-                        Password = "user",
-                        Phone = "0901234567",
-                        Address = "Quận 1, TP. Hồ Chí Minh",
-                        Avatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
-                        Bio = "Thành viên tích cực mua bán & tái sử dụng đồ cũ.",
-                        Role = "customer"
-                    },
-                    new()
-                    {
-                        Name = "Chung Tấn Thành",
-                        Email = "thanh@thriftshop.vn",
-                        Password = "user",
-                        Phone = "0908765432",
-                        Address = "Quận 1, TP. Hồ Chí Minh",
-                        Avatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
-                        Bio = "Chuyên thanh lý đồ vintage, áo khoác, đồ denim sưu tầm.",
-                        Role = "customer"
-                    },
-                    new()
-                    {
-                        Name = "Đặng Thuỳ Dương",
-                        Email = "duong.dang@thriftshop.vn",
-                        Password = "user",
-                        Phone = "0918765432",
-                        Address = "Quận Phú Nhuận, TP.HCM",
-                        Avatar = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
-                        Bio = "Thanh lý đồ công nghệ, đồ decor nhà cửa còn mới 95%.",
-                        Role = "customer"
-                    },
-                    new()
-                    {
-                        Name = "Hoàng Minh Trí",
-                        Email = "tri.hoang@thriftshop.vn",
-                        Password = "user",
-                        Phone = "0987654321",
-                        Address = "Quận 3, TP.HCM",
-                        Avatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
-                        Bio = "Đam mê sneaker secondhand và thời trang đường phố.",
-                        Role = "customer"
-                    }
+                    FullName = "Ban Quản Trị ThriftShop",
+                    Email = "admin@thriftshop.vn",
+                    PasswordHash = "admin",
+                    Phone = "19006868",
+                    Address = "TP. Hồ Chí Minh",
+                    Avatar = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&q=80",
+                    Bio = "Ban Quản Trị & Kiểm Duyệt Sàn Đồ Cũ ThriftShop",
+                    Role = "admin"
                 };
-                context.Users.AddRange(users);
-                context.SaveChanges();
-            }
-
-            var userList = context.Users.ToList();
-            int userThanh = userList.FirstOrDefault(u => u.Name == "Chung Tấn Thành")?.Id ?? 3;
-            int userDuong = userList.FirstOrDefault(u => u.Name == "Đặng Thuỳ Dương")?.Id ?? 4;
-            int userTri = userList.FirstOrDefault(u => u.Name == "Hoàng Minh Trí")?.Id ?? 5;
-
-            // 3. SEED PRODUCTS (Sản phẩm đồ cũ mở bán)
-            if (!context.Products.Any())
-            {
-                var products = new List<Product>
-                {
-                    new()
-                    {
-                        Name = "Áo khoác Jean Levis Vintage 1990s lót lông",
-                        CategoryId = catThoiTrang,
-                        CategoryName = "Thời trang",
-                        Price = 420000,
-                        OriginalPrice = 1650000,
-                        Description = "Áo jean Levis nguyên bản form boxy chuẩn vintage thập niên 90. Chất vải denim dày dặn, có bạc màu tự nhiên rất phong cách. Lớp lót lông cừu ấm áp không bị rách.  (Tình trạng: Độ mới: 92% - Tốt - Khuy áo nguyên bản, hơi sờn nhẹ gấu tay áo (chất vintage), không rách, đã giặt sấy thơm tho sạch sẽ.)",
-                        Image = "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80\",\"https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80\",\"https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userThanh,
-                        SellerName = "Chung Tấn Thành",
-                        SellerPhone = "0908765432",
-                        SellerEmail = "thanh@thriftshop.vn",
-                        SellerAddress = "Quận 1, TP. Hồ Chí Minh",
-                        SellerAvatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
-                        Featured = true,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("01/10/2026 10:30", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Tai nghe chống ồn Sony WH-1000XM4 màu Bạc",
-                        CategoryId = catDienTu,
-                        CategoryName = "Đồ điện tử",
-                        Price = 3600000,
-                        OriginalPrice = 6990000,
-                        Description = "Tai nghe chống ồn chủ động đỉnh cao Sony WH-1000XM4. Mua chính hãng Sony Store Việt Nam, ít dùng do chuyển sang dùng in-ear. Pin còn nghe liên tục trên 28 tiếng chống ồn.  (Tình trạng: Độ mới: 95% - Rất mới - Đệm tai và headband còn nguyên vẹn không tróc da. Đầy đủ phụ kiện: hộp cứng bảo vệ, cáp Type-C, jack 3.5mm và adapter máy bay zin.)",
-                        Image = "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80\",\"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80\",\"https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userDuong,
-                        SellerName = "Đặng Thuỳ Dương",
-                        SellerPhone = "0918765432",
-                        SellerEmail = "duong.dang@thriftshop.vn",
-                        SellerAddress = "Quận Phú Nhuận, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
-                        Featured = true,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("02/10/2026 14:15", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Giày Sneaker Nike Air Jordan 1 Retro High OG (Size 42)",
-                        CategoryId = catThoiTrang,
-                        CategoryName = "Thời trang",
-                        Price = 1850000,
-                        OriginalPrice = 4800000,
-                        Description = "Đôi Jordan 1 Retro bản High OG phối màu Chicago kinh điển. Giày chính hãng mua tại cửa hàng Nike Landmark 81, có box thay thế sạch sẽ.  (Tình trạng: Độ mới: 90% - Tốt - Đế giày mòn nhẹ gót (đã dán sole bảo vệ lúc mới mua), da mũi giày có nếp nhăn tự nhiên, tặng kèm dây giày cam thay thế.)",
-                        Image = "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&q=80\",\"https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&q=80\",\"https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userTri,
-                        SellerName = "Hoàng Minh Trí",
-                        SellerPhone = "0987654321",
-                        SellerEmail = "tri.hoang@thriftshop.vn",
-                        SellerAddress = "Quận 3, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
-                        Featured = true,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("03/10/2026 09:00", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Máy đọc sách Kindle Paperwhite Gen 4 (10th) 8GB",
-                        CategoryId = catDienTu,
-                        CategoryName = "Đồ điện tử",
-                        Price = 1450000,
-                        OriginalPrice = 2890000,
-                        Description = "Kindle Paperwhite Gen 4 chống nước IPX8, màn hình 300ppi sắc nét như trang sách thật. Máy đã cài đặt sẵn từ điển Anh-Việt, hỗ trợ đọc file PRC, MOBI, EPUB, PDF.  (Tình trạng: Độ mới: 94% - Rất mới - Màn hình E-ink không một vết xước, vỏ lưng cao su không chảy keo, pin dùng 3 tuần đọc mỗi ngày 1 tiếng.)",
-                        Image = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80\",\"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80\",\"https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userDuong,
-                        SellerName = "Đặng Thuỳ Dương",
-                        SellerPhone = "0918765432",
-                        SellerEmail = "duong.dang@thriftshop.vn",
-                        SellerAddress = "Quận Phú Nhuận, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
-                        Featured = true,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("04/10/2026 11:20", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Nồi chiên không dầu Philips HD9252 dung tích 4.1L",
-                        CategoryId = catGiaDung,
-                        CategoryName = "Đồ gia dụng",
-                        Price = 850000,
-                        OriginalPrice = 2200000,
-                        Description = "Nồi chiên không dầu Philips công nghệ Rapid Air giảm 90% lượng dầu mỡ. Dung tích 4.1L đủ nướng gà nguyên con hoặc làm bánh cho cả gia đình.  (Tình trạng: Độ mới: 90% - Tốt - Khay chống dính còn rất tốt không bong tróc, bảng điều khiển cảm ứng nhạy bén, dây nguồn zin.)",
-                        Image = "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80\",\"https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80\",\"https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userThanh,
-                        SellerName = "Chung Tấn Thành",
-                        SellerPhone = "0908765432",
-                        SellerEmail = "thanh@thriftshop.vn",
-                        SellerAddress = "Quận 1, TP. Hồ Chí Minh",
-                        SellerAvatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
-                        Featured = false,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("05/10/2026 16:45", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Combo trọn bộ 12 tập Manga Naruto Boxset sưu tầm",
-                        CategoryId = catVPP,
-                        CategoryName = "Văn phòng phẩm",
-                        Price = 290000,
-                        OriginalPrice = 650000,
-                        Description = "Trọn bộ truyện tranh Naruto chính hãng NXB Kim Đồng bản in chất lượng cao. Bộ sưu tập cá nhân ít đọc, giữ gìn kỹ càng trong tủ kính.  (Tình trạng: Độ mới: 96% - Như mới - Sách bọc màng co nilon bảo quản cẩn thận, giấy không ố vàng, không quăn mép, đầy đủ bookmark tặng kèm.)",
-                        Image = "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80\",\"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80\",\"https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userTri,
-                        SellerName = "Hoàng Minh Trí",
-                        SellerPhone = "0987654321",
-                        SellerEmail = "tri.hoang@thriftshop.vn",
-                        SellerAddress = "Quận 3, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
-                        Featured = false,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("06/10/2026 08:30", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Đèn bàn học chống cận Taotronics LED điều chỉnh 5 độ sáng",
-                        CategoryId = catGiaDung,
-                        CategoryName = "Đồ gia dụng",
-                        Price = 320000,
-                        OriginalPrice = 850000,
-                        Description = "Đèn LED Taotronics bảo vệ thị lực, có 5 tông màu ánh sáng từ vàng ấm đến trắng sáng và 7 mức cường độ sáng cảm ứng.  (Tình trạng: Độ mới: 93% - Rất tốt - Mọi chế độ sáng và cổng sạc USB tích hợp hoạt động bình thường, chân đế nặng chắc chắn không lỏng lẻo.)",
-                        Image = "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&q=80\",\"https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=600&q=80\",\"https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userThanh,
-                        SellerName = "Chung Tấn Thành",
-                        SellerPhone = "0908765432",
-                        SellerEmail = "thanh@thriftshop.vn",
-                        SellerAddress = "Quận 1, TP. Hồ Chí Minh",
-                        SellerAvatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
-                        Featured = false,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("07/10/2026 13:10", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Bút máy Parker Jotter London vỏ thép không gỉ",
-                        CategoryId = catVPP,
-                        CategoryName = "Văn phòng phẩm",
-                        Price = 280000,
-                        OriginalPrice = 680000,
-                        Description = "Bút máy cao cấp Parker Jotter sản xuất tại Pháp. Thiết kế mũi tên đặc trưng, vỏ kim loại sáng bóng thanh lịch, phù hợp ký hợp đồng hoặc làm quà tặng.  (Tình trạng: Độ mới: 95% - Rất mới - Ngòi bút F trơn mượt không cào giấy, bơm mực piston chính hãng đi kèm, vỏ bút không trầy xước.)",
-                        Image = "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=600&q=80\",\"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80\",\"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userDuong,
-                        SellerName = "Đặng Thuỳ Dương",
-                        SellerPhone = "0918765432",
-                        SellerEmail = "duong.dang@thriftshop.vn",
-                        SellerAddress = "Quận Phú Nhuận, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
-                        Featured = false,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("08/10/2026 15:00", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Đàn Ukulele Concert Mahalo gỗ Mahogany tự nhiên",
-                        CategoryId = catKhac,
-                        CategoryName = "Khác",
-                        Price = 390000,
-                        OriginalPrice = 950000,
-                        Description = "Cây ukulele size Concert 23 inch dễ bấm cho người mới tập hoặc mang đi du lịch dã ngoại. Âm thanh ấm áp, mộc mạc và tươi vui.  (Tình trạng: Độ mới: 94% - Rất tốt - Gỗ khô vang âm chuẩn, khóa đàn chắc chắn giữ dây tốt, dây Aquila chính hãng Ý, tặng bao da 3 lớp.)",
-                        Image = "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80\",\"https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80\",\"https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userTri,
-                        SellerName = "Hoàng Minh Trí",
-                        SellerPhone = "0987654321",
-                        SellerEmail = "tri.hoang@thriftshop.vn",
-                        SellerAddress = "Quận 3, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
-                        Featured = false,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("09/10/2026 17:20", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Mô hình Figure One Piece Luffy Gear 4 chính hãng Bandai",
-                        CategoryId = catKhac,
-                        CategoryName = "Khác",
-                        Price = 450000,
-                        OriginalPrice = 1100000,
-                        Description = "Mô hình nhân vật Luffy trạng thái Gear 4 Snakeman siêu ngầu. Chi tiết sơn sắc nét, cơ bắp sống động, hiệu ứng khói chân thực.  (Tình trạng: Độ mới: 98% - Like New - Mô hình trưng tủ kính không bụi bẩn, không trầy sơn, đủ hộp và đế chống zin của hãng.)",
-                        Image = "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&q=80\",\"https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80\",\"https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userThanh,
-                        SellerName = "Chung Tấn Thành",
-                        SellerPhone = "0908765432",
-                        SellerEmail = "thanh@thriftshop.vn",
-                        SellerAddress = "Quận 1, TP. Hồ Chí Minh",
-                        SellerAvatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
-                        Featured = false,
-                        Status = "approved",
-                        IsSold = false,
-                        CreatedAt = DateTime.ParseExact("10/10/2026 12:00", "dd/MM/yyyy HH:mm", null)
-                    }
-                };
-                context.Products.AddRange(products);
-                context.SaveChanges();
-            }
-
-            // 4. SEED PENDING POSTS (Tin chờ Admin duyệt)
-            if (!context.PendingPosts.Any())
-            {
-                var pendingPosts = new List<PendingPost>
-                {
-                    new()
-                    {
-                        Name = "Bàn phím cơ không dây Keychron K2 v2 nhôm RGB",
-                        CategoryId = catDienTu,
-                        CategoryName = "Đồ điện tử",
-                        Price = 1150000,
-                        OriginalPrice = 2100000,
-                        Description = "Bàn phím cơ nhỏ gọn layout 75% cho cả Mac và Windows. Ít dùng do công ty cấp máy mới, còn nguyên tem bảo hành phongvu.  (Tình trạng: Độ mới: 95% - Rất tốt - Gateron Red Switch êm ái gõ văn phòng, pin kết nối bluetooth 3 thiết bị ngon lành, kèm cáp Type-C zin và keycap puller.)",
-                        Image = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80\",\"https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80\",\"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = 2,
-                        SellerName = "Người Dùng Mẫu",
-                        SellerPhone = "0901234567",
-                        SellerEmail = "user@thriftshop.vn",
-                        SellerAddress = "Quận 1, TP. Hồ Chí Minh",
-                        SellerAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
-                        Status = "pending",
-                        CreatedAt = DateTime.ParseExact("12/10/2026 14:00", "dd/MM/yyyy HH:mm", null)
-                    },
-                    new()
-                    {
-                        Name = "Áo Sweater Polo Ralph Lauren Vintage thêu ngựa nhỏ",
-                        CategoryId = catThoiTrang,
-                        CategoryName = "Thời trang",
-                        Price = 350000,
-                        OriginalPrice = 1200000,
-                        Description = "Sweater Ralph Lauren xách tay Nhật. Form oversize thoải mái unisex cả nam nữ đều mặc đẹp.  (Tình trạng: Độ mới: 90% - Tốt - Chất len dệt kim mỏng nhẹ mặc mùa thu mát mẻ, bo chun tay áo còn co giãn tốt, không thủng rách.)",
-                        Image = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80",
-                        ImagesJson = "[\"https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80\",\"https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&q=80\",\"https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80\"]",
-                        Stock = 1,
-                        SellerId = userTri,
-                        SellerName = "Hoàng Minh Trí",
-                        SellerPhone = "0987654321",
-                        SellerEmail = "tri.hoang@thriftshop.vn",
-                        SellerAddress = "Quận 3, TP.HCM",
-                        SellerAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
-                        Status = "pending",
-                        CreatedAt = DateTime.ParseExact("12/10/2026 15:30", "dd/MM/yyyy HH:mm", null)
-                    }
-                };
-                context.PendingPosts.AddRange(pendingPosts);
-                context.SaveChanges();
-            }
-
-            // 5. SEED ORDERS
-            if (!context.Orders.Any())
-            {
-                var sampleOrder = new Order
-                {
-                    CustName = "Nguyễn Anh Khoa",
-                    CustPhone = "0901234567",
-                    CustEmail = "user@thriftshop.vn",
-                    CustAddress = "Quận 1, TP. Hồ Chí Minh",
-                    PaymentMethod = "COD - Thanh toán khi nhận hàng",
-                    Status = "pending",
-                    OrderDate = DateTime.Now.AddDays(-1),
-                    TotalAmount = 450000,
-                    Notes = "Đồng kiểm ngoại hình khi nhận hàng",
-                    UserId = userList.FirstOrDefault(u => u.Email == "user@thriftshop.vn")?.Id ?? 2,
-                    OrderItems = new List<OrderItem>
-                    {
-                        new()
-                        {
-                            ProductId = 1,
-                            ProductName = "Bàn phím cơ DareU EK87 Tenkeyless Blue Switch cũ",
-                            Image = "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80",
-                            Price = 450000,
-                            Quantity = 1,
-                            Subtotal = 450000
-                        }
-                    }
-                };
-                context.Orders.Add(sampleOrder);
+                context.Users.Add(admin);
                 context.SaveChanges();
             }
         }

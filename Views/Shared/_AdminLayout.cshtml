@@ -1,120 +1,175 @@
-@inject ThriftShop.Data.ThriftDbContext _dbAdminLayout
-@{
-    int realServerPendingCount = 0;
-    try
-    {
-        realServerPendingCount = _dbAdminLayout.PendingPosts.Count(p => p.Status == "pending");
-    }
-    catch { }
-}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ThriftShop Quản Trị</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - Trang Quản Trị MyStore</title>
+    <!-- Google Fonts (Be Vietnam Pro) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap 4.5.2 CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
-    <!-- Font Awesome 5 Free -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Admin CSS -->
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <style>
+        .admin-nav-bar {
+            background-color: #212529;
+            padding: 14px 0;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .admin-nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .admin-brand {
+            color: #ffffff !important;
+            font-size: 22px;
+            font-weight: bold;
+            text-decoration: none !important;
+            margin-right: 35px;
+        }
+
+        .admin-menu-list {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .admin-menu-list a {
+            color: #ced4da !important;
+            text-decoration: none !important;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .admin-menu-list a:hover {
+            color: #ffffff !important;
+            background-color: #343a40;
+        }
+
+        .admin-link-client {
+            color: #20c997 !important;
+            text-decoration: none !important;
+            font-weight: 600;
+            padding: 8px 14px;
+            border: 1px solid #20c997;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .admin-link-client:hover {
+            background-color: #20c997;
+            color: #ffffff !important;
+        }
+
+        /* Banner & Styling theo biểu mẫu slide */
+        h2.bg-success {
+            background-color: #d8ebd2 !important;
+            color: #2d572c !important;
+            padding: 12px 18px !important;
+            margin-top: 15px !important;
+            margin-bottom: 20px !important;
+            border-radius: 4px !important;
+            font-size: 24px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+        }
+
+        th.bg-success, thead.table-success, thead th {
+            background-color: #d8ebd2 !important;
+            color: #2d572c !important;
+            font-weight: bold !important;
+        }
+
+        table.bg-info {
+            background-color: #eaf4fb !important;
+        }
+
+        .search-container {
+            padding-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .order-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        footer {
+            margin-top: 30px;
+            padding: 20px 0;
+            color: #495057;
+        }
+
+        footer h4 {
+            font-size: 16px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body class="admin-body">
-    <script>
-        window.serverRealPendingCount = @realServerPendingCount;
-    </script>
-    <div class="admin-wrapper">
-        <!-- SIDEBAR -->
-        <div class="admin-sidebar">
-            <div class="sidebar-header">
-                <a asp-controller="Admin" asp-action="Index" class="sidebar-brand">
-                    THRIFTSHOP ADMIN
+    <header class="admin-nav-bar">
+        <div class="container admin-nav-container">
+            <div style="display: flex; align-items: center;">
+                <a asp-controller="Admin" asp-action="Index" class="admin-brand">My Store</a>
+                <ul class="admin-menu-list">
+                    <li><a asp-controller="Admin" asp-action="Index">Home</a></li>
+                    <li><a asp-controller="Admin" asp-action="Categories">Danh mục</a></li>
+                    <li><a asp-controller="Admin" asp-action="Products">Sản phẩm</a></li>
+                    <li><a asp-controller="Admin" asp-action="ApproveProducts">Duyệt tin</a></li>
+                    <li><a asp-controller="Admin" asp-action="Orders">Đơn hàng</a></li>
+                    <li><a asp-controller="Admin" asp-action="Users">Khách hàng</a></li>
+                    <li><a asp-controller="Admin" asp-action="Chat">Tin nhắn / Hỗ trợ</a></li>
+                    <li><a asp-controller="Account" asp-action="Logout">Đăng xuất</a></li>
+                </ul>
+            </div>
+            <div class="ms-auto d-flex align-items-center pe-3">
+                <a href="/" target="_blank" class="btn btn-outline-success btn-sm" 
+                   style="line-height: 1.5; padding: 5px 12px; font-size: 13px; font-weight: 500; border-radius: 4px; white-space: nowrap;">
+                    Về trang chủ Web
                 </a>
             </div>
-            @{
-                var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? "";
-            }
-            <ul class="sidebar-menu">
-                <li class="menu-header">Menu Quản Trị</li>
-                <li class="@(currentAction == "Index" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Index">
-                        Bảng Điều Khiển
-                    </a>
-                </li>
-                <li class="@(currentAction == "ApproveProducts" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="ApproveProducts">
-                        Duyệt Tin Đăng
-                        <span class="badge badge-secondary" id="admin-pending-badge">@realServerPendingCount</span>
-                    </a>
-                </li>
-                <li class="@(currentAction == "Categories" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Categories">
-                        Quản Lý Danh Mục
-                    </a>
-                </li>
-                <li class="@(currentAction == "Products" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Products">
-                        Quản Lý Tin Đăng
-                    </a>
-                </li>
-                <li class="@(currentAction == "Users" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Users">
-                        Quản Lý Người Dùng
-                    </a>
-                </li>
-
-                <li class="menu-header">Hệ Thống</li>
-                <li>
-                    <a asp-controller="Home" asp-action="Index" target="_blank">
-                        Xem Trang Khách Hàng
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Account" asp-action="Logout" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}" style="color: #495057;">
-                        Đăng Xuất
-                    </a>
-                </li>
-            </ul>
         </div>
+    </header>
 
-        <!-- MAIN CONTENT -->
-        <div class="admin-main">
-            <!-- TOPBAR ĐƠN SẮC -->
-            <header class="admin-topbar">
-                <div>
-                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 14.5px;">@ViewData["Title"]</h5>
-                </div>
-                <div class="topbar-right">
-                    <a asp-controller="Admin" asp-action="ApproveProducts" class="text-dark mr-3" style="text-decoration: none;">
-                        Chờ duyệt: <span class="badge badge-secondary" id="admin-topbar-pending-alert">@realServerPendingCount</span>
-                    </a>
-                    <a asp-controller="Home" asp-action="Index" target="_blank" class="text-dark mr-3" style="text-decoration: none;">
-                        Xem website
-                    </a>
-                    <span class="text-muted">
-                        Tài khoản: <strong class="text-dark">admin@thriftshop.vn</strong>
-                    </span>
-                    <a asp-controller="Account" asp-action="Logout" class="text-dark font-weight-bold ml-2" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}">
-                        [Đăng xuất]
-                    </a>
-                </div>
-            </header>
+    <main class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer class="mt-4 pb-4 text-muted">
+            <p>&copy; @DateTime.Now.Year - ThriftShop Secondhand C2C</p>
+            <h4 style="font-size: 16px; font-weight: bold; margin-top: 10px; margin-bottom: 5px;">Contact</h4>
+            <p>Trần Nguyễn Anh Khoa</p>
+        </footer>
+    </main>
 
-            <!-- PAGE CONTENT -->
-            <main class="admin-page-content">
-                @RenderBody()
-            </main>
-        </div>
-    </div>
-
-    <!-- Scripts -->
+    <!-- Core Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- Data & Admin scripts -->
-    <script src="~/js/data.js" asp-append-version="true"></script>
-    <script src="~/js/admin.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using ThriftShop.Common;
 using ThriftShop.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Đăng ký HttpContextAccessor & Session (Quản lý đăng nhập & phân quyền Server-side theo giáo trình)
+// Đăng ký HttpContextAccessor & Session (Quản lý dữ liệu tạm & tương thích ngược)
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -12,6 +14,19 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// Đăng ký dịch vụ Cookie Authentication chuẩn công nghiệp (Persistent Session)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = ".ThriftShop.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromDays(14); // Giữ đăng nhập 14 ngày
+        options.SlidingExpiration = true;              // Tự động gia hạn khi người dùng có hoạt động
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
 
 // Đăng ký DbContext kết nối SQL Server LocalDB (Chuong 08 Entity Framework)
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
@@ -58,11 +73,32 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 
-
 app.UseRouting();
 
-// Sử dụng Session middleware cho xác thực người dùng
+// Middleware xác thực & phân quyền Cookie Authentication (Bắt buộc UseAuthentication trước UseAuthorization)
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Sử dụng Session middleware cho dữ liệu tạm
 app.UseSession();
+
+// Tự động bù đắp (Re-hydrate) dữ liệu Session từ Cookie Claims khi Server vừa Restart
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true && !context.Session.IsLoggedIn())
+    {
+        var idClaim = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(idClaim, out int uid))
+        {
+            context.Session.SetInt32(ThriftShop.Common.SessionExtensions.SessionIdKey, uid);
+            context.Session.SetString(ThriftShop.Common.SessionExtensions.SessionNameKey, context.User.Identity?.Name ?? "");
+            context.Session.SetString(ThriftShop.Common.SessionExtensions.SessionEmailKey, context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "");
+            context.Session.SetString(ThriftShop.Common.SessionExtensions.SessionRoleKey, context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "customer");
+            context.Session.SetString(ThriftShop.Common.SessionExtensions.SessionAvatarKey, context.User.FindFirst("Avatar")?.Value ?? "");
+        }
+    }
+    await next();
+});
 
 app.MapControllerRoute(
     name: "default",

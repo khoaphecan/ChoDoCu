@@ -1,0 +1,69 @@
+@model ThriftShop.Models.Product
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi Tiết Sản Phẩm";
+}
+
+<h2 class="bg-success">CHI TIẾT SẢN PHẨM</h2>
+
+<div class="row">
+    <div class="col-md-4 text-center mb-3">
+        <img id="mainProductImg" src="@Model.DisplayImage" 
+             class="img-fluid rounded border" style="max-height: 320px; width: 100%; object-fit: cover;" alt="@Model.Name"
+             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';" />
+        
+        @if (Model.Images != null && Model.Images.Length > 0)
+        {
+            <div class="d-flex justify-content-center flex-wrap mt-2" style="gap: 6px;">
+                <img src="@Model.DisplayImage" style="width: 48px; height: 48px; object-fit: cover; border: 1px solid #ced4da; cursor: pointer; border-radius: 4px;" 
+                     onclick="document.getElementById('mainProductImg').src = this.src;" title="Ảnh đại diện" />
+                @foreach (var img in Model.Images)
+                {
+                    if (!string.IsNullOrWhiteSpace(img))
+                    {
+                        <img src="@img" style="width: 48px; height: 48px; object-fit: cover; border: 1px solid #ced4da; cursor: pointer; border-radius: 4px;" 
+                             onclick="document.getElementById('mainProductImg').src = this.src;" title="Ảnh chi tiết" />
+                    }
+                }
+            </div>
+            <div class="small text-muted mt-1">Ảnh thực tế do người bán tải lên</div>
+        }
+    </div>
+    <div class="col-md-8">
+        <h3>@Model.Name</h3>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-3">Mã sản phẩm:</dt>
+            <dd class="col-sm-9">#@Model.Id</dd>
+
+            <dt class="col-sm-3">Danh mục:</dt>
+            <dd class="col-sm-9">@(Model.Category?.Name ?? Model.CategoryName)</dd>
+
+            <dt class="col-sm-3">Giá thanh lý:</dt>
+            <dd class="col-sm-9 font-weight-bold" style="color: #2d572c; font-size: 18px;">@Model.Price.ToString("N0") đ</dd>
+
+            <dt class="col-sm-3">Giá mua mới:</dt>
+            <dd class="col-sm-9">@(Model.OriginalPrice > 0 ? Model.OriginalPrice.ToString("N0") + " đ" : "Không cung cấp")</dd>
+
+            <dt class="col-sm-3">Trạng thái:</dt>
+            <dd class="col-sm-9">@(Model.IsSold ? "Đã bán" : "Còn hàng / Đang mở bán")</dd>
+
+            <dt class="col-sm-3">Người bán:</dt>
+            <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.SellerName) ? "Admin" : Model.SellerName)</dd>
+
+            <dt class="col-sm-3">SĐT người bán:</dt>
+            <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.SellerPhone) ? "Chưa cập nhật" : Model.SellerPhone)</dd>
+
+            <dt class="col-sm-3">Khu vực xem đồ:</dt>
+            <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.SellerAddress) ? "Chưa cập nhật" : Model.SellerAddress)</dd>
+
+            <dt class="col-sm-3">Mô tả & Khuyết điểm:</dt>
+            <dd class="col-sm-9" style="white-space: pre-line;">@(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả chi tiết." : Model.Description)</dd>
+        </dl>
+
+        <p class="mt-4">
+            <a asp-action="EditProduct" asp-route-id="@Model.Id" class="btn btn-primary">Sửa</a>
+            <a asp-action="Products" class="btn btn-primary ml-2">Quay lại danh sách</a>
+        </p>
+    </div>
+</div>

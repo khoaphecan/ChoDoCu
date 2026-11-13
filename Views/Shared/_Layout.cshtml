@@ -4,33 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ThriftShop | Website Mua Bán Đồ Cũ Secondhand</title>
-    <!-- Fonts -->
+    <!-- Fonts (Be Vietnam Pro: Chuẩn font tiếng Việt không bị nhảy nét / lệch dấu) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body, h1, h2, h3, h4, h5, h6, input, button, select, textarea, a, span, p, div {
+            font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
+    </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Page Transition -->
     <link rel="stylesheet" href="~/css/page-transition.css" asp-append-version="true" />
     <!-- Custom Style (WebApplication8 aesthetic) -->
     <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
-    <!-- Immediate Synchronous Route Guard for Protected Pages -->
-    <script>
-        (function() {
-            try {
-                var p = window.location.pathname.toLowerCase();
-                var protectedRoutes = ['/cart', '/products/postitem', '/products/mylistings', '/admin', '/account/profile', '/products/favorites'];
-                var isProtected = protectedRoutes.some(function(r) { return p === r || p.indexOf(r + '/') === 0; });
-                if (isProtected) {
-                    var u = localStorage.getItem("thrift_current_user");
-                    if (!u || u === "null" || u === "undefined") {
-                        var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                        window.location.replace('/Account/Login?returnUrl=' + returnUrl);
-                    }
-                }
-            } catch(e) {}
-        })();
-    </script>
 </head>
 <body>
     <!-- HEADER CHUẨN CAMERA917 -->
@@ -43,34 +31,44 @@
 
             <!-- Search Bar -->
             <div class="search">
-                <form class="search-form" id="searchForm" asp-controller="Products" asp-action="Index" method="get">
-                    <input name="search" id="searchInput" type="search" placeholder="Tìm kiếm đồ cũ: quần áo vintage, công nghệ, giày dép, sách cũ..." autocomplete="off">
-                    <button type="submit" aria-label="Tìm kiếm">🔎</button>
+                <form id="globalSearchForm" method="get" action="/" class="search-form search-bar-wrapper">
+                    <input type="text" id="globalSearchInput" name="search" 
+                           value="@Context.Request.Query["search"]"
+                           placeholder="Tìm kiếm đồ cũ: quần áo vintage, công nghệ, giày dép, sách cũ..." 
+                           autocomplete="off" />
+                    @if (!string.IsNullOrEmpty(Context.Request.Query["search"]))
+                    {
+                        <a href="/" id="clearSearchBtn" title="Xóa tìm kiếm" style="position: absolute; right: 46px; top: 50%; transform: translateY(-50%); text-decoration: none; cursor: pointer; color: #9ca3af; font-size: 15px; font-weight: bold; padding: 4px; z-index: 2;">✕</a>
+                    }
+                    <button type="submit" id="btnGlobalSearch" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px;" aria-label="Tìm kiếm">
+                        🔍
+                    </button>
                 </form>
             </div>
 
             <!-- User Actions -->
             <div class="user">
-                <!-- Người dùng & Tài khoản: RENDER TỪ SERVER-SIDE SESSION (ASP.NET MVC) -->
+                <!-- Người dùng & Tài khoản: RENDER TỪ COOKIE AUTH & SERVER SESSION -->
+                @{
+                    bool isUserLoggedIn = (User.Identity != null && User.Identity.IsAuthenticated) || Context.Session.IsLoggedIn();
+                    string displayName = Context.Session.GetUserName() ?? User.Identity?.Name ?? "Thành viên";
+                    string displayAvatar = Context.Session.GetUserAvatar() ?? User.FindFirst("Avatar")?.Value ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
+                    bool isUserAdmin = User.IsInRole("admin") || (User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value == "admin@thriftshop.vn") || Context.Session.IsAdmin();
+                }
                 <div id="user-header-auth" style="display: inline-flex; align-items: center; gap: 12px;">
-                    @if (Context.Session.IsLoggedIn())
+                    @if (isUserLoggedIn)
                     {
                         <div class="dropdown" style="position: relative; display: inline-block;">
-                            <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #18181b; font-weight: 600;">
-                                <img src="@(Context.Session.GetUserAvatar() ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80")" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ff3c00;">
-                                <span>@Context.Session.GetUserName()</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" style="min-width: 200px; border-radius: 10px; margin-top: 8px;">
-                                <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
-                                    <i class="fas fa-user-cog mr-2"></i>Cài đặt tài khoản
-                                </a>
-                                <a class="dropdown-item" asp-controller="Products" asp-action="Favorites">
-                                    <i class="fas fa-heart mr-2 text-danger"></i>Tin đã yêu thích
-                                </a>
-                                <a class="dropdown-item" asp-controller="Account" asp-action="SellerProfile" asp-route-userId="@Context.Session.GetUserId()">
-                                    <i class="fas fa-id-badge mr-2"></i>Trang cá nhân của tôi
-                                </a>
-                                @if (Context.Session.IsAdmin())
+                            <button class="btn btn-link dropdown-toggle text-white d-flex align-items-center no-transition" type="button" id="userMenuBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-decoration: none; box-shadow: none; padding: 4px 8px; border: none; background: transparent;">
+                                <img src="@displayAvatar" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #ff3c00; margin-right: 8px;">
+                                <span style="color: #ffffff !important; font-weight: 600; font-size: 14px;">@displayName</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right shadow border-0" aria-labelledby="userMenuBtn" style="border-radius: 10px; margin-top: 8px; z-index: 1050; min-width: 200px;">
+                                <a class="dropdown-item no-transition" asp-controller="Orders" asp-action="MyOrders"><i class="fas fa-receipt mr-2 text-success"></i>Đơn hàng của tôi</a>
+                                <a class="dropdown-item no-transition" asp-controller="Products" asp-action="MyListings"><i class="fas fa-list-alt mr-2 text-primary"></i>Tin của tôi</a>
+                                <a class="dropdown-item no-transition" asp-controller="Account" asp-action="Profile"><i class="fas fa-user-cog mr-2 text-secondary"></i>Cài đặt tài khoản</a>
+                                <a class="dropdown-item no-transition" asp-controller="Products" asp-action="Favorites"><i class="fas fa-heart mr-2 text-danger"></i>Tin đã yêu thích</a>
+                                @if (isUserAdmin)
                                 {
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item text-warning font-weight-bold" asp-controller="Admin" asp-action="Index">
@@ -78,39 +76,20 @@
                                     </a>
                                 }
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout" onclick="try { localStorage.removeItem('thrift_current_user'); sessionStorage.clear(); } catch(e){}">
-                                    <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
-                                </a>
+                                <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout"><i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất</a>
                             </div>
                         </div>
-                        <script>
-                            try {
-                                localStorage.setItem("thrift_current_user", JSON.stringify({
-                                    id: @Context.Session.GetUserId(),
-                                    name: "@Html.Raw(Context.Session.GetUserName())",
-                                    email: "@Html.Raw(Context.Session.GetUserEmail())",
-                                    role: "@Html.Raw(Context.Session.GetUserRole())",
-                                    avatar: "@Html.Raw(Context.Session.GetUserAvatar())"
-                                }));
-                            } catch(e) {}
-                        </script>
                     }
                     else
                     {
-                        <a asp-controller="Account" asp-action="Login" id="auth-link">Đăng nhập</a>
-                        <a asp-controller="Account" asp-action="Register" id="register-link">Đăng ký</a>
-                        <script>
-                            try {
-                                localStorage.removeItem("thrift_current_user");
-                                sessionStorage.removeItem("thrift_session_active");
-                            } catch(e) {}
-                        </script>
+                        <a asp-controller="Account" asp-action="Login" style="color: #ffffff; text-decoration: none; font-weight: 600; margin-right: 8px;">Đăng nhập</a>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-sm btn-outline-light font-weight-bold" style="border-radius: 20px; padding: 4px 14px;">Đăng ký</a>
                     }
                 </div>
 
                 <!-- Liên hệ & Hộp thư Chat -->
-                <a asp-controller="Cart" asp-action="Index" class="cart" title="Liên hệ & Hộp thư Chat" onclick="return handleCheckAuthNav(event, '/Cart');">
-                    💬 Liên hệ <span class="cart-count" id="cartCount">0</span>
+                <a asp-controller="Cart" asp-action="Index" class="cart" title="Liên hệ & Hộp thư Chat">
+                    💬 Liên hệ
                 </a>
             </div>
         </div>
@@ -119,8 +98,9 @@
         <nav>
             <ul>
                 <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                <li><a asp-controller="Products" asp-action="PostItem" onclick="return handleCheckAuthNav(event, '/Products/PostItem');">Đăng bán đồ cũ</a></li>
-                <li><a asp-controller="Products" asp-action="MyListings" onclick="return handleCheckAuthNav(event, '/Products/MyListings');">Tin của tôi</a></li>
+                <li><a asp-controller="Products" asp-action="PostItem">Đăng bán đồ cũ</a></li>
+                <li><a asp-controller="Products" asp-action="MyListings">Tin của tôi</a></li>
+                <li><a asp-controller="Orders" asp-action="MyOrders">Đơn hàng của tôi</a></li>
                 <li><a asp-controller="Home" asp-action="Warranty">Chính sách bảo đảm</a></li>
             </ul>
         </nav>
@@ -151,6 +131,7 @@
                     <li><a asp-controller="Products" asp-action="Index">Tất Cả Tin Bán Đồ Cũ</a></li>
                     <li><a asp-controller="Products" asp-action="PostItem">Đăng Bán Đồ Cũ Mới</a></li>
                     <li><a asp-controller="Products" asp-action="MyListings">Quản Lý Tin Của Tôi</a></li>
+                    <li><a asp-controller="Orders" asp-action="MyOrders">Đơn Hàng Của Tôi</a></li>
                     <li><a asp-controller="Products" asp-action="Favorites">Tin Đã Yêu Thích</a></li>
                 </ul>
             </div>
@@ -162,7 +143,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 ThriftShop - Đề tài 30: Website Mua Bán Đồ Cũ Secondhand.</p>
+            <p>&copy; 2026 ThriftShop</p>
         </div>
     </footer>
 
@@ -210,6 +191,12 @@
             {
                 <text>
                 showToast("@Html.Raw(TempData["ErrorMessage"])", "error");
+                </text>
+            }
+            @if (TempData["InfoMessage"] != null)
+            {
+                <text>
+                showToast("@Html.Raw(TempData["InfoMessage"])", "info");
                 </text>
             }
         });

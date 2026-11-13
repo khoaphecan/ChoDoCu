@@ -1,165 +1,140 @@
 /* ==============================================================
-   GIAO DIỆN QUẢN TRỊ ADMIN ĐƠN SẮC TỐI GIẢN (MONOCHROME)
-   Phong cách bài tập web cơ bản: chỉ đen, trắng, xám
-   Không màu mè, không hiệu ứng rườm rà, đúng chuẩn HTML/CSS nhập môn
+   GIAO DIỆN QUẢN TRỊ ADMIN - NAVBAR NGANG ("MY STORE" STYLE)
+   Phong cách chuẩn bài tập thực hành ASP.NET MVC LTW
+   Thanh Navbar ngang trên cùng + Khối tiêu đề Pastel Green
    ============================================================== */
 
 body.admin-body {
-  background-color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f4f6f9;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: #212529;
   font-size: 13.5px;
   margin: 0;
   padding: 0;
 }
 
-.admin-wrapper {
-  display: flex;
-  min-height: 100vh;
+/* NAVBAR NGANG TRÊN CÙNG */
+.admin-navbar {
+  background-color: #212529 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  padding: 8px 16px;
 }
 
-/* Sidebar bên trái đơn sắc */
-.admin-sidebar {
-  width: 220px;
-  background-color: #f8f9fa;
-  border-right: 1px solid #dee2e6;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  padding: 14px 15px;
-  border-bottom: 1px solid #dee2e6;
-  background-color: #e9ecef;
-  text-align: center;
-}
-
-.sidebar-brand {
-  font-size: 15px;
-  font-weight: bold;
-  color: #212529;
-  text-decoration: none !important;
+.admin-navbar .navbar-brand {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff !important;
   letter-spacing: 0.5px;
 }
 
-.sidebar-menu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex: 1;
+.admin-navbar .nav-link {
+  color: #ced4da !important;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 12px !important;
+  border-radius: 4px;
+  transition: all 0.15s ease;
 }
 
-.sidebar-menu .menu-header {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #6c757d;
-  padding: 10px 15px 4px 15px;
-  font-weight: bold;
-  background: #f1f3f5;
-  border-top: 1px solid #dee2e6;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.sidebar-menu li a {
-  display: flex;
-  align-items: center;
-  padding: 10px 15px;
-  color: #212529;
-  text-decoration: none;
-  border-bottom: 1px solid #e9ecef;
-  font-size: 13px;
-}
-
-.sidebar-menu li a:hover {
-  background-color: #dee2e6;
-  color: #000000;
-  text-decoration: none;
-}
-
-.sidebar-menu li.active a {
-  background-color: #343a40 !important;
+.admin-navbar .nav-link:hover {
   color: #ffffff !important;
-  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-menu li.active a i {
+.admin-navbar .nav-item.active .nav-link {
   color: #ffffff !important;
+  background-color: #343a40;
+  font-weight: 700;
 }
 
-.sidebar-menu li a i {
-  width: 18px;
-  font-size: 13px;
-  margin-right: 8px;
-  color: #495057 !important;
+/* TIÊU ĐỀ KHỐI PASTEL GREEN ("MY STORE" STYLE) */
+h2.bg-success {
+  background-color: #d8ebd2 !important;
+  color: #2d572c !important;
+  padding: 12px 18px !important;
+  margin-top: 15px !important;
+  margin-bottom: 20px !important;
+  border-radius: 4px !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
 }
 
-.sidebar-menu .badge {
-  margin-left: auto;
-  font-size: 11px;
-  background-color: #6c757d !important;
-  color: #ffffff !important;
+th.bg-success, thead.table-success {
+  background-color: #d8ebd2 !important;
+  color: #2d572c !important;
 }
 
-/* Vùng nội dung chính bên phải */
-.admin-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
+.admin-section-banner, .page-title-box {
+  background-color: #dff0d8 !important;
+  color: #3c763d !important;
+  padding: 12px 20px !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  border-radius: 4px !important;
+  margin-bottom: 20px !important;
+  text-transform: uppercase !important;
+  border: 1px solid #d6e9c6 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
 }
 
-/* Topbar đơn sắc */
-.admin-topbar {
-  background-color: #f8f9fa;
-  height: 48px;
-  border-bottom: 1px solid #dee2e6;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 13px;
-}
-
-.admin-page-content {
-  padding: 18px 20px;
-  flex: 1;
-  background-color: #ffffff;
-}
-
-.page-title-box {
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.page-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #212529;
-  margin: 0;
+.admin-section-banner h1, .page-title-box h1, .page-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #3c763d !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px;
 }
 
 .page-breadcrumb {
-  font-size: 12px;
-  color: #6c757d;
+  display: none !important;
 }
 
-/* Khung card đơn sắc */
-.admin-card {
+/* BẢNG DỮ LIỆU CHUẨN BOOTSTRAP */
+.table {
+  background-color: #ffffff;
+  margin-bottom: 0;
+}
+
+.table-bordered {
+  border: 1px solid #dee2e6;
+}
+
+.table thead th, .table-bordered thead th, .thead-light th {
+  background-color: #f1f3f5 !important;
+  color: #333333 !important;
+  text-transform: uppercase !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  vertical-align: middle !important;
+  padding: 10px 12px;
+}
+
+.table td {
+  vertical-align: middle !important;
+  font-size: 13.5px !important;
+  padding: 10px 12px;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Khung card */
+.admin-card, .card {
   background: #ffffff;
   border: 1px solid #dee2e6;
+  border-radius: 4px;
   margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
-.admin-card-header {
-  padding: 9px 15px;
+.admin-card-header, .card-header {
+  padding: 10px 16px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
   display: flex;

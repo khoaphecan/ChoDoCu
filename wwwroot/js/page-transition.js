@@ -1,73 +1,72 @@
-﻿/* =========================================
+/* =========================================
    CAMERA917 - PAGE TRANSITION
 ========================================= */
 
-document.addEventListener("DOMContentLoaded", function () {
+(function () {
+    function restorePageVisibility() {
+        if (document.body) {
+            document.body.classList.remove("page-exit");
+            document.body.classList.add("page-loaded");
+            document.body.style.opacity = "1";
+        }
+    }
 
-    /* ================================
-       HIỆU ỨNG KHI TRANG VỪA MỞ
-    ================================= */
+    // Khôi phục ngay lập tức
+    restorePageVisibility();
 
-    requestAnimationFrame(function () {
+    document.addEventListener("DOMContentLoaded", function () {
+        restorePageVisibility();
 
-        document.body.classList.add("page-loaded");
-
-    });
-
-
-    /* ================================
-       HIỆU ỨNG KHI BẤM LINK
-    ================================= */
-
-    document.querySelectorAll("a").forEach(function (link) {
-
-        link.addEventListener("click", function (event) {
-
-            const href = this.getAttribute("href");
-
-
-            /* Không xử lý link đặc biệt */
-
-            if (
-                !href ||
-                href.startsWith("#") ||
-                href.startsWith("http") ||
-                href.startsWith("mailto:") ||
-                href.startsWith("tel:")
-            ) {
-                return;
-            }
-
-
-            /* Nếu mở tab mới thì bỏ qua */
-
-            if (this.target === "_blank") {
-                return;
-            }
-
-
-            /* Ngăn chuyển trang ngay */
-
-            event.preventDefault();
-
-
-            /* Chạy hiệu ứng thoát */
-
-            document.body.classList.remove("page-loaded");
-
-            document.body.classList.add("page-exit");
-
-
-            /* Chờ animation xong rồi chuyển trang */
-
-            setTimeout(function () {
-
-                window.location.href = href;
-
-            }, 350);
-
+        /* Phục hồi giao diện khi nhấn Back / Forward trên trình duyệt */
+        window.addEventListener("pageshow", function (event) {
+            restorePageVisibility();
         });
 
-    });
+        /* ================================
+           HIỆU ỨNG KHI BẤM LINK
+        ================================= */
+        document.querySelectorAll("a").forEach(function (link) {
+            link.addEventListener("click", function (event) {
+                const href = this.getAttribute("href");
 
-});
+                /* BỎ QUA HOÀN TOÀN: link menu User, dropdown, header, nav, tab mới, script */
+                if (
+                    !href ||
+                    href.startsWith("#") ||
+                    href.startsWith("http") ||
+                    href.startsWith("mailto:") ||
+                    href.startsWith("tel:") ||
+                    href.startsWith("javascript:") ||
+                    this.target === "_blank" ||
+                    this.classList.contains("no-transition") ||
+                    this.classList.contains("dropdown-item") ||
+                    this.classList.contains("dropdown-toggle") ||
+                    this.hasAttribute("data-toggle") ||
+                    this.closest(".dropdown") ||
+                    this.closest(".dropdown-menu") ||
+                    this.closest("header") ||
+                    this.closest("nav")
+                ) {
+                    return;
+                }
+
+                /* Ngăn chuyển trang tức thì */
+                event.preventDefault();
+
+                /* Chạy hiệu ứng thoát nhẹ nhàng */
+                document.body.classList.remove("page-loaded");
+                document.body.classList.add("page-exit");
+
+                /* Chuyển trang sau 180ms */
+                setTimeout(function () {
+                    window.location.href = href;
+                }, 180);
+
+                /* Bảo hiểm chống kẹt trắng trang: tự động hồi phục nếu sau 1.5s chưa chuyển */
+                setTimeout(function () {
+                    restorePageVisibility();
+                }, 1500);
+            });
+        });
+    });
+})();

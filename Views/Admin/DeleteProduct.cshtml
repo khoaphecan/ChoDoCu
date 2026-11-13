@@ -1,0 +1,44 @@
+@model ThriftShop.Models.Product
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Xóa Sản Phẩm";
+}
+
+<h2 class="bg-success">XÓA SẢN PHẨM</h2>
+
+<h4 class="alert alert-danger">Bạn thực sự muốn xóa sản phẩm này à?</h4>
+
+<div class="container-fluid mb-4">
+    <div class="row bg-info p-3 rounded" style="background-color: #eaf4fb !important;">
+        <div class="col-md-3 text-center">
+            <img src="@Model.DisplayImage" 
+                 style="height: 200px; width: 200px; object-fit: cover; border-radius: 4px;" alt="@Model.Name"
+                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200';" />
+        </div>
+        <div class="col-md-9 bg-info" style="background-color: #eaf4fb !important;">
+            <dl class="row">
+                <dt class="col-sm-3 font-weight-bold">Tên sản phẩm</dt>
+                <dd class="col-sm-9">@Model.Name</dd>
+
+                <dt class="col-sm-3 font-weight-bold">Mô tả</dt>
+                <dd class="col-sm-9">@Model.Description</dd>
+
+                <dt class="col-sm-3 font-weight-bold">Đơn giá</dt>
+                <dd class="col-sm-9">@Model.Price.ToString("N0") đ</dd>
+
+                <dt class="col-sm-3 font-weight-bold">Trạng thái</dt>
+                <dd class="col-sm-9">@(Model.IsSold ? "Đã bán" : "Còn hàng / Đang mở bán")</dd>
+
+                <dt class="col-sm-3 font-weight-bold">Danh mục</dt>
+                <dd class="col-sm-9">@(Model.Category?.Name ?? Model.CategoryName)</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<form asp-controller="Admin" asp-action="DeleteProduct" method="post" class="form-actions no-color mt-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="submit" value="Xóa" class="btn btn-primary" />
+    <a asp-controller="Admin" asp-action="Products" class="btn btn-primary">Quay lại danh sách</a>
+</form>

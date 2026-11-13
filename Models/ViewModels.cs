@@ -24,26 +24,9 @@ namespace ThriftShop.Models
         public bool IsFavorite { get; set; }
     }
 
-    public class AdminDashboardViewModel
-    {
-        public int PendingCount { get; set; }
-        public int CategoriesCount { get; set; }
-        public int ProductsCount { get; set; }
-        public int UsersCount { get; set; }
-        public List<PendingPost> RecentPending { get; set; } = new();
-        public List<Product> RecentProducts { get; set; } = new();
-    }
-
     public class SellerProfileViewModel
     {
         public User User { get; set; } = new();
         public List<Product> ActiveProducts { get; set; } = new();
-    }
-
-    public class ChatThreadViewModel
-    {
-        public Product Product { get; set; } = new();
-        public User OtherUser { get; set; } = new();
-        public List<ChatMessage> Messages { get; set; } = new();
     }
 }

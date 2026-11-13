@@ -1,0 +1,78 @@
+@model ThriftShop.Models.Order
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Xóa Đơn Hàng";
+}
+
+<h2 class="bg-success">XÓA ĐƠN HÀNG #@Model.Id</h2>
+
+<h4 class="alert alert-danger">Bạn có chắc chắn muốn xóa đơn hàng này không?</h4>
+
+<div class="card mb-4">
+    <div class="card-header bg-info font-weight-bold" style="background-color: #d8ebd2 !important; color: #2d572c;">
+        Thông Tin Đơn Hàng
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 font-weight-bold">Mã đơn hàng:</dt>
+            <dd class="col-sm-9">#@Model.Id</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Ngày đặt hàng:</dt>
+            <dd class="col-sm-9">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Khách hàng:</dt>
+            <dd class="col-sm-9">@Model.CustName</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Số điện thoại:</dt>
+            <dd class="col-sm-9">@Model.CustPhone</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Địa chỉ giao hàng:</dt>
+            <dd class="col-sm-9">@Model.CustAddress</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Trạng thái:</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+
+            <dt class="col-sm-3 font-weight-bold">Tổng tiền:</dt>
+            <dd class="col-sm-9 font-weight-bold" style="font-size: 18px;">@Model.TotalAmount.ToString("N0") đ</dd>
+        </dl>
+    </div>
+</div>
+
+<h3 style="color: #2d572c;" class="mb-3">DANH SÁCH MẶT HÀNG TRONG ĐƠN</h3>
+<table class="table table-bordered">
+    <thead class="table-success" style="background-color: #d8ebd2;">
+        <tr>
+            <th class="bg-success">Tên sản phẩm</th>
+            <th class="bg-success text-center" style="width: 100px;">Số lượng</th>
+            <th class="bg-success" style="width: 150px;">Đơn giá</th>
+            <th class="bg-success" style="width: 150px;">Thành tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.OrderItems != null && Model.OrderItems.Any())
+        {
+            foreach (var detail in Model.OrderItems)
+            {
+                <tr>
+                    <td>@detail.ProductName</td>
+                    <td class="text-center">@detail.Quantity</td>
+                    <td>@detail.Price.ToString("N0") đ</td>
+                    <td>@((detail.Quantity * detail.Price).ToString("N0")) đ</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" class="text-center text-muted">Không có chi tiết mặt hàng</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<form asp-controller="Admin" asp-action="DeleteOrder" method="post" class="form-actions no-color mt-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="submit" value="Xóa đơn hàng" class="btn btn-danger" />
+    <a asp-controller="Admin" asp-action="Orders" class="btn btn-primary">Quay lại danh sách</a>
+</form>

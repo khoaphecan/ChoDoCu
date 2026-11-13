@@ -64,7 +64,7 @@ namespace ThriftShop.Models.DTOs
         public string ItemsJson { get; set; } = "[]";
 
         [Required(ErrorMessage = "Vui lòng cung cấp tổng tiền thanh toán")]
-        [Range(1000, 1000000000, ErrorMessage = "Tổng tiền thanh toán không hợp lệ")]
+        [Range(0.0, 999999999999.0, ErrorMessage = "Tổng tiền thanh toán phải từ 0 đến 999 tỷ đồng.")]
         [JsonPropertyName("totalAmount")]
         public decimal TotalAmount { get; set; }
     }

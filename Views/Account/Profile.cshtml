@@ -1,19 +1,17 @@
+@model ThriftShop.Models.User
 @{
     ViewData["Title"] = "Thiết Lập Hồ Sơ & Cài Đặt Tài Khoản - ThriftShop";
+    var userJson = Model != null ? System.Text.Json.JsonSerializer.Serialize(new {
+        id = Model.Id,
+        name = Model.FullName,
+        email = Model.Email,
+        phone = Model.Phone,
+        address = Model.Address,
+        avatar = Model.Avatar,
+        bio = Model.Bio,
+        role = Model.Role
+    }) : "null";
 }
-
-<!-- Route Guard: Chuyển hướng ngay nếu chưa đăng nhập -->
-<script>
-    (function() {
-        try {
-            var u = localStorage.getItem("thrift_current_user");
-            if (!u || u === "null" || u === "undefined") {
-                var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                window.location.replace('/Account/Login?returnUrl=' + returnUrl);
-            }
-        } catch(e) {}
-    })();
-</script>
 
 <style>
     .profile-page-wrapper {
@@ -467,14 +465,14 @@
         "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&q=80"
     ];
 
-    function initProfilePage() {
-        if (typeof ThriftDB === 'undefined' || !ThriftDB.isLoggedIn()) {
-            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
-            return;
-        }
+    const SERVER_USER = @Html.Raw(userJson);
 
-        const user = ThriftDB.getCurrentUser();
-        if (!user) return;
+    function initProfilePage() {
+        let user = SERVER_USER;
+        if (!user && typeof ThriftDB !== 'undefined') {
+            user = ThriftDB.getCurrentUser();
+        }
+        if (!user) user = {};
 
         // Điền dữ liệu vào form
         document.getElementById('inputFullName').value = user.name || '';
@@ -545,27 +543,32 @@
         }
     }
 
+    let selectedAvatarFile = null;
+
     function handleAvatarFileSelect(e) {
-        const file = e.target.files[0];
+        const file = e.target.files && e.target.files[0];
         if (!file) return;
 
-        if (file.size > 3 * 1024 * 1024) {
-            alert("Vui lòng chọn ảnh có dung lượng dưới 3MB!");
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Vui lòng chọn ảnh có dung lượng dưới 5MB!");
             return;
         }
+
+        selectedAvatarFile = file;
 
         const reader = new FileReader();
         reader.onload = function(evt) {
             currentAvatarData = evt.target.result;
             document.getElementById('avatarPreview').src = currentAvatarData;
             if (typeof showToast === 'function') {
-                showToast("Đã tải ảnh đại diện lên! Nhấn 'Lưu thay đổi' để hoàn tất.", "info");
+                showToast("Đã chọn ảnh đại diện! Nhấn 'Lưu thay đổi' để hoàn tất.", "info");
             }
         };
         reader.readAsDataURL(file);
     }
 
     function setPresetAvatar(idx) {
+        selectedAvatarFile = null;
         const url = PRESET_AVATARS[idx - 1] || PRESET_AVATARS[0];
         currentAvatarData = url;
         document.getElementById('avatarPreview').src = url;
@@ -574,6 +577,7 @@
     function promptAvatarUrl() {
         const url = prompt("Nhập đường link (URL) ảnh đại diện của bạn:", currentAvatarData);
         if (url && url.trim().length > 5) {
+            selectedAvatarFile = null;
             currentAvatarData = url.trim();
             document.getElementById('avatarPreview').src = currentAvatarData;
         }
@@ -596,6 +600,10 @@
         formData.append('phone', phone);
         formData.append('address', address);
         formData.append('bio', bio);
+
+        if (selectedAvatarFile) {
+            formData.append('avatarFile', selectedAvatarFile);
+        }
         if (currentAvatarData) {
             formData.append('avatar', currentAvatarData);
         }
@@ -607,13 +615,24 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                const finalAvatar = (data.user && data.user.avatar) ? data.user.avatar : currentAvatarData;
+                const finalName = (data.user && data.user.name) ? data.user.name : fullName;
+
+                // Cập nhật ngay avatar & tên trên Navbar góc phải
+                document.querySelectorAll('#userMenuBtn img, #user-header-auth img').forEach(img => {
+                    img.src = finalAvatar;
+                });
+                document.querySelectorAll('#userMenuBtn span, #user-header-auth span').forEach(sp => {
+                    sp.textContent = finalName;
+                });
+
                 if (typeof ThriftDB !== 'undefined') {
                     ThriftDB.updateCurrentUser({
-                        name: fullName,
+                        name: finalName,
                         phone: phone,
                         address: address,
                         bio: bio,
-                        avatar: currentAvatarData
+                        avatar: finalAvatar
                     });
                 }
                 if (typeof showToast === 'function') {
@@ -626,7 +645,7 @@
             }
         })
         .catch(err => {
-            alert("Lỗi kết nối máy chủ!");
+            alert("Lỗi kết nối máy chủ: " + err);
         });
     }
 

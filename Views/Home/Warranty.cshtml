@@ -90,5 +90,23 @@
             <strong>💡 Khuyến nghị cho người mua & người bán:</strong> 
             Mọi thỏa thuận về thông số, tình trạng sản phẩm và phụ kiện nên được trao đổi trực tiếp qua tính năng <strong>Chat / Liên hệ</strong> trên website để hệ thống có thể đối soát và bảo vệ bạn trong mọi tình huống.
         </div>
+
+        <!-- NÚT CHAT VỚI ADMIN HỖ TRỢ / QUẢN LÝ CSKH DÀNH CHO ADMIN -->
+        <div class="text-center mt-4">
+            @if (User?.IsInRole("Admin") == true || User?.IsInRole("admin") == true || Context.Session.GetString("UserRole") == "admin")
+            {
+                <a asp-controller="Admin" asp-action="Chat" 
+                   style="display: inline-flex; align-items: center; gap: 8px; background: #ff5722; color: #ffffff; font-weight: 600; padding: 12px 28px; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3); transition: all 0.2s;">
+                    <span>🎧</span> Quản Lý Hộp Thư Hỗ Trợ (CSKH)
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Chat" asp-action="StartSupportChat" 
+                   style="display: inline-flex; align-items: center; gap: 8px; background: #ff5722; color: #ffffff; font-weight: 600; padding: 12px 28px; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3); transition: all 0.2s;">
+                    <span>🎧</span> Chat Với Admin Hỗ Trợ Trực Tiếp
+                </a>
+            }
+        </div>
     </div>
 </div>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -73,6 +74,8 @@ namespace ThriftShop.Models.DTOs
 
         [JsonPropertyName("avatar")]
         public string? Avatar { get; set; }
+
+        public IFormFile? AvatarFile { get; set; }
     }
 
     /// <summary>

@@ -1,0 +1,204 @@
+@model ThriftShop.Models.PendingPost
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi Tiết Tin Kiểm Duyệt";
+    var linkedProduct = ViewBag.LinkedProduct as ThriftShop.Models.Product;
+    var isApproved = Model.Status != null && Model.Status.Equals("approved", StringComparison.OrdinalIgnoreCase);
+}
+
+<h2 class="bg-success">CHI TIẾT TIN KIỂM DUYỆT #@Model.Id</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
+    </div>
+}
+
+<div class="row">
+    <!-- CỘT HÌNH ẢNH SẢN PHẨM -->
+    <div class="col-md-5 text-center mb-3">
+        <img id="mainApproveImg" src="@(string.IsNullOrEmpty(Model.Image) ? "https://images.unsplash.com/photo-1544816155-12df9643f363?w=500" : Model.Image)" 
+             class="img-fluid border rounded" style="max-height: 350px; width: 100%; object-fit: cover;" alt="@Model.Name" />
+        
+        @if (Model.Images != null && Model.Images.Length > 0)
+        {
+            <div class="d-flex justify-content-center flex-wrap mt-2" style="gap: 6px;">
+                <img src="@Model.Image" style="width: 50px; height: 50px; object-fit: cover; border: 1px solid #ced4da; cursor: pointer; border-radius: 4px;" 
+                     onclick="document.getElementById('mainApproveImg').src = this.src;" title="Ảnh đại diện" />
+                @foreach (var img in Model.Images)
+                {
+                    if (!string.IsNullOrWhiteSpace(img))
+                    {
+                        <img src="@img" style="width: 50px; height: 50px; object-fit: cover; border: 1px solid #ced4da; cursor: pointer; border-radius: 4px;" 
+                             onclick="document.getElementById('mainApproveImg').src = this.src;" title="Ảnh chi tiết" />
+                    }
+                }
+            </div>
+            <div class="small text-muted mt-1">Ảnh thực tế do người bán chụp và tải lên (@(Model.Images.Length) ảnh)</div>
+        }
+    </div>
+
+    <!-- CỘT THÔNG TIN KIỂM DUYỆT -->
+    <div class="col-md-7">
+        <div class="card border mb-3">
+            <div class="card-header font-weight-bold" style="background-color: #d8ebd2 !important; color: #2d572c;">
+                Thông Tin Tin Đăng & Người Bán
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 font-weight-bold">Tên món đồ:</dt>
+                    <dd class="col-sm-8 font-weight-bold h5 mb-2">@Model.Name</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Danh mục:</dt>
+                    <dd class="col-sm-8">@(Model.Category?.Name ?? Model.CategoryName)</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Giá thanh lý:</dt>
+                    <dd class="col-sm-8 font-weight-bold" style="color: #2d572c; font-size: 18px;">@Model.Price.ToString("N0") đ</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Giá mua lúc mới:</dt>
+                    <dd class="col-sm-8">@(Model.OriginalPrice > 0 ? Model.OriginalPrice.ToString("N0") + " đ" : "Không cung cấp")</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Trạng thái tin:</dt>
+                    <dd class="col-sm-8 font-weight-bold">
+                        @if (Model.Status?.ToLower() == "pending")
+                        {
+                            <span class="text-warning">Chờ kiểm duyệt</span>
+                        }
+                        else if (isApproved)
+                        {
+                            <span class="text-success">Đã duyệt mở bán</span>
+                            @if (linkedProduct != null)
+                            {
+                                @if (linkedProduct.Deleted)
+                                {
+                                    <span class="badge bg-dark text-white ms-2">Món đồ đã bị gỡ / xóa</span>
+                                }
+                                else if (linkedProduct.IsSold)
+                                {
+                                    <span class="badge bg-secondary text-white ms-2">Món đồ này đã bán</span>
+                                }
+                                else
+                                {
+                                    <a href="/Products/Details/@linkedProduct.Id" target="_blank" class="btn btn-outline-success btn-sm ms-2 font-weight-bold">Xem tin ngoài sàn &rarr;</a>
+                                }
+                            }
+                        }
+                        else if (Model.Status?.ToLower() == "rejected")
+                        {
+                            <span class="text-danger">Đã từ chối</span>
+                        }
+                        else
+                        {
+                            <span>@Model.Status</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Người đăng bán:</dt>
+                    <dd class="col-sm-8">@Model.SellerName</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Số điện thoại:</dt>
+                    <dd class="col-sm-8">@Model.SellerPhone</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Khu vực xem đồ:</dt>
+                    <dd class="col-sm-8">@Model.SellerAddress</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Thời gian gửi duyệt:</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Mô tả & Khuyết điểm:</dt>
+                    <dd class="col-sm-8" style="white-space: pre-line;">@Model.Description</dd>
+
+                    @if (!string.IsNullOrEmpty(Model.RejectReason))
+                    {
+                        <dt class="col-sm-4 font-weight-bold text-danger">Lý do từ chối:</dt>
+                        <dd class="col-sm-8 text-danger">@Model.RejectReason</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <!-- CÁC NÚT HÀNH ĐỘNG DUYỆT / TỪ CHỐI -->
+        @if (Model.Status == "pending")
+        {
+            <div class="card p-3 border mb-3 bg-light">
+                <h5 class="font-weight-bold text-dark mb-3">Xử Lý Kiểm Duyệt</h5>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <form asp-controller="Admin" asp-action="ApprovePost" asp-route-id="@Model.Id" method="post" class="mr-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success font-weight-bold px-4" onclick="return confirm('Xác nhận duyệt món đồ này lên sàn mở bán?')">
+                            <i class="fas fa-check-circle mr-1"></i> Duyệt Mở Bán
+                        </button>
+                    </form>
+                </div>
+
+                <form asp-controller="Admin" asp-action="RejectPost" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <label class="font-weight-bold mb-1">Từ chối tin kèm lý do phản hồi người bán:</label>
+                    <div class="input-group">
+                        <input type="text" name="reason" class="form-control" placeholder="Nhập lý do từ chối (ảnh mờ, khuyết điểm chưa rõ...)" required />
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Xác nhận từ chối bài đăng này?')">
+                                Từ Chối
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        }
+        else if (isApproved)
+        {
+            <div class="alert alert-success">
+                <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 10px;">
+                    <div>
+                        <strong><i class="fas fa-check-circle mr-1"></i> Tin đăng này đã được duyệt và hiện đang mở bán công khai trên sàn đồ cũ.</strong>
+                        @if (linkedProduct != null)
+                        {
+                            @if (linkedProduct.Deleted)
+                            {
+                                <div class="mt-2"><span class="badge bg-dark text-white">Món đồ đã bị gỡ / xóa</span> <em>(Sản phẩm đã bị gỡ hoặc xóa khỏi danh mục bán)</em></div>
+                            }
+                            else if (linkedProduct.IsSold)
+                            {
+                                <div class="mt-2"><span class="badge bg-secondary text-white">Món đồ này đã bán</span> <em>(Món đồ đã được đánh dấu bán thành công cho khách hàng)</em></div>
+                            }
+                        }
+                    </div>
+                    @if (linkedProduct != null && !linkedProduct.Deleted && !linkedProduct.IsSold)
+                    {
+                        <a href="/Products/Details/@linkedProduct.Id" target="_blank" class="btn btn-outline-success btn-sm font-weight-bold">Xem tin ngoài sàn &rarr;</a>
+                    }
+                </div>
+            </div>
+        }
+        else if (Model.Status == "rejected")
+        {
+            <div class="alert alert-danger">
+                Tin đăng này đã bị từ chối với lý do: <strong>@Model.RejectReason</strong>
+            </div>
+        }
+
+        <div class="mt-3 d-flex align-items-center flex-wrap" style="gap: 10px;">
+            <a asp-action="ApproveProducts" class="btn btn-primary">Quay lại danh sách</a>
+
+            @if (isApproved)
+            {
+                <form asp-controller="Admin" asp-action="UnapprovePost" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn HẠ BÀI / GỠ TIN này khỏi sàn? Món đồ sẽ không còn hiển thị cho người mua và đưa về mục chờ kiểm duyệt.');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger font-weight-bold">
+                        <i class="fas fa-arrow-down mr-1"></i> Hạ bài / Gỡ khỏi sàn
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

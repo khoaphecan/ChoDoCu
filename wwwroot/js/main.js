@@ -71,13 +71,9 @@ $(document).ready(function() {
   window.addEventListener("chatsUpdated", updateCartBadge);
 });
 
-// Cập nhật số lượng liên hệ / tin nhắn chưa đọc trên Header
+// Cập nhật số lượng liên hệ / tin nhắn chưa đọc trên Header (Đã loại bỏ badge theo yêu cầu)
 function updateCartBadge() {
-  const count = (typeof ThriftDB !== 'undefined' && ThriftDB.getUnreadChatCount) ? ThriftDB.getUnreadChatCount() : 2;
-  const badges = $(".cart-count, #cartCount, #unreadChatCount, .badge-cart");
-  if (badges.length) {
-    badges.text(count > 0 ? count : 0);
-  }
+  // Đã gỡ bỏ badge số lượng tĩnh trên nút Liên hệ
 }
 
 // Kiểm tra trạng thái đã đăng nhập hay chưa
@@ -96,9 +92,13 @@ window.checkUserLoggedIn = function() {
 // Chuyển sang hộp thoại Chat với người bán của sản phẩm
 window.openChatWithSeller = function(productId) {
   const isHtml = window.location.pathname.endsWith('.html');
-  const loginUrl = isHtml ? 'login.html' : '/Account/Login';
   const pId = parseInt(productId);
-  const chatUrl = isHtml ? `cart.html?productId=${pId}` : `/Cart?productId=${pId}`;
+  if (!isHtml) {
+    window.location.href = `/Chat/StartChat?productId=${pId}`;
+    return;
+  }
+  const loginUrl = 'login.html';
+  const chatUrl = `cart.html?productId=${pId}`;
 
   // KIỂM TRA ĐĂNG NHẬP: Khi chưa đăng nhập thì lập tức chuyển hướng đến trang đăng nhập ngay
   if (!window.checkUserLoggedIn()) {
@@ -118,14 +118,16 @@ window.handleChatWithSeller = window.openChatWithSeller;
 
 // Hàm kiểm tra đăng nhập khi bấm vào các tính năng yêu cầu tài khoản
 window.handleCheckAuthNav = function(event, targetUrl) {
+  const isHtml = window.location.pathname.endsWith('.html');
+  if (!isHtml) {
+    return true; // ASP.NET Core controllers handle session checks natively
+  }
   if (!window.checkUserLoggedIn()) {
     if (event) {
       if (typeof event.preventDefault === "function") event.preventDefault();
       if (typeof event.stopPropagation === "function") event.stopPropagation();
     }
-    const isHtml = window.location.pathname.endsWith('.html');
-    const loginUrl = isHtml ? 'login.html' : '/Account/Login';
-    window.location.href = `${loginUrl}?returnUrl=${encodeURIComponent(targetUrl)}`;
+    window.location.href = `login.html?returnUrl=${encodeURIComponent(targetUrl)}`;
     return false;
   }
   return true;
@@ -133,6 +135,10 @@ window.handleCheckAuthNav = function(event, targetUrl) {
 
 // Cập nhật trạng thái Đăng nhập / Hồ sơ người dùng trên Header
 function renderUserStatus() {
+  const isHtml = window.location.pathname.endsWith('.html');
+  if (!isHtml) {
+    return; // Trong ASP.NET Core MVC, Header đã được render từ Session phía Server
+  }
   const user = ThriftDB.getCurrentUser();
   const container = $("#user-header-auth");
   if (!container.length) return;

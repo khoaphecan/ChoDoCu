@@ -1621,7 +1621,8 @@ const ThriftDB = {
   // === QUẢN LÝ LIÊN HỆ & CHAT THEO SẢN PHẨM (CHUẨN ẢNH 3) ===
   getChats() {
     const raw = localStorage.getItem("thrift_chats");
-    let chats = raw ? JSON.parse(raw) : DEFAULT_CHATS;
+    let chats = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(chats)) chats = [];
     let modified = false;
 
     // Tự động kiểm tra và đồng bộ lại ảnh đại diện chuẩn của người bán trong các cuộc trò chuyện (tránh cache nhầm avatar ui-avatars)
@@ -1752,11 +1753,9 @@ const ThriftDB = {
           image: product.image,
           statusText: "Tin đang mở bán · Còn hàng"
         },
-        lastMessage: "Tôi quan tâm đến món đồ này!",
-        lastTime: "Vừa xong",
-        messages: [
-          { sender: "buyer", text: "Xin chào, món đồ này còn không bạn?", time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) }
-        ]
+        lastMessage: "",
+        lastTime: "",
+        messages: []
       };
       chats.unshift(chat);
       this.saveChats(chats);

@@ -24,12 +24,13 @@ namespace ThriftShop.Models
         public string CategoryName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập giá bán mong muốn")]
-        [Range(1000, 1000000000, ErrorMessage = "Giá thanh lý từ 1.000 ₫ trở lên")]
+        [Range(0.0, 999999999999.0, ErrorMessage = "Giá sản phẩm phải từ 0 đến 999 tỷ đồng.")]
         [Display(Name = "Giá Thanh Lý (₫)")]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập giá gốc")]
+        [Range(0.0, 999999999999.0, ErrorMessage = "Giá gốc phải từ 0 đến 999 tỷ đồng.")]
         [Display(Name = "Giá Mua Mới (₫)")]
         [Column(TypeName = "decimal(18,2)")]
         public decimal OriginalPrice { get; set; }
@@ -39,7 +40,7 @@ namespace ThriftShop.Models
         public string Description { get; set; } = string.Empty;
 
         [Display(Name = "Hình Ảnh Thật")]
-        public string Image { get; set; } = string.Empty;
+        public string? Image { get; set; } = string.Empty;
 
         /// <summary>
         /// Chuỗi JSON lưu danh sách ảnh phụ thực tế (nvarchar(max))
@@ -74,6 +75,30 @@ namespace ThriftShop.Models
             set
             {
                 ImagesJson = value != null && value.Length > 0 ? JsonSerializer.Serialize(value) : null;
+            }
+        }
+
+        /// <summary>
+        /// Ảnh hiển thị đại diện bài đăng:
+        /// 1. Nếu có Image (Base64 hoặc URL hợp lệ), trả về Image.
+        /// 2. Nếu Image rỗng nhưng Images / ImagesJson có ảnh, lấy ảnh đầu tiên Images[0].
+        /// 3. Chỉ fallback URL khi không có bất kỳ ảnh nào.
+        /// </summary>
+        [NotMapped]
+        public string DisplayImage
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(Image)) return Image;
+                try
+                {
+                    if (Images != null && Images.Length > 0 && !string.IsNullOrWhiteSpace(Images[0]))
+                    {
+                        return Images[0];
+                    }
+                }
+                catch { }
+                return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600";
             }
         }
 
@@ -131,6 +156,8 @@ namespace ThriftShop.Models
         public string Status { get; set; } = "pending"; // 'pending' | 'approved' | 'rejected' | 'sold'
 
         public bool IsSold { get; set; } = false;
+
+        public bool Deleted { get; set; } = false;
 
         [StringLength(255)]
         public string? RejectReason { get; set; }

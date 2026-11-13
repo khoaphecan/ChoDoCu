@@ -1,12 +1,15 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThriftShop.Common;
 using ThriftShop.Data;
+using ThriftShop.Filters;
 using ThriftShop.Models;
 using ThriftShop.Models.DTOs;
 
 namespace ThriftShop.Controllers
 {
+    [UserAuthorize]
     public class OrdersController : Controller
     {
         private readonly ThriftDbContext _db;
@@ -16,88 +19,51 @@ namespace ThriftShop.Controllers
             _db = db;
         }
 
-        // GET: /Orders
-        public IActionResult Index(string? search, string? status)
+        // GET: /Orders/MyOrders
+        [HttpGet]
+        public async Task<IActionResult> MyOrders()
         {
             var userId = HttpContext.Session.GetUserId();
-            var isAdmin = HttpContext.Session.IsAdmin();
+            if (!userId.HasValue)
+            {
+                var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(idClaim, out int uid))
+                {
+                    userId = uid;
+                }
+            }
 
             if (!userId.HasValue)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem danh sách đơn hàng!";
-                return RedirectToAction("Login", "Account", new { returnUrl = "/Orders" });
+                TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem đơn hàng của bạn!";
+                return RedirectToAction("Login", "Account", new { returnUrl = "/Orders/MyOrders" });
             }
 
-            var query = _db.Orders.Include(o => o.OrderItems).AsNoTracking();
+            int currentUserId = userId.Value;
+            bool isAdmin = HttpContext.Session.IsAdmin() || User.IsInRole("admin") || (User.FindFirst(ClaimTypes.Email)?.Value == "admin@thriftshop.vn");
+
+            var query = _db.Orders.IgnoreQueryFilters()
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .AsQueryable();
 
             if (!isAdmin)
             {
-                query = query.Where(o => o.UserId == userId.Value);
+                query = query.Where(o => o.UserId == currentUserId);
             }
 
-            if (!string.IsNullOrWhiteSpace(status) && status != "all")
-            {
-                query = query.Where(o => o.Status.ToLower() == status.Trim().ToLower());
-            }
+            var orders = await query
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
 
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var q = search.Trim().ToLower();
-                query = query.Where(o => o.CustName.ToLower().Contains(q) || o.CustPhone.Contains(q));
-            }
-
-            var orders = query.OrderByDescending(o => o.OrderDate).ToList();
-            return View(orders);
+            return View("MyOrders", orders);
         }
 
-        // GET: /Orders/GetMyOrders
-        // Trả về JSON mảng OrderSummaryDto cho frontend fetch
+        // GET: /Orders hoặc /Orders/Index
         [HttpGet]
-        public IActionResult GetMyOrders()
+        public async Task<IActionResult> Index()
         {
-            try
-            {
-                var userId = HttpContext.Session.GetUserId();
-                var isAdmin = HttpContext.Session.IsAdmin();
-
-                if (!userId.HasValue)
-                {
-                    return Json(new List<OrderSummaryDto>());
-                }
-
-                var query = _db.Orders.Include(o => o.OrderItems).AsNoTracking();
-                if (!isAdmin)
-                {
-                    query = query.Where(o => o.UserId == userId.Value);
-                }
-
-                var rawOrders = query.OrderByDescending(o => o.OrderDate).ToList();
-
-                var dtoList = rawOrders.Select(o => new OrderSummaryDto
-                {
-                    Id = o.OrderCode,
-                    OrderDate = o.OrderDate.ToString("dd/MM/yyyy HH:mm"),
-                    OrderStatus = (o.Status ?? "pending").ToLower(),
-                    CustomerName = o.CustName,
-                    CustomerPhone = o.CustPhone,
-                    ShippingAddress = o.CustAddress,
-                    TotalAmount = o.TotalAmount,
-                    Items = o.OrderItems.Select(oi => new OrderItemDto
-                    {
-                        ProductId = oi.ProductId,
-                        ProductName = oi.ProductName,
-                        Image = oi.Image,
-                        Price = oi.Price,
-                        Quantity = oi.Quantity
-                    }).ToList()
-                }).ToList();
-
-                return Json(dtoList);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { error = ex.Message });
-            }
+            return await MyOrders();
         }
 
         // GET: /Orders/Details/DH000123
@@ -131,7 +97,7 @@ namespace ThriftShop.Controllers
             }
 
             ViewBag.OrderId = order.OrderCode;
-            return View("Index", new List<Order> { order });
+            return View("MyOrders", new List<Order> { order });
         }
     }
 }

@@ -87,20 +87,23 @@
 @section Scripts {
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Kiểm tra đăng nhập phía client đồng bộ với server
-        if (typeof window.checkUserLoggedIn === 'function' ? !window.checkUserLoggedIn() : !localStorage.getItem('thrift_current_user')) {
-            window.location.replace('/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
-            return;
-        }
 
-        // Hỗ trợ đọc giỏ hàng từ cả thrift_cart lẫn cart
+
+        // Hỗ trợ nạp trực tiếp sản phẩm từ URL (khi bấm Đặt Mua Ngay) hoặc từ giỏ hàng
         let cart = [];
-        try {
-            const rawThrift = localStorage.getItem('thrift_cart');
-            const rawCart = localStorage.getItem('cart');
-            if (rawThrift) cart = JSON.parse(rawThrift);
-            else if (rawCart) cart = JSON.parse(rawCart);
-        } catch(e) { cart = []; }
+        const directItem = @Html.Raw(ViewBag.DirectItemJson ?? "null");
+        if (directItem) {
+            cart = [directItem];
+            localStorage.setItem('thrift_cart', JSON.stringify(cart));
+            localStorage.setItem('cart', JSON.stringify(cart));
+        } else {
+            try {
+                const rawThrift = localStorage.getItem('thrift_cart');
+                const rawCart = localStorage.getItem('cart');
+                if (rawThrift) cart = JSON.parse(rawThrift);
+                else if (rawCart) cart = JSON.parse(rawCart);
+            } catch(e) { cart = []; }
+        }
 
         const itemsList = document.getElementById('checkoutItemsList');
         const totalEl = document.getElementById('checkoutTotal');

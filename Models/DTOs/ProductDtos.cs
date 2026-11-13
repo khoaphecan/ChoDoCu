@@ -21,11 +21,11 @@ namespace ThriftShop.Models.DTOs
         public int CategoryId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập giá thanh lý mong muốn")]
-        [Range(1000, 1000000000, ErrorMessage = "Giá thanh lý phải từ 1.000 ₫ đến 1.000.000.000 ₫")]
+        [Range(0.0, 999999999999.0, ErrorMessage = "Giá sản phẩm phải từ 0 đến 999 tỷ đồng.")]
         [JsonPropertyName("price")]
         public decimal Price { get; set; }
 
-        [Range(0, 1000000000, ErrorMessage = "Giá gốc không hợp lệ")]
+        [Range(0.0, 999999999999.0, ErrorMessage = "Giá gốc phải từ 0 đến 999 tỷ đồng.")]
         [JsonPropertyName("originalPrice")]
         public decimal OriginalPrice { get; set; }
 
@@ -54,96 +54,5 @@ namespace ThriftShop.Models.DTOs
         [MinLength(10, ErrorMessage = "Mô tả chi tiết phải có tối thiểu 10 ký tự")]
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Response trả về sau khi người dùng đăng bán thành công
-    /// </summary>
-    public class PostItemResponseDto
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
-
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
-
-        [JsonPropertyName("price")]
-        public decimal Price { get; set; }
-
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = "pending";
-
-        [JsonPropertyName("message")]
-        public string Message { get; set; } = "Tin đăng đã được gửi và chuyển sang trạng thái chờ Admin duyệt!";
-    }
-
-    /// <summary>
-    /// DTO hiển thị danh sách và modal kiểm duyệt tin đồ cũ cho Admin (ApproveProducts.cshtml)
-    /// Đảm bảo serialize ra JSON ở dạng camelCase, đồng bộ 100% với frontend JS
-    /// </summary>
-    public class AdminProductViewDto
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
-
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
-
-        [JsonPropertyName("categoryId")]
-        public int CategoryId { get; set; }
-
-        [JsonPropertyName("categoryName")]
-        public string CategoryName { get; set; } = string.Empty;
-
-        [JsonPropertyName("price")]
-        public decimal Price { get; set; }
-
-        [JsonPropertyName("originalPrice")]
-        public decimal OriginalPrice { get; set; }
-
-        [JsonPropertyName("description")]
-        public string Description { get; set; } = string.Empty;
-
-        [JsonPropertyName("image")]
-        public string Image { get; set; } = string.Empty;
-
-        [JsonPropertyName("imagesJson")]
-        public string? ImagesJson { get; set; }
-
-        [JsonPropertyName("videosJson")]
-        public string? VideosJson { get; set; }
-
-        [JsonPropertyName("stock")]
-        public int Stock { get; set; } = 1;
-
-        [JsonPropertyName("sellerId")]
-        public int SellerId { get; set; }
-
-        [JsonPropertyName("sellerName")]
-        public string SellerName { get; set; } = string.Empty;
-
-        [JsonPropertyName("sellerPhone")]
-        public string SellerPhone { get; set; } = string.Empty;
-
-        [JsonPropertyName("sellerEmail")]
-        public string? SellerEmail { get; set; }
-
-        [JsonPropertyName("sellerAddress")]
-        public string SellerAddress { get; set; } = string.Empty;
-
-        [JsonPropertyName("sellerAvatar")]
-        public string? SellerAvatar { get; set; }
-
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = "pending"; // 'pending' | 'approved' | 'rejected' | 'sold'
-
-        [JsonPropertyName("isSold")]
-        public bool IsSold { get; set; } = false;
-
-        [JsonPropertyName("rejectReason")]
-        public string? RejectReason { get; set; }
-
-        [JsonPropertyName("createdAt")]
-        public string CreatedAt { get; set; } = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
     }
 }

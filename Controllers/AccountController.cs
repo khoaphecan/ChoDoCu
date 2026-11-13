@@ -1,9 +1,13 @@
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThriftShop.Common;
 using ThriftShop.Data;
+using ThriftShop.Filters;
 using ThriftShop.Models;
 using ThriftShop.Models.DTOs;
 
@@ -41,7 +45,7 @@ namespace ThriftShop.Controllers
         /// Xác thực email và password từ frontend JSON payload
         /// </summary>
         [HttpPost("/api/login")]
-        public IActionResult ApiLogin([FromBody] LoginRequestDto dto)
+        public async Task<IActionResult> ApiLogin([FromBody] LoginRequestDto dto)
         {
             try
             {
@@ -51,13 +55,31 @@ namespace ThriftShop.Controllers
                     return BadRequest(new { message = firstError ?? "Dữ liệu đăng nhập không hợp lệ!" });
                 }
 
-                var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == dto.Email.Trim().ToLower());
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.Trim().ToLower());
                 if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
                 {
                     return BadRequest(new { message = "Email hoặc mật khẩu không chính xác!" });
                 }
 
-                // Thiết lập Session đăng nhập
+                // 1. Ký phát hành Cookie Authentication (Persistent Session 14 ngày)
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.FullName ?? user.Name ?? "Thành viên"),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role ?? "customer"),
+                    new Claim("Avatar", user.Avatar ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150")
+                };
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14)
+                };
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+
+                // 2. Thiết lập Session đăng nhập để tương thích ngược
                 HttpContext.Session.SetUser(user);
 
                 return Ok(new
@@ -131,9 +153,10 @@ namespace ThriftShop.Controllers
         // GET: /Account/Login
         public IActionResult Login(string? returnUrl)
         {
-            if (HttpContext.Session.IsLoggedIn())
+            if (User.Identity?.IsAuthenticated == true || HttpContext.Session.IsLoggedIn())
             {
-                if (HttpContext.Session.IsAdmin())
+                bool isAdmin = User.IsInRole("admin") || HttpContext.Session.IsAdmin();
+                if (isAdmin)
                     return RedirectToAction("Index", "Admin");
                 return Redirect(returnUrl ?? "/");
             }
@@ -145,7 +168,7 @@ namespace ThriftShop.Controllers
         // POST: /Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(LoginViewModel model, string? returnUrl)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
 
@@ -154,16 +177,39 @@ namespace ThriftShop.Controllers
                 return View(model);
             }
 
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == model.Email.Trim().ToLower());
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == model.Email.Trim().ToLower());
             if (user == null || !VerifyPassword(model.Password, user.PasswordHash))
             {
                 ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không chính xác!");
                 return View(model);
             }
 
+            // 1. Tạo danh sách Claims định danh người dùng
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName ?? user.Name ?? "Thành viên"),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role ?? "customer"),
+                new Claim("Avatar", user.Avatar ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150")
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+            // 2. Cấu hình Cookie Authentication (Persistent Session 14 ngày)
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true, // Duy trì phiên qua restart server/đóng trình duyệt
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14)
+            };
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+
+            // 3. Đồng bộ gán Session cũ để tương thích ngược với code cũ
             HttpContext.Session.SetUser(user);
             TempData["SuccessMessage"] = $"Đăng nhập thành công! Chào mừng {user.FullName}";
 
+            // 4. Chuyển hướng an toàn
             if (user.Role == "admin" || user.Email == "admin@thriftshop.vn")
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -223,18 +269,39 @@ namespace ThriftShop.Controllers
         }
 
         // GET: /Account/Logout
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.ClearUser();
+            HttpContext.Session.Clear();
             Response.Cookies.Delete(".AspNetCore.Session");
+            Response.Cookies.Delete(".ThriftShop.Auth");
             TempData["SuccessMessage"] = "Đã đăng xuất thành công.";
             return RedirectToAction("Index", "Home");
         }
 
+        // GET: /Account/AccessDenied
+        public IActionResult AccessDenied()
+        {
+            TempData["ErrorMessage"] = "Bạn không có quyền truy cập vào chức năng này!";
+            return RedirectToAction("Index", "Home");
+        }
+
         // GET: /Account/Profile
+        [UserAuthorize]
         public IActionResult Profile()
         {
-            var userId = HttpContext.Session.GetUserId();
+            int? userId = null;
+            var nameIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(nameIdClaim, out int parsedId))
+            {
+                userId = parsedId;
+            }
+            else
+            {
+                userId = HttpContext.Session.GetUserId();
+            }
+
             if (!userId.HasValue)
             {
                 return RedirectToAction("Login", new { returnUrl = "/Account/Profile" });
@@ -252,17 +319,27 @@ namespace ThriftShop.Controllers
 
         // POST: /Account/UpdateProfile ([FromForm] UpdateProfileDto)
         [HttpPost]
-        public IActionResult UpdateProfile([FromForm] UpdateProfileDto dto)
+        [UserAuthorize]
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto dto, IFormFile? avatarFile)
         {
             try
             {
-                var userId = HttpContext.Session.GetUserId();
+                int? userId = HttpContext.Session.GetUserId();
+                if (!userId.HasValue)
+                {
+                    var nameIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (int.TryParse(nameIdClaim, out int parsedId))
+                    {
+                        userId = parsedId;
+                    }
+                }
+
                 if (!userId.HasValue)
                 {
                     return Json(new { success = false, message = "Vui lòng đăng nhập để thực hiện chức năng này!" });
                 }
 
-                var user = _db.Users.Find(userId.Value);
+                var user = await _db.Users.FindAsync(userId.Value);
                 if (user == null)
                 {
                     return Json(new { success = false, message = "Không tìm thấy tài khoản người dùng!" });
@@ -288,13 +365,93 @@ namespace ThriftShop.Controllers
                     user.Bio = dto.Bio.Trim();
                 }
 
-                if (!string.IsNullOrWhiteSpace(dto.Avatar))
+                // Xử lý lưu ảnh đại diện:
+                var file = avatarFile ?? dto.AvatarFile ?? (Request.HasFormContentType && Request.Form.Files.Count > 0 ? (Request.Form.Files["avatarFile"] ?? Request.Form.Files["avatar"]) : null);
+                if (file != null && file.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "avatars");
+                    if (!Directory.Exists(uploadsFolder))
+                        Directory.CreateDirectory(uploadsFolder);
+
+                    var ext = Path.GetExtension(file.FileName);
+                    if (string.IsNullOrEmpty(ext)) ext = ".jpg";
+                    var uniqueFileName = $"avatar_{user.Id}_{DateTime.Now.Ticks}{ext}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(fileStream);
+                    }
+
+                    user.Avatar = $"/images/avatars/{uniqueFileName}";
+                }
+                else if (!string.IsNullOrWhiteSpace(dto.Avatar) && dto.Avatar.StartsWith("data:image/"))
+                {
+                    try
+                    {
+                        var commaIndex = dto.Avatar.IndexOf(',');
+                        if (commaIndex > 0)
+                        {
+                            var header = dto.Avatar.Substring(0, commaIndex);
+                            var base64Data = dto.Avatar.Substring(commaIndex + 1);
+
+                            string ext = ".jpg";
+                            if (header.Contains("png")) ext = ".png";
+                            else if (header.Contains("webp")) ext = ".webp";
+                            else if (header.Contains("gif")) ext = ".gif";
+
+                            var imageBytes = Convert.FromBase64String(base64Data);
+
+                            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "avatars");
+                            if (!Directory.Exists(uploadsFolder))
+                                Directory.CreateDirectory(uploadsFolder);
+
+                            var uniqueFileName = $"avatar_{user.Id}_{DateTime.Now.Ticks}{ext}";
+                            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                            await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+
+                            user.Avatar = $"/images/avatars/{uniqueFileName}";
+                        }
+                        else
+                        {
+                            user.Avatar = dto.Avatar.Trim();
+                        }
+                    }
+                    catch
+                    {
+                        user.Avatar = dto.Avatar.Trim();
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(dto.Avatar))
                 {
                     user.Avatar = dto.Avatar.Trim();
                 }
 
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
+
+                // 1. Cập nhật Session
                 HttpContext.Session.SetUser(user);
+
+                // 2. Cập nhật Claims trong Cookie Authentication để Navbar đổi ngay lập tức
+                try
+                {
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim(ClaimTypes.Name, user.FullName ?? user.Name ?? "Thành viên"),
+                        new Claim(ClaimTypes.Email, user.Email),
+                        new Claim(ClaimTypes.Role, user.Role ?? "customer"),
+                        new Claim("Avatar", user.Avatar ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150")
+                    };
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14)
+                    });
+                }
+                catch { }
 
                 return Json(new
                 {
@@ -315,12 +472,14 @@ namespace ThriftShop.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Lỗi khi cập nhật hồ sơ: " + ex.Message });
+                var detailError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = "Lỗi khi cập nhật hồ sơ: " + detailError });
             }
         }
 
         // POST: /Account/ChangePassword ([FromForm] ChangePasswordDto)
         [HttpPost]
+        [UserAuthorize]
         public IActionResult ChangePassword([FromForm] ChangePasswordDto dto)
         {
             try
@@ -364,70 +523,35 @@ namespace ThriftShop.Controllers
             }
         }
 
-        // GET: /Account/SellerProfile?userId=...
-        public IActionResult SellerProfile(string? userId)
+        // GET: /Account/PublicProfile/5 hoặc /Account/PublicProfile?id=5
+        [HttpGet]
+        public async Task<IActionResult> PublicProfile(int id)
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            if (id <= 0)
             {
-                var curId = HttpContext.Session.GetUserId();
-                if (curId.HasValue)
-                    userId = curId.Value.ToString();
-                else
-                    return RedirectToAction("Login");
-            }
-
-            User? seller = null;
-            if (int.TryParse(userId, out int idVal))
-            {
-                seller = _db.Users.Find(idVal);
-            }
-            if (seller == null)
-            {
-                seller = _db.Users.FirstOrDefault(u =>
-                    u.Email.ToLower() == userId.ToLower() ||
-                    u.FullName.ToLower() == userId.ToLower());
-            }
-
-            if (seller == null)
-            {
-                var sampleProd = _db.Products.FirstOrDefault(p =>
-                    p.SellerId.ToString() == userId ||
-                    p.SellerName.ToLower() == userId.ToLower());
-
-                if (sampleProd != null)
+                int curUserId = HttpContext.Session.GetUserId() ?? 0;
+                if (curUserId > 0)
                 {
-                    seller = new User
-                    {
-                        Id = sampleProd.SellerId,
-                        FullName = sampleProd.SellerName,
-                        Email = sampleProd.SellerEmail ?? "seller@thriftshop.vn",
-                        PasswordHash = "user",
-                        Phone = sampleProd.SellerPhone,
-                        Address = sampleProd.SellerAddress,
-                        Avatar = sampleProd.SellerAvatar ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
-                        Bio = "Thành viên mua bán đồ cũ trên sàn ThriftShop."
-                    };
+                    id = curUserId;
                 }
                 else
                 {
-                    seller = new User
-                    {
-                        FullName = userId,
-                        PasswordHash = "user",
-                        Avatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80"
-                    };
+                    return NotFound("Không tìm thấy thông tin người bán.");
                 }
             }
 
-            var activeProducts = _db.Products.AsNoTracking()
-                .Where(p => (p.SellerId == seller.Id ||
-                            (p.SellerEmail != null && p.SellerEmail.ToLower() == seller.Email.ToLower()) ||
-                            p.SellerName.ToLower() == seller.FullName.ToLower())
-                            && p.Status == "approved"
-                            && !p.IsSold
-                            && !p.Deleted)
-                .OrderByDescending(p => p.Id)
-                .ToList();
+            var seller = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+            if (seller == null)
+            {
+                return NotFound("Người dùng không tồn tại hoặc đã bị xóa.");
+            }
+
+            var activeProducts = await _db.Products
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .Where(p => p.SellerId == id && !p.Deleted && !p.IsSold && p.Status == "approved")
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
 
             var viewModel = new SellerProfileViewModel
             {
@@ -435,13 +559,43 @@ namespace ThriftShop.Controllers
                 ActiveProducts = activeProducts
             };
 
-            return View(viewModel);
+            ViewBag.Seller = seller;
+            ViewBag.UserId = seller.Id.ToString();
+
+            return View("SellerProfile", viewModel);
         }
 
-        // GET: /Account/UserPublic
-        public IActionResult UserPublic(string? userId)
+        // GET: /Account/SellerProfile?userId=...
+        public async Task<IActionResult> SellerProfile(string? userId, int? id)
         {
-            return RedirectToAction(nameof(SellerProfile), new { userId });
+            int targetId = id ?? 0;
+            if (targetId <= 0 && !string.IsNullOrWhiteSpace(userId) && int.TryParse(userId, out int parsed))
+            {
+                targetId = parsed;
+            }
+
+            if (targetId <= 0 && !string.IsNullOrWhiteSpace(userId))
+            {
+                var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u =>
+                    u.Email.ToLower() == userId.ToLower() ||
+                    u.FullName.ToLower() == userId.ToLower());
+                if (user != null)
+                {
+                    targetId = user.Id;
+                }
+            }
+
+            if (targetId <= 0)
+            {
+                targetId = HttpContext.Session.GetUserId() ?? 0;
+            }
+
+            if (targetId <= 0)
+            {
+                return RedirectToAction("Login", new { returnUrl = Request.Path + Request.QueryString });
+            }
+
+            return await PublicProfile(targetId);
         }
 
         #endregion

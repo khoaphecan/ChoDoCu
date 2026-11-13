@@ -1,0 +1,479 @@
+@model IEnumerable<ThriftShop.Models.Order>
+@{
+    ViewData["Title"] = "Lịch Sử Đơn Hàng Của Tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Bootstrap 5 CSS Scoped For Clean Layout -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+
+<style>
+    /* Scoped Fixes & Overrides for ThriftShop Theme */
+    #my-orders-wrapper {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #f8fafc;
+        min-height: calc(100vh - 220px);
+    }
+    #my-orders-wrapper a {
+        text-decoration: none;
+    }
+    .order-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .order-card:hover {
+        box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .order-item-row:not(:last-child) {
+        border-bottom: 1px dashed #e2e8f0;
+    }
+    .order-status-badge {
+        font-size: 0.82rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 50rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .order-filter-pill {
+        border-radius: 50rem;
+        padding: 0.45rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .order-filter-pill.active, .order-filter-pill:hover {
+        background: #198754;
+        color: #ffffff;
+        border-color: #198754;
+    }
+    .stat-badge-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+    }
+</style>
+
+<div id="my-orders-wrapper">
+    <div class="container py-4" style="max-width: 1000px; min-height: 550px;">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+            <div>
+                <h3 class="font-weight-bold mb-1" style="font-size: 22px;">Lịch Sử Đơn Hàng Của Tôi</h3>
+                <p class="text-muted mb-0 small">Theo dõi trạng thái đơn mua đồ cũ và biên nhận giao dịch.</p>
+            </div>
+            <a href="/" class="btn btn-outline-secondary btn-sm">Về trang chủ</a>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            var totalOrders = Model.Count();
+            var totalSpent = Model.Sum(o => o.TotalAmount);
+            var pendingCount = Model.Count(o => (o.Status ?? "").ToLower() == "pending" || (o.Status ?? "") == "Đang xác nhận");
+            var confirmedCount = Model.Count(o => (o.Status ?? "").ToLower() == "confirmed" || (o.Status ?? "").ToLower() == "processing" || (o.Status ?? "") == "Đã xác nhận");
+            var shippingCount = Model.Count(o => (o.Status ?? "").ToLower() == "shipping" || (o.Status ?? "") == "Đang vận chuyển");
+            var deliveredCount = Model.Count(o => (o.Status ?? "").ToLower() == "delivered" || (o.Status ?? "") == "Đã giao");
+
+            <!-- Quick Summary Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="stat-badge-box shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted small d-block">Tổng số đơn</span>
+                                <span class="h4 fw-bold text-dark mb-0">@totalOrders</span>
+                            </div>
+                            <div class="rounded-circle bg-light p-2 text-primary">
+                                <i class="fas fa-box-open fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-badge-box shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted small d-block">Tổng chi tiêu</span>
+                                <span class="h5 fw-bold text-danger mb-0">@totalSpent.ToString("N0") ₫</span>
+                            </div>
+                            <div class="rounded-circle bg-light p-2 text-danger">
+                                <i class="fas fa-coins fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-badge-box shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted small d-block">Đang xử lý / Giao</span>
+                                <span class="h4 fw-bold text-warning mb-0">@(pendingCount + confirmedCount + shippingCount)</span>
+                            </div>
+                            <div class="rounded-circle bg-light p-2 text-warning">
+                                <i class="fas fa-shipping-fast fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-badge-box shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted small d-block">Đã giao thành công</span>
+                                <span class="h4 fw-bold text-success mb-0">@deliveredCount</span>
+                            </div>
+                            <div class="rounded-circle bg-light p-2 text-success">
+                                <i class="fas fa-check-circle fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs & Search Bar -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-lg-8">
+                            <div class="d-flex flex-wrap gap-2" id="orderFilterPills">
+                                <button type="button" class="order-filter-pill active" data-filter="all">Tất cả (@totalOrders)</button>
+                                <button type="button" class="order-filter-pill" data-filter="pending">Đang xác nhận (@pendingCount)</button>
+                                <button type="button" class="order-filter-pill" data-filter="confirmed">Đã xác nhận (@confirmedCount)</button>
+                                <button type="button" class="order-filter-pill" data-filter="shipping">Đang vận chuyển (@shippingCount)</button>
+                                <button type="button" class="order-filter-pill" data-filter="delivered">Đã giao (@deliveredCount)</button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                                <input type="text" id="orderSearchInput" class="form-control border-start-0 ps-0" placeholder="Tìm theo Mã đơn (DH...), tên đồ cũ...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table List -->
+            <div class="table-responsive bg-white rounded-3 shadow-sm border mb-4">
+                <table class="table table-hover align-middle mb-0" id="ordersTable">
+                    <thead class="table-light text-secondary text-uppercase small" style="font-size: 0.75rem;">
+                        <tr>
+                            <th scope="col" class="py-3 ps-3" style="width: 15%;">MÃ ĐƠN HÀNG</th>
+                            <th scope="col" class="py-3" style="width: 37%;">MÓN ĐỒ ĐÃ ĐẶT</th>
+                            <th scope="col" class="py-3 text-center" style="width: 14%;">NGÀY ĐẶT</th>
+                            <th scope="col" class="py-3 text-end" style="width: 12%;">TỔNG TIỀN</th>
+                            <th scope="col" class="py-3 text-center" style="width: 12%;">TRẠNG THÁI</th>
+                            <th scope="col" class="py-3 text-center pe-3" style="width: 10%;">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            var st = order.Status ?? "pending";
+                            string badgeHtml;
+                            string filterStatus;
+
+                            if (st == "pending" || st.Equals("Đang xác nhận", StringComparison.OrdinalIgnoreCase))
+                            {
+                                badgeHtml = "<span class=\"badge bg-warning text-dark\"><i class=\"far fa-clock me-1\"></i>Đang xác nhận</span>";
+                                filterStatus = "pending";
+                            }
+                            else if (st == "confirmed" || st == "processing" || st.Equals("Đã xác nhận", StringComparison.OrdinalIgnoreCase))
+                            {
+                                badgeHtml = "<span class=\"badge bg-info text-dark\"><i class=\"fas fa-check me-1\"></i>Đã xác nhận</span>";
+                                filterStatus = "confirmed";
+                            }
+                            else if (st == "shipping" || st.Equals("Đang vận chuyển", StringComparison.OrdinalIgnoreCase))
+                            {
+                                badgeHtml = "<span class=\"badge bg-primary text-white\"><i class=\"fas fa-shipping-fast me-1\"></i>Đang vận chuyển</span>";
+                                filterStatus = "shipping";
+                            }
+                            else if (st == "delivered" || st.Equals("Đã giao", StringComparison.OrdinalIgnoreCase))
+                            {
+                                badgeHtml = "<span class=\"badge bg-success text-white\"><i class=\"fas fa-check-circle me-1\"></i>Đã giao</span>";
+                                filterStatus = "delivered";
+                            }
+                            else
+                            {
+                                badgeHtml = $"<span class=\"badge bg-secondary text-white\">{st}</span>";
+                                filterStatus = st.ToLower();
+                            }
+
+                            var items = order.OrderItems?.ToList() ?? new List<ThriftShop.Models.OrderItem>();
+                            var productNames = string.Join(" ", items.Select(i => i.ProductName));
+
+                            <tr class="order-row" data-status="@filterStatus" data-code="@order.OrderCode.ToLower()" data-products="@productNames.ToLower()">
+                                <td class="ps-3">
+                                    <span class="badge bg-light text-dark border fw-bold text-monospace py-1 px-2" style="font-family: Consolas, monospace; font-size: 0.85rem;">
+                                        @order.OrderCode
+                                    </span>
+                                    <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                        @(order.PaymentMethod ?? "COD")
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (items.Any())
+                                    {
+                                        <div class="d-flex flex-column gap-2">
+                                            @foreach (var item in items)
+                                            {
+                                                var imgUrl = !string.IsNullOrWhiteSpace(item.Image) 
+                                                    ? item.Image 
+                                                    : (!string.IsNullOrWhiteSpace(item.Product?.Image) 
+                                                        ? item.Product.Image 
+                                                        : "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=120");
+
+                                                <div class="d-flex align-items-center">
+                                                    <img src="@imgUrl" alt="@item.ProductName" 
+                                                         style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px;" 
+                                                         class="border me-2 flex-shrink-0" 
+                                                         onerror="this.src='https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=120';">
+                                                    <div class="overflow-hidden">
+                                                        <a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId" 
+                                                           class="fw-semibold text-dark text-truncate d-block" style="max-width: 280px; font-size: 0.88rem;" 
+                                                           title="@item.ProductName">
+                                                            @item.ProductName
+                                                        </a>
+                                                        <div class="small text-muted" style="font-size: 0.78rem;">
+                                                            <span>@item.Price.ToString("N0") ₫</span>
+                                                            <span class="mx-1">×</span>
+                                                            <span class="fw-semibold">@item.Quantity</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small fst-italic">Đơn hàng không có mục chi tiết</span>
+                                    }
+                                </td>
+                                <td class="text-center small text-secondary">
+                                    <div><i class="far fa-calendar-alt me-1"></i>@order.OrderDate.ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;"><i class="far fa-clock me-1"></i>@order.OrderDate.ToString("HH:mm")</div>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-bold text-danger fs-6">
+                                        @order.TotalAmount.ToString("N0") ₫
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @Html.Raw(badgeHtml)
+                                </td>
+                                <td class="text-center pe-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1 fw-semibold" 
+                                            data-bs-toggle="modal" data-bs-target="#orderInvoiceModal-@order.Id"
+                                            data-toggle="modal" data-target="#orderInvoiceModal-@order.Id"
+                                            title="Xem chi tiết giao hàng">
+                                        <i class="fas fa-file-invoice me-1"></i>Chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- MODALS FOR ORDER DETAILS -->
+            @foreach (var order in Model)
+            {
+                var items = order.OrderItems?.ToList() ?? new List<ThriftShop.Models.OrderItem>();
+                <div class="modal fade" id="orderInvoiceModal-@order.Id" tabindex="-1" aria-labelledby="modalLabel-@order.Id" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header bg-success text-white py-3">
+                                <h5 class="modal-title fw-bold" id="modalLabel-@order.Id">
+                                    <i class="fas fa-receipt me-2"></i>CHI TIẾT ĐƠN HÀNG: @order.OrderCode
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                                    <div>
+                                        <h4 class="fw-bold text-dark mb-0">ThriftShop Secondhand</h4>
+                                        <small class="text-muted">Nền tảng mua bán & ký gửi đồ cũ chính hãng</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="badge bg-light text-dark border px-2 py-1 fw-bold fs-6">@order.OrderCode</div>
+                                        <div class="small text-muted mt-1">Ngày đặt: @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                </div>
+
+                                <!-- Customer & Delivery Info -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-sm-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <h6 class="fw-bold text-success mb-2"><i class="fas fa-user me-1"></i>Thông Tin Người Nhận</h6>
+                                            <p class="small mb-1"><strong>Họ và tên:</strong> @order.CustName</p>
+                                            <p class="small mb-1"><strong>Điện thoại:</strong> @order.CustPhone</p>
+                                            <p class="small mb-0"><strong>Email:</strong> @(string.IsNullOrWhiteSpace(order.CustEmail) ? "Không cung cấp" : order.CustEmail)</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <h6 class="fw-bold text-success mb-2"><i class="fas fa-map-marker-alt me-1"></i>Địa Chỉ Giao Hàng</h6>
+                                            <p class="small mb-1"><strong>Địa chỉ:</strong> @order.CustAddress</p>
+                                            <p class="small mb-1"><strong>Thanh toán:</strong> @order.PaymentMethod</p>
+                                            <p class="small mb-0"><strong>Ghi chú:</strong> @(string.IsNullOrWhiteSpace(order.Notes) ? "Không có" : order.Notes)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Items Table -->
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-bordered align-middle small mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 5%;" class="text-center">#</th>
+                                                <th style="width: 50%;">Món Đồ Cũ</th>
+                                                <th style="width: 15%;" class="text-end">Đơn Giá</th>
+                                                <th style="width: 10%;" class="text-center">SL</th>
+                                                <th style="width: 20%;" class="text-end">Thành Tiền</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (items.Any())
+                                            {
+                                                int stt = 1;
+                                                foreach (var item in items)
+                                                {
+                                                    <tr>
+                                                        <td class="text-center">@(stt++)</td>
+                                                        <td>
+                                                            <div class="d-flex align-items-center" style="gap: 10px;">
+                                                                <img src="@(string.IsNullOrEmpty(item.Image) ? (item.Product?.Image ?? "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600") : item.Image)" 
+                                                                     alt="@item.ProductName" 
+                                                                     style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; flex-shrink: 0;" />
+                                                                <div>
+                                                                    <a href="/Products/Details/@item.ProductId" target="_blank" class="fw-bold text-dark text-decoration-none">
+                                                                        @item.ProductName <i class="fas fa-external-link-alt ms-1 text-muted" style="font-size: 11px;"></i>
+                                                                    </a>
+                                                                    <div class="small text-muted">Mã món đồ: #@item.ProductId</div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-end">@item.Price.ToString("N0") ₫</td>
+                                                        <td class="text-center fw-semibold">@item.Quantity</td>
+                                                        <td class="text-end fw-bold text-danger">@item.Subtotal.ToString("N0") ₫</td>
+                                                    </tr>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted">Không có dữ liệu chi tiết mục hàng</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4" class="text-end fw-bold">Tổng tiền hàng:</td>
+                                                <td class="text-end fw-bold">@order.TotalAmount.ToString("N0") ₫</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="4" class="text-end fw-bold">Phí vận chuyển:</td>
+                                                <td class="text-end fw-bold text-success">Miễn phí</td>
+                                            </tr>
+                                            <tr class="table-light">
+                                                <td colspan="4" class="text-end fw-bold text-dark h6 mb-0">TỔNG CỘNG THANH TOÁN:</td>
+                                                <td class="text-end fw-bold text-danger h5 mb-0">@order.TotalAmount.ToString("N0") ₫</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <div class="text-center pt-2 small text-muted">
+                                    <p class="fst-italic mb-1">Cảm ơn bạn đã lựa chọn tái sử dụng đồ cũ cùng sàn ThriftShop!</p>
+                                    <p class="mb-0">Hotline hỗ trợ kỹ thuật và đổi trả đồ cũ: <strong>1900 6868</strong></p>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-dismiss="modal">Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- GỌN GÀNG KHỐI TRẠNG THÁI RỖNG (EMPTY STATE) -->
+            <div class="card border-0 shadow-sm text-center py-5 my-4" style="background-color: #fdfdfd; border-radius: 8px;">
+                <div class="card-body">
+                    <div style="font-size: 48px; color: #adb5bd;" class="mb-3">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h5 class="font-weight-bold text-dark mb-2">Bạn chưa có đơn hàng nào</h5>
+                    <p class="text-muted small mb-4" style="max-width: 450px; margin: 0 auto;">
+                        Khám phá ngay các món đồ cũ, vintage độc đáo từ cộng đồng người bán trên sàn ThriftShop.
+                    </p>
+                    <a href="/" class="btn btn-success px-4 py-2 font-weight-bold" style="background-color: #28a745; border-color: #28a745;">
+                        Khám Phá Sàn Đồ Cũ Ngay
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Pure client-side UI filtering & search (ZERO localStorage / fake auth checks)
+    $(document).ready(function() {
+        let currentFilter = "all";
+        let searchKeyword = "";
+
+        // Pill filter
+        $(".order-filter-pill").on("click", function() {
+            $(".order-filter-pill").removeClass("active");
+            $(this).addClass("active");
+            currentFilter = $(this).data("filter");
+            applyFilter();
+        });
+
+        // Search input
+        $("#orderSearchInput").on("input", function() {
+            searchKeyword = $(this).val().toLowerCase().trim();
+            applyFilter();
+        });
+
+        function applyFilter() {
+            let visibleCount = 0;
+            $(".order-row").each(function() {
+                const rowStatus = $(this).data("status") || "";
+                const rowCode = $(this).data("code") || "";
+                const rowProducts = $(this).data("products") || "";
+
+                let matchStatus = false;
+                if (currentFilter === "all") {
+                    matchStatus = true;
+                } else {
+                    matchStatus = (rowStatus === currentFilter);
+                }
+
+                let matchSearch = true;
+                if (searchKeyword) {
+                    matchSearch = rowCode.includes(searchKeyword) || rowProducts.includes(searchKeyword);
+                }
+
+                if (matchStatus && matchSearch) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    });
+</script>
+}
