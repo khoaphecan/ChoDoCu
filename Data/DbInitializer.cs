@@ -13,6 +13,38 @@ namespace ThriftShop.Data
             try
             {
                 context.Database.ExecuteSqlRaw(@"
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'PendingPosts')
+                    BEGIN
+                        IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'PendingPosts' AND COLUMN_NAME = 'UpdatedAt' AND DATA_TYPE = 'nvarchar')
+                        BEGIN
+                            ALTER TABLE PendingPosts ALTER COLUMN UpdatedAt DATETIME2 NULL;
+                        END
+                    END
+
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Users')
+                    BEGIN
+                        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'CreatedAt')
+                        BEGIN
+                            ALTER TABLE Users ADD CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE();
+                        END
+                    END
+
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Products')
+                    BEGIN
+                        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Products' AND COLUMN_NAME = 'CreatedAt')
+                        BEGIN
+                            ALTER TABLE Products ADD CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE();
+                        END
+                    END
+
+                    IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Favorites')
+                    BEGIN
+                        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Favorites' AND COLUMN_NAME = 'CreatedAt')
+                        BEGIN
+                            ALTER TABLE Favorites ADD CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE();
+                        END
+                    END
+
                     IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Orders')
                     BEGIN
                         IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Orders' AND COLUMN_NAME = 'CreatedAt')
@@ -38,6 +70,11 @@ namespace ThriftShop.Data
                     IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'ConversationId')
                     BEGIN
                         ALTER TABLE ChatMessages ADD ConversationId INT NULL;
+                    END
+
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'CreatedAt')
+                    BEGIN
+                        ALTER TABLE ChatMessages ADD CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE();
                     END
 
                     IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'ChatMessages' AND COLUMN_NAME = 'ProductId' AND IS_NULLABLE = 'NO')

@@ -162,12 +162,14 @@ namespace ThriftShop.Models
         [StringLength(255)]
         public string? RejectReason { get; set; }
 
+        [Column(TypeName = "datetime2")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [NotMapped]
         public string CreatedAtString => CreatedAt.ToString("dd/MM/yyyy HH:mm");
 
-        public string? UpdatedAt { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? UpdatedAt { get; set; }
 
         // Navigation properties (EF Core)
         public virtual Category? Category { get; set; }

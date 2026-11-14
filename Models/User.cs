@@ -38,6 +38,9 @@ namespace ThriftShop.Models
         [StringLength(20)]
         public string Role { get; set; } = "customer"; // 'customer' | 'admin'
 
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
         // Thuộc tính Helper tương thích ngược với các View/Controller cũ
         [NotMapped]
         public string Name

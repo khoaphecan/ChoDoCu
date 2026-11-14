@@ -17,10 +17,16 @@ namespace ThriftShop.Models
         [Required]
         public int SellerId { get; set; }
 
+        [Column(TypeName = "datetime2")]
         public DateTime? BuyerClearedAt { get; set; }
+
+        [Column(TypeName = "datetime2")]
         public DateTime? SellerClearedAt { get; set; }
 
+        [Column(TypeName = "datetime2")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [Column(TypeName = "datetime2")]
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         // Navigation

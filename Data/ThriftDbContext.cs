@@ -49,6 +49,7 @@ namespace ThriftShop.Data
                 entity.Property(u => u.Avatar);
                 entity.Property(u => u.Bio).HasMaxLength(500);
                 entity.Property(u => u.Role).HasMaxLength(20).HasDefaultValue("customer");
+                entity.Property(u => u.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
             });
 
             // ==========================================
@@ -65,6 +66,7 @@ namespace ThriftShop.Data
                 entity.Property(p => p.SellerAddress).HasMaxLength(255);
                 entity.Property(p => p.SellerAvatar).HasMaxLength(255);
                 entity.Property(p => p.Status).HasMaxLength(30).HasDefaultValue("approved");
+                entity.Property(p => p.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
 
                 // Cấu hình kiểu dữ liệu decimal(18,2) cho giá tiền
                 entity.Property(p => p.Price)
@@ -107,6 +109,8 @@ namespace ThriftShop.Data
                 entity.Property(p => p.Status).HasMaxLength(30).HasDefaultValue("pending");
                 entity.Property(p => p.RejectReason).HasMaxLength(255);
                 entity.Property(p => p.Deleted).HasDefaultValue(false);
+                entity.Property(p => p.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
+                entity.Property(p => p.UpdatedAt).HasColumnType("datetime2");
 
                 // Cấu hình kiểu dữ liệu decimal(18,2) cho giá tiền
                 entity.Property(p => p.Price)
@@ -146,6 +150,8 @@ namespace ThriftShop.Data
                 entity.Property(o => o.PaymentMethod).HasMaxLength(100).HasDefaultValue("COD - Thanh toán khi nhận hàng");
                 entity.Property(o => o.Notes).HasMaxLength(500);
                 entity.Property(o => o.Status).HasMaxLength(30).HasDefaultValue("pending");
+                entity.Property(o => o.OrderDate).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
+                entity.Property(o => o.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
 
                 // Cấu hình kiểu dữ liệu decimal(18,2) cho TotalAmount
                 entity.Property(o => o.TotalAmount)
@@ -194,6 +200,7 @@ namespace ThriftShop.Data
             modelBuilder.Entity<Favorite>(entity =>
             {
                 entity.HasKey(f => f.Id);
+                entity.Property(f => f.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
 
                 entity.HasOne(f => f.Product)
                       .WithMany()
@@ -212,6 +219,10 @@ namespace ThriftShop.Data
             modelBuilder.Entity<Conversation>(entity =>
             {
                 entity.HasKey(c => c.Id);
+                entity.Property(c => c.BuyerClearedAt).HasColumnType("datetime2");
+                entity.Property(c => c.SellerClearedAt).HasColumnType("datetime2");
+                entity.Property(c => c.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
+                entity.Property(c => c.UpdatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
 
                 entity.HasOne(c => c.Product)
                       .WithMany()
@@ -233,6 +244,8 @@ namespace ThriftShop.Data
             modelBuilder.Entity<ChatMessage>(entity =>
             {
                 entity.HasKey(c => c.Id);
+                entity.Property(c => c.SentAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
+                entity.Property(c => c.CreatedAt).HasColumnType("datetime2").HasDefaultValueSql("GETDATE()");
                 entity.Property(c => c.Message).IsRequired(false).HasColumnType("nvarchar(max)");
                 entity.Property(c => c.ImageUrl).IsRequired(false).HasColumnType("nvarchar(max)");
                 entity.Property(c => c.SenderAvatar).IsRequired(false).HasColumnType("nvarchar(max)");

@@ -39,7 +39,11 @@ namespace ThriftShop.Models
         [StringLength(30)]
         public string Status { get; set; } = "pending"; // 'pending' | 'processing' | 'shipping' | 'delivered' | 'cancelled'
 
+        [Column(TypeName = "datetime2")]
         public DateTime OrderDate { get; set; } = DateTime.Now;
+
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public int? UserId { get; set; }
 

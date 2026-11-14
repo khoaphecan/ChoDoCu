@@ -166,6 +166,7 @@ namespace ThriftShop.Models
 
         public int? PendingPostId { get; set; }
 
+        [Column(TypeName = "datetime2")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [NotMapped]

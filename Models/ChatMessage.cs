@@ -27,8 +27,11 @@ namespace ThriftShop.Models
 
         public string? ImageUrl { get; set; }
 
+        [Column(TypeName = "datetime2")]
         public DateTime SentAt { get; set; } = DateTime.Now;
-        public DateTime CreatedAt => SentAt;
+
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public bool IsRead { get; set; } = false;
 
         public virtual Conversation? Conversation { get; set; }
