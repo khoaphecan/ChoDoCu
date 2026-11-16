@@ -7,17 +7,17 @@
 
 <h2 class="bg-success">DANH SÁCH KHÁCH HÀNG & TÀI KHOẢN</h2>
 
-@if (TempData["ErrorMessage"] != null)
+@if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-        @TempData["ErrorMessage"]
+        @(TempData["Error"] ?? TempData["ErrorMessage"])
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
     </div>
 }
-@if (TempData["SuccessMessage"] != null)
+@if (TempData["Success"] != null || TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
-        @TempData["SuccessMessage"]
+        @(TempData["Success"] ?? TempData["SuccessMessage"])
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
     </div>
 }
@@ -65,7 +65,7 @@
                         <div class="d-flex justify-content-center align-items-center" style="gap: 5px;">
                             <a asp-action="UserDetails" asp-route-id="@item.Id" class="btn btn-info btn-sm text-white" style="padding: 3px 8px; font-size: 13px;">Chi tiết</a>
                             <a asp-action="EditUser" asp-route-id="@item.Id" class="btn btn-primary btn-sm" style="padding: 3px 8px; font-size: 13px;">Sửa</a>
-                            @if (item.Role?.ToLower() != "admin" || item.Id != currentAdminId)
+                            @if (item.Role?.ToLower() != "admin" && item.Id != 1 && item.Id != currentAdminId)
                             {
                                 <form asp-action="DeleteUser" asp-route-id="@item.Id" method="post" class="d-inline mb-0" onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này?');">
                                     @Html.AntiForgeryToken()

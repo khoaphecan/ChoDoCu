@@ -681,52 +681,161 @@ namespace ThriftShop.Controllers
             var user = await _db.Users.FindAsync(id);
             if (user == null)
             {
-                TempData["ErrorMessage"] = "Không tìm thấy người dùng #" + id;
+                var notFoundMsg = "Không tìm thấy người dùng #" + id;
+                if (IsAjax()) return Json(new { success = false, message = notFoundMsg });
+                TempData["Error"] = notFoundMsg;
+                TempData["ErrorMessage"] = notFoundMsg;
                 return RedirectToAction(nameof(Users));
             }
 
             int currentAdminId = HttpContext.Session.GetUserId() ?? 1;
-            if (id == currentAdminId)
+            // Chặn không cho phép xóa tài khoản Quản trị viên
+            if (id == 1 || id == currentAdminId || user.Role?.ToLower() == "admin")
             {
-                TempData["ErrorMessage"] = "Không thể tự xóa tài khoản Quản trị viên đang đăng nhập.";
+                var adminBlockMsg = "Không thể xóa tài khoản Quản trị viên!";
+                if (IsAjax()) return Json(new { success = false, message = adminBlockMsg });
+                TempData["Error"] = adminBlockMsg;
+                TempData["ErrorMessage"] = adminBlockMsg;
                 return RedirectToAction(nameof(Users));
             }
 
-            // Kiểm tra đơn mua hàng chưa hoàn tất
-            bool hasActiveOrders = await _db.Orders.AnyAsync(o => o.UserId == id
-                && o.Status != "Đã giao" && o.Status != "delivered" && o.Status != "cancelled" && o.Status != "Đã hủy");
-            if (hasActiveOrders)
+            try
             {
-                TempData["ErrorMessage"] = "Không thể xóa: Người dùng này đang có đơn hàng chưa hoàn tất!";
+                var strategy = _db.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
+                {
+                    using var transaction = await _db.Database.BeginTransactionAsync();
+
+                    // 1. Lấy danh sách ID sản phẩm do User này đăng bán (kể cả sản phẩm bị xóa mềm)
+                    var userProducts = await _db.Products
+                        .IgnoreQueryFilters()
+                        .Where(p => p.SellerId == id)
+                        .ToListAsync();
+                    var userProductIds = userProducts.Select(p => p.Id).ToList();
+
+                    // 2. Xóa tin nhắn & hội thoại liên quan đến User này:
+                    // - Hội thoại mà user là Buyer hoặc Seller, hoặc hội thoại về sản phẩm của user này
+                    var relatedConvs = await _db.Conversations
+                        .Where(c => c.BuyerId == id || c.SellerId == id || (c.ProductId != null && userProductIds.Contains(c.ProductId.Value)))
+                        .ToListAsync();
+                    var relatedConvIds = relatedConvs.Select(c => c.Id).ToList();
+
+                    // - Tin nhắn thuộc các hội thoại trên HOẶC tin nhắn do user gửi/nhận HOẶC tin nhắn trỏ tới sản phẩm của user này
+                    var relatedMessages = await _db.ChatMessages
+                        .Where(m => (m.ConversationId != null && relatedConvIds.Contains(m.ConversationId.Value))
+                                 || m.SenderId == id 
+                                 || m.ReceiverId == id 
+                                 || (m.ProductId != null && userProductIds.Contains(m.ProductId.Value)))
+                        .ToListAsync();
+
+                    if (relatedMessages.Any())
+                    {
+                        _db.ChatMessages.RemoveRange(relatedMessages);
+                    }
+
+                    if (relatedConvs.Any())
+                    {
+                        _db.Conversations.RemoveRange(relatedConvs);
+                    }
+                    await _db.SaveChangesAsync();
+
+                    // 3. Xóa danh sách yêu thích (Favorites):
+                    // - Favorites do user này lưu (f.UserId == id)
+                    // - Favorites của người khác lưu sản phẩm của user này (userProductIds.Contains(f.ProductId))
+                    var relatedFavs = await _db.Favorites
+                        .Where(f => f.UserId == id || userProductIds.Contains(f.ProductId))
+                        .ToListAsync();
+
+                    if (relatedFavs.Any())
+                    {
+                        _db.Favorites.RemoveRange(relatedFavs);
+                        await _db.SaveChangesAsync();
+                    }
+
+                    // 4. Xóa chi tiết đơn hàng (OrderItems) trỏ tới sản phẩm của User này & gỡ liên kết Orders:
+                    if (userProductIds.Any())
+                    {
+                        var relatedOrderItems = await _db.OrderItems
+                            .Where(oi => userProductIds.Contains(oi.ProductId))
+                            .ToListAsync();
+
+                        if (relatedOrderItems.Any())
+                        {
+                            var affectedOrderIds = relatedOrderItems.Select(oi => oi.OrderId).Distinct().ToList();
+                            _db.OrderItems.RemoveRange(relatedOrderItems);
+                            await _db.SaveChangesAsync();
+
+                            // Kiểm tra nếu đơn hàng trống sau khi xóa mặt hàng thì xóa đơn hàng, ngược lại cập nhật lại TotalAmount
+                            foreach (var orderId in affectedOrderIds)
+                            {
+                                var order = await _db.Orders
+                                    .Include(o => o.OrderItems)
+                                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                                if (order != null)
+                                {
+                                    if (!order.OrderItems.Any())
+                                    {
+                                        _db.Orders.Remove(order);
+                                    }
+                                    else
+                                    {
+                                        order.TotalAmount = order.OrderItems.Sum(oi => oi.Subtotal);
+                                    }
+                                }
+                            }
+                            await _db.SaveChangesAsync();
+                        }
+                    }
+
+                    // Gán o.UserId = null cho các đơn hàng mà user này từng đặt mua để giữ lại lịch sử doanh thu
+                    var buyerOrders = await _db.Orders
+                        .Where(o => o.UserId == id)
+                        .ToListAsync();
+                    foreach (var order in buyerOrders)
+                    {
+                        order.UserId = null;
+                    }
+                    await _db.SaveChangesAsync();
+
+                    // 5. Xóa sản phẩm (Products) và bài chờ duyệt (PendingPosts) của User này:
+                    if (userProducts.Any())
+                    {
+                        _db.Products.RemoveRange(userProducts);
+                        await _db.SaveChangesAsync();
+                    }
+
+                    var userPendingPosts = await _db.PendingPosts
+                        .IgnoreQueryFilters()
+                        .Where(pp => pp.SellerId == id)
+                        .ToListAsync();
+                    if (userPendingPosts.Any())
+                    {
+                        _db.PendingPosts.RemoveRange(userPendingPosts);
+                        await _db.SaveChangesAsync();
+                    }
+
+                    // 6. Xóa tài khoản Users:
+                    _db.Users.Remove(user);
+                    await _db.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                });
+
+                var successMsg = "Đã xóa người dùng và toàn bộ dữ liệu liên quan!";
+                if (IsAjax()) return Json(new { success = true, message = successMsg });
+                TempData["Success"] = successMsg;
+                TempData["SuccessMessage"] = successMsg;
                 return RedirectToAction(nameof(Users));
             }
-
-            // Kiểm tra sản phẩm đăng bán chưa đóng
-            bool hasActiveListings = await _db.Products.AnyAsync(p => p.SellerId == id && !p.Deleted && !p.IsSold);
-            if (hasActiveListings)
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Không thể xóa: Người dùng này đang có sản phẩm mở bán trên sàn!";
+                var errorMsg = "Lỗi khi xóa người dùng: " + ex.Message;
+                if (IsAjax()) return Json(new { success = false, message = errorMsg });
+                TempData["Error"] = errorMsg;
+                TempData["ErrorMessage"] = errorMsg;
                 return RedirectToAction(nameof(Users));
             }
-
-            // Xóa các dữ liệu phụ trợ liên quan nếu có
-            var userChats = await _db.ChatMessages.Where(m => m.SenderId == id || m.ReceiverId == id).ToListAsync();
-            _db.ChatMessages.RemoveRange(userChats);
-
-            var userConvs = await _db.Conversations.Where(c => c.BuyerId == id || c.SellerId == id).ToListAsync();
-            _db.Conversations.RemoveRange(userConvs);
-
-            var userPending = await _db.PendingPosts.Where(p => p.SellerId == id).ToListAsync();
-            _db.PendingPosts.RemoveRange(userPending);
-
-            var userFavs = await _db.Favorites.Where(f => f.UserId == id).ToListAsync();
-            _db.Favorites.RemoveRange(userFavs);
-
-            _db.Users.Remove(user);
-            await _db.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = $"Đã xóa tài khoản #{id} ({user.FullName}) thành công!";
-            return RedirectToAction(nameof(Users));
         }
 
         private static string HashPassword(string password)
