@@ -217,79 +217,63 @@ function renderUserStatus() {
   }
 }
 
-// Hàm chuyển đổi trạng thái yêu thích món đồ (Dấu tim)
-window.toggleProductFavorite = function(productId, event) {
+// Hàm chuyển đổi trạng thái yêu thích món đồ (Dấu tim & Nút chi tiết)
+async function toggleFavorite(event, productId, btn) {
   if (event) {
     if (typeof event.preventDefault === "function") event.preventDefault();
     if (typeof event.stopPropagation === "function") event.stopPropagation();
   }
-  const isHtml = window.location.pathname.endsWith('.html');
-  const loginUrl = isHtml ? 'login.html' : '/Account/Login';
-
-  // KIỂM TRA ĐĂNG NHẬP: Chưa đăng nhập thì chuyển hướng ngay sang Login
-  if (!window.checkUserLoggedIn()) {
-    const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.href = `${loginUrl}?returnUrl=${returnUrl}`;
-    return false;
-  }
-
-  // Gửi cập nhật trực tiếp lên Backend ASP.NET Core SQL Server
-  fetch('/Products/ToggleFavorite?productId=' + productId, { method: 'POST' })
-    .then(r => r.json())
-    .then(data => {
-      if (data.requireLogin) {
-        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.href = `${loginUrl}?returnUrl=${returnUrl}`;
-        return;
-      }
-      if (data.success) {
-        const isFav = data.isFav;
-        if (typeof ThriftDB !== 'undefined') {
-          const localIsFav = ThriftDB.isFavorite(productId);
-          if (localIsFav !== isFav) ThriftDB.toggleFavorite(productId);
-        }
-        const btns = document.querySelectorAll(`[data-fav-id="${productId}"]`);
-        btns.forEach(btn => {
-          const icon = btn.querySelector('i');
-          const span = btn.querySelector('span');
-          if (isFav) {
-            btn.classList.add('active');
-            if (icon) icon.className = 'fas fa-heart text-danger mr-1';
-            if (span) span.textContent = 'Đã thích';
-          } else {
-            btn.classList.remove('active');
-            if (icon) icon.className = 'far fa-heart mr-1';
-            if (span) span.textContent = 'Yêu thích';
-          }
-        });
-
-        if (typeof showToast === 'function') {
-          showToast(isFav ? 'Đã thêm món đồ vào Tin đã yêu thích ❤️' : 'Đã bỏ món đồ khỏi Tin đã yêu thích', isFav ? 'success' : 'info');
-        }
-      }
-    })
-    .catch(() => {
-      // Fallback cục bộ nếu mất mạng
-      if (typeof ThriftDB !== 'undefined') {
-        const res = ThriftDB.toggleFavorite(productId);
-        const btns = document.querySelectorAll(`[data-fav-id="${productId}"]`);
-        btns.forEach(btn => {
-          const icon = btn.querySelector('i');
-          const span = btn.querySelector('span');
-          if (res.isFav) {
-            btn.classList.add('active');
-            if (icon) icon.className = 'fas fa-heart text-danger mr-1';
-            if (span) span.textContent = 'Đã thích';
-          } else {
-            btn.classList.remove('active');
-            if (icon) icon.className = 'far fa-heart mr-1';
-            if (span) span.textContent = 'Yêu thích';
-          }
-        });
-      }
+  try {
+    const res = await fetch(`/Products/ToggleFavorite?productId=${productId}`, {
+      method: 'POST'
     });
+    const data = await res.json();
+    if (data.requireLogin) {
+      alert(data.message || 'Vui lòng đăng nhập để lưu sản phẩm yêu thích!');
+      window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+      return;
+    }
+    if (data.success) {
+      const isFav = (typeof data.isFavorited !== 'undefined') ? data.isFavorited : data.isFav;
+      if (typeof ThriftDB !== 'undefined' && typeof ThriftDB.toggleFavorite === 'function') {
+        const localIsFav = ThriftDB.isFavorite ? ThriftDB.isFavorite(productId) : false;
+        if (localIsFav !== isFav) ThriftDB.toggleFavorite(productId);
+      }
 
-  return true;
+      // Cập nhật tất cả các nút của sản phẩm này trên trang hiện tại
+      document.querySelectorAll(`[data-fav-id="${productId}"]`).forEach(b => {
+        const icon = b.querySelector('i, svg');
+        if (b.classList.contains('btn-fav-detail')) {
+          b.innerHTML = isFav ? '❤️ Đã yêu thích' : '♡ Yêu thích';
+          b.classList.toggle('active', isFav);
+          if (isFav) {
+            b.style.borderColor = '#ef4444';
+            b.style.backgroundColor = '#fef2f2';
+            b.style.color = '#ef4444';
+          } else {
+            b.style.borderColor = '#e4e4e7';
+            b.style.backgroundColor = '#ffffff';
+            b.style.color = '#71717a';
+          }
+        } else if (icon) {
+          icon.className = isFav ? 'fas fa-heart text-danger' : 'far fa-heart';
+          b.classList.toggle('active', isFav);
+          b.title = isFav ? 'Bỏ yêu thích' : 'Yêu thích món đồ';
+        }
+      });
+
+      if (typeof showToast === 'function') {
+        showToast(isFav ? 'Đã thêm món đồ vào Tin đã yêu thích ❤️' : 'Đã bỏ món đồ khỏi Tin đã yêu thích', isFav ? 'success' : 'info');
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi khi cập nhật yêu thích:', err);
+  }
+}
+window.toggleFavorite = toggleFavorite;
+window.toggleProductFavorite = function(productId, event, btn) {
+  const targetBtn = btn || (event ? event.currentTarget : null) || document.querySelector(`[data-fav-id="${productId}"]`);
+  return toggleFavorite(event, productId, targetBtn);
 };
 
 // Xử lý đăng xuất đồng bộ cả Client (localStorage) và Server (Session/Cookie)

@@ -11,6 +11,7 @@
         bio = Model.Bio,
         role = Model.Role
     }) : "null";
+    var favoriteProducts = (ViewBag.FavoriteProducts as List<ThriftShop.Models.Product>) ?? new List<ThriftShop.Models.Product>();
 }
 
 <style>
@@ -334,6 +335,10 @@
                 <i class="fas fa-lock"></i>
                 <span>Đổi mật khẩu</span>
             </button>
+            <button class="profile-nav-item" id="tabBtnFavorites" onclick="switchProfileTab('favorites')">
+                <i class="fas fa-heart text-danger"></i>
+                <span>Tin đã yêu thích (@favoriteProducts.Count)</span>
+            </button>
         </div>
     </aside>
 
@@ -452,6 +457,74 @@
                 </button>
             </form>
         </div>
+
+        <!-- TAB 3: DANH SÁCH SẢN PHẨM YÊU THÍCH (ĐỒNG BỘ TRỰC TIẾP TỪ SQL SERVER) -->
+        <div id="tabPaneFavorites" style="display: none;">
+            <div class="profile-breadcrumb">Bộ sưu tập</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <h2 class="profile-section-title" style="margin-bottom: 0;">❤️ Tin Đăng Đã Yêu Thích</h2>
+                <a href="/Products/Favorites" class="btn btn-sm btn-outline-danger" style="font-weight: 600; border-radius: 8px;">
+                    Mở trang quản lý yêu thích &rarr;
+                </a>
+            </div>
+
+            @if (favoriteProducts != null && favoriteProducts.Any())
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px;">
+                    @foreach (var p in favoriteProducts)
+                    {
+                        <div class="card-dark-item" id="prof-fav-@p.Id">
+                            <div style="position: relative;">
+                                <a href="/Products/Details/@p.Id" class="card-dark-image" style="display: block; cursor: pointer; text-decoration: none;" title="Xem chi tiết @p.Name">
+                                    <img src="@p.DisplayImage" alt="@p.Name" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
+                                </a>
+                                <button type="button" class="btn-card-fav active" 
+                                        style="position: absolute; top: 10px; right: 10px; z-index: 3;" 
+                                        onclick="toggleFavorite(event, @p.Id, this)" 
+                                        title="Bỏ yêu thích" 
+                                        data-fav-id="@p.Id">
+                                    <i class="fas fa-heart text-danger"></i>
+                                </button>
+                            </div>
+                            <div class="card-dark-body">
+                                <div class="card-dark-category">@((p.CategoryName ?? "ĐỒ CŨ").ToUpper())</div>
+                                <h3 class="card-dark-title" title="@p.Name">
+                                    <a href="/Products/Details/@p.Id" style="color: inherit; text-decoration: none;">@p.Name</a>
+                                </h3>
+                                <div class="card-dark-meta">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>@(p.SellerAddress ?? "TP.HCM") · Người bán: <strong>@(p.SellerName ?? "Thành viên")</strong>
+                                </div>
+                                <div class="card-dark-price-row">
+                                    <span class="card-dark-price">@p.Price.ToString("N0") ₫</span>
+                                    @if (p.OriginalPrice > p.Price)
+                                    {
+                                        <span class="card-dark-old-price">@p.OriginalPrice.ToString("N0") ₫</span>
+                                    }
+                                </div>
+                                <div class="card-dark-actions">
+                                    <a href="/Products/Details/@p.Id" class="btn-card-detail">Chi tiết</a>
+                                    <a asp-controller="Chat" asp-action="StartChat" asp-route-productId="@p.Id"
+                                       class="btn-card-add btn-chat-card"
+                                       style="position: relative; z-index: 2; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;"
+                                       title="Nhắn tin với người bán">Chat</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; padding: 50px 20px; background: #fafafa; border-radius: 12px; border: 1.5px dashed #e4e4e7;">
+                    <i class="far fa-heart" style="font-size: 40px; color: #fca5a5; margin-bottom: 12px; display: inline-block;"></i>
+                    <h4 style="font-size: 16px; font-weight: 700; color: #18181b; margin-bottom: 6px;">Bạn chưa lưu món đồ yêu thích nào</h4>
+                    <p style="font-size: 13.5px; color: #71717a; margin-bottom: 18px;">Khám phá các sản phẩm đồ cũ trên sàn và bấm nút tim để lưu lại theo dõi nhé!</p>
+                    <a href="/Products" class="btn btn-danger btn-sm font-weight-bold" style="border-radius: 8px; padding: 8px 18px;">
+                        Khám phá đồ cũ ngay
+                    </a>
+                </div>
+            }
+        </div>
     </main>
 </div>
 
@@ -506,19 +579,32 @@
     function switchProfileTab(tab) {
         const tabProfile = document.getElementById('tabPaneProfile');
         const tabPassword = document.getElementById('tabPanePassword');
+        const tabFavorites = document.getElementById('tabPaneFavorites');
         const btnProfile = document.getElementById('tabBtnProfile');
         const btnPassword = document.getElementById('tabBtnPassword');
+        const btnFavorites = document.getElementById('tabBtnFavorites');
 
         if (tab === 'profile') {
             tabProfile.style.display = 'block';
             tabPassword.style.display = 'none';
+            if (tabFavorites) tabFavorites.style.display = 'none';
             btnProfile.classList.add('active');
             btnPassword.classList.remove('active');
-        } else {
+            if (btnFavorites) btnFavorites.classList.remove('active');
+        } else if (tab === 'password') {
             tabProfile.style.display = 'none';
             tabPassword.style.display = 'block';
+            if (tabFavorites) tabFavorites.style.display = 'none';
             btnProfile.classList.remove('active');
             btnPassword.classList.add('active');
+            if (btnFavorites) btnFavorites.classList.remove('active');
+        } else if (tab === 'favorites') {
+            tabProfile.style.display = 'none';
+            tabPassword.style.display = 'none';
+            if (tabFavorites) tabFavorites.style.display = 'block';
+            btnProfile.classList.remove('active');
+            btnPassword.classList.remove('active');
+            if (btnFavorites) btnFavorites.classList.add('active');
         }
     }
 

@@ -86,12 +86,25 @@ namespace ThriftShop.Controllers
                 seller = _db.Users.AsNoTracking().FirstOrDefault(u => u.Email.ToLower() == product.SellerEmail.ToLower());
             }
 
-            var currentUserId = HttpContext.Session.GetUserId();
+            int currentUserId = 0;
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                            ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                            ?? HttpContext.Session.GetUserId()?.ToString();
+            int.TryParse(userIdStr, out currentUserId);
+
             bool isFav = false;
-            if (currentUserId.HasValue)
+            var favoriteProductIds = new List<int>();
+            if (currentUserId > 0)
             {
-                isFav = _db.Favorites.Any(f => f.UserId == currentUserId.Value && f.ProductId == product.Id);
+                favoriteProductIds = _db.Favorites.AsNoTracking()
+                    .Where(f => f.UserId == currentUserId)
+                    .Select(f => f.ProductId)
+                    .ToList();
+                isFav = favoriteProductIds.Contains(product.Id);
             }
+
+            ViewBag.IsFavorited = isFav;
+            ViewBag.FavoriteProductIds = favoriteProductIds;
 
             var imagesList = product.Images.ToList();
             if (imagesList.Count == 0 && !string.IsNullOrEmpty(product.Image))
@@ -440,41 +453,52 @@ namespace ThriftShop.Controllers
 
         // POST: /Products/ToggleFavorite?productId=123
         [HttpPost]
-        public IActionResult ToggleFavorite(int productId)
+        public async Task<IActionResult> ToggleFavorite(int productId)
         {
             try
             {
-                var userId = HttpContext.Session.GetUserId();
-                if (!userId.HasValue)
+                var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                                ?? HttpContext.Session.GetUserId()?.ToString();
+
+                if (!int.TryParse(userIdStr, out int userId) || userId <= 0)
                 {
-                    return Json(new { success = false, requireLogin = true, message = "Vui lòng đăng nhập để lưu tin yêu thích!" });
+                    return Json(new { success = false, requireLogin = true, message = "Vui lòng đăng nhập để lưu sản phẩm yêu thích!" });
                 }
 
-                var existing = _db.Favorites.FirstOrDefault(f => f.UserId == userId.Value && f.ProductId == productId);
-                bool isFav;
+                var productExists = await _db.Products.AnyAsync(p => p.Id == productId && !p.Deleted);
+                if (!productExists)
+                {
+                    return Json(new { success = false, message = "Sản phẩm không tồn tại hoặc đã bị gỡ!" });
+                }
 
+                var existing = await _db.Favorites
+                    .FirstOrDefaultAsync(f => f.UserId == userId && f.ProductId == productId);
+
+                bool isFavorited;
                 if (existing != null)
                 {
                     _db.Favorites.Remove(existing);
-                    isFav = false;
+                    isFavorited = false;
                 }
                 else
                 {
                     _db.Favorites.Add(new Favorite
                     {
-                        UserId = userId.Value,
+                        UserId = userId,
                         ProductId = productId,
                         CreatedAt = DateTime.Now
                     });
-                    isFav = true;
+                    isFavorited = true;
                 }
 
-                _db.SaveChanges();
-                return Json(new { success = true, isFav = isFav });
+                await _db.SaveChangesAsync();
+                return Json(new { success = true, isFavorited = isFavorited, isFav = isFavorited });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Lỗi thao tác yêu thích: " + ex.Message });
+                var msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = "Lỗi thao tác yêu thích: " + msg });
             }
         }
     }

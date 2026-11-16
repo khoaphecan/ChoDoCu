@@ -12,6 +12,8 @@
                                || !string.IsNullOrWhiteSpace(Context.Request.Query["catFilter"])
                                || !string.IsNullOrWhiteSpace(Context.Request.Query["minPrice"])
                                || !string.IsNullOrWhiteSpace(Context.Request.Query["maxPrice"]);
+
+    var favoriteIds = (ViewBag.FavoriteProductIds as List<int>) ?? Model.FavoriteProductIds ?? new List<int>();
 }
 
 @if (!isSearchingOrFiltering)
@@ -99,13 +101,18 @@
             {
                 @foreach (var p in Model.Products)
                 {
+                    bool isFavorited = favoriteIds.Contains(p.Id);
                     <div class="card-dark-item" data-product-name="@p.Name">
                         <div style="position: relative;">
                             <a href="/Products/Details/@p.Id" class="card-dark-image" style="display: block; cursor: pointer; text-decoration: none;" title="Xem chi tiết @p.Name">
                                 <img src="@p.DisplayImage" alt="@p.Name" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'">
                             </a>
-                            <button class="btn-card-fav" onclick="toggleProductFavorite(@p.Id, event)" title="Yêu thích món đồ" data-fav-id="@p.Id">
-                                <i class="far fa-heart"></i>
+                            <button type="button" class="btn-card-fav @(isFavorited ? "active" : "")" 
+                                    style="position: absolute; top: 10px; right: 10px; z-index: 3;" 
+                                    onclick="toggleFavorite(event, @p.Id, this)" 
+                                    title="@(isFavorited ? "Bỏ yêu thích" : "Yêu thích món đồ")" 
+                                    data-fav-id="@p.Id">
+                                <i class="@(isFavorited ? "fas fa-heart text-danger" : "far fa-heart")"></i>
                             </button>
                         </div>
                         <div class="card-dark-body">

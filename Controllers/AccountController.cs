@@ -314,6 +314,14 @@ namespace ThriftShop.Controllers
                 return RedirectToAction("Login");
             }
 
+            // Đồng bộ danh sách sản phẩm yêu thích từ Database
+            ViewBag.FavoriteProducts = _db.Favorites.AsNoTracking()
+                .Where(f => f.UserId == userId.Value)
+                .Join(_db.Products.AsNoTracking(), f => f.ProductId, p => p.Id, (f, p) => p)
+                .Where(p => !p.IsSold && !p.Deleted)
+                .OrderByDescending(p => p.Id)
+                .ToList();
+
             return View(user);
         }
 
@@ -527,9 +535,9 @@ namespace ThriftShop.Controllers
         [HttpGet]
         public async Task<IActionResult> PublicProfile(int id)
         {
+            int curUserId = HttpContext.Session.GetUserId() ?? 0;
             if (id <= 0)
             {
-                int curUserId = HttpContext.Session.GetUserId() ?? 0;
                 if (curUserId > 0)
                 {
                     id = curUserId;
@@ -561,6 +569,14 @@ namespace ThriftShop.Controllers
 
             ViewBag.Seller = seller;
             ViewBag.UserId = seller.Id.ToString();
+
+            if (curUserId > 0)
+            {
+                ViewBag.FavoriteProductIds = await _db.Favorites.AsNoTracking()
+                    .Where(f => f.UserId == curUserId)
+                    .Select(f => f.ProductId)
+                    .ToListAsync();
+            }
 
             return View("SellerProfile", viewModel);
         }

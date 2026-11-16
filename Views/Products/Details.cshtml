@@ -19,6 +19,7 @@
     bool isSold = p != null && (p.IsSold || (p.Status != null && p.Status.ToLower() == "sold"));
     bool isDeleted = p != null && (p.Deleted || (p.Status != null && p.Status.ToLower() == "deleted"));
     bool isProductClosed = isSold || isDeleted;
+    bool isFavorited = (ViewBag.IsFavorited == true) || (Model != null && Model.IsFavorite);
 }
 
 <div class="container" style="max-width: 1440px; width: 95%; margin: 30px auto 60px; padding: 0 15px;">
@@ -180,9 +181,12 @@
                     </a>
                     
                     <!-- Nút 3: Yêu thích -->
-                    <button id="btnFavDetail" type="button" data-fav-id="@productId" onclick="toggleProductFavorite(@productId, event)" style="height: 48px; padding: 0 16px; font-size: 14px; border-radius: 8px; border: 1.5px solid #e4e4e7; background: #ffffff; color: #71717a; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;" title="Yêu thích món đồ">
-                        <i class="@(Model != null && Model.IsFavorite ? "fas fa-heart text-danger mr-1" : "far fa-heart mr-1")" id="detailFavIcon"></i> 
-                        <span id="detailFavText">@(Model != null && Model.IsFavorite ? "Đã thích" : "Yêu thích")</span>
+                    <button id="btnFavDetail" type="button" class="btn-fav-detail @(isFavorited ? "active" : "")" 
+                            data-fav-id="@productId" 
+                            onclick="toggleFavorite(event, @productId, this)" 
+                            style="height: 48px; padding: 0 18px; font-size: 14px; font-weight: 600; border-radius: 8px; border: 1.5px solid @(isFavorited ? "#ef4444" : "#e4e4e7"); background: @(isFavorited ? "#fef2f2" : "#ffffff"); color: @(isFavorited ? "#ef4444" : "#71717a"); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;" 
+                            title="Yêu thích món đồ">
+                        @Html.Raw(isFavorited ? "❤️ Đã yêu thích" : "🤍 Yêu thích")
                     </button>
                 }
             </div>
@@ -222,7 +226,7 @@
         const favBtn = document.getElementById('btnFavDetail');
         if (favBtn) {
             favBtn.onclick = (e) => {
-                toggleProductFavorite(currentId, e);
+                toggleFavorite(e, currentId, favBtn);
             };
         }
     }

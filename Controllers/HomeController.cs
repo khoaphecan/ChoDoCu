@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ThriftShop.Common;
 using ThriftShop.Data;
 using ThriftShop.Models;
 
@@ -70,6 +71,23 @@ namespace ThriftShop.Controllers
             var categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
             ViewBag.Categories = categories;
 
+            // Truy vấn danh sách ProductId đã thích nếu user đã đăng nhập
+            int currentUserId = 0;
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                            ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                            ?? HttpContext.Session.GetUserId()?.ToString();
+            int.TryParse(userIdStr, out currentUserId);
+
+            var favoriteProductIds = new List<int>();
+            if (currentUserId > 0)
+            {
+                favoriteProductIds = _db.Favorites.AsNoTracking()
+                    .Where(f => f.UserId == currentUserId)
+                    .Select(f => f.ProductId)
+                    .ToList();
+            }
+            ViewBag.FavoriteProductIds = favoriteProductIds;
+
             var viewModel = new HomeViewModel
             {
                 Products = products,
@@ -81,7 +99,8 @@ namespace ThriftShop.Controllers
                 CatFilter = catFilter,
                 MinPrice = minPrice,
                 MaxPrice = maxPrice,
-                Sort = sort ?? "newest"
+                Sort = sort ?? "newest",
+                FavoriteProductIds = favoriteProductIds
             };
 
             return View(viewModel);

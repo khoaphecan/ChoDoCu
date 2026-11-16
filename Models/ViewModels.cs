@@ -12,6 +12,7 @@ namespace ThriftShop.Models
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public string? Sort { get; set; } = "newest";
+        public List<int> FavoriteProductIds { get; set; } = new();
     }
 
     public class ProductDetailViewModel
