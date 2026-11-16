@@ -5,17 +5,17 @@
     var categories = ViewBag.Categories as IEnumerable<ThriftShop.Models.Category> ?? new List<ThriftShop.Models.Category>();
 }
 
-@if (TempData["ErrorMessage"] != null)
+@if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-        @TempData["ErrorMessage"]
+        @Html.Raw(TempData["Error"] ?? TempData["ErrorMessage"])
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
     </div>
 }
-@if (TempData["SuccessMessage"] != null)
+@if (TempData["Success"] != null || TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
-        @TempData["SuccessMessage"]
+        @Html.Raw(TempData["Success"] ?? TempData["SuccessMessage"])
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">&times;</button>
     </div>
 }
@@ -65,28 +65,50 @@
                 <th class="bg-success">Tên sản phẩm</th>
                 <th class="bg-success" style="width: 140px;">Đơn giá</th>
                 <th class="bg-success" style="width: 160px;">Danh mục</th>
-                <th class="bg-success text-center" style="width: 220px;"></th>
+                <th class="bg-success text-center" style="width: 140px;">TRẠNG THÁI</th>
+                <th class="bg-success text-center" style="width: 220px;">THAO TÁC</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var product in Model)
             {
                 <tr>
-                    <td class="text-center p-2">
+                    <td class="text-center p-2 align-middle">
                         <img src="@product.DisplayImage" 
                              style="height: 80px; width: 80px; object-fit: cover; border-radius: 4px;" 
                              alt="@product.Name"
                              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100';" />
                     </td>
-                    <td>
+                    <td class="align-middle">
                         @product.Name
                     </td>
-                    <td>@product.Price.ToString("N0") đ</td>
-                    <td>@(product.Category?.Name ?? product.CategoryName)</td>
-                    <td class="text-center text-nowrap">
-                        <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-primary btn-sm">Sửa</a>
-                        <a asp-action="ProductDetails" asp-route-id="@product.Id" class="btn btn-primary btn-sm">Chi tiết</a>
-                        <a asp-action="DeleteProduct" asp-route-id="@product.Id" class="btn btn-primary btn-sm">Xóa</a>
+                    <td class="align-middle">@product.Price.ToString("N0") đ</td>
+                    <td class="align-middle">@(product.Category?.Name ?? product.CategoryName)</td>
+                    <td class="text-center align-middle">
+                        @if (product.IsSold || product.Status == "sold" || product.Stock <= 0)
+                        {
+                            <span class="badge bg-secondary" style="background-color: #64748b; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 12px; font-weight: 600;">Đã bán</span>
+                        }
+                        else if (product.Status == "pending")
+                        {
+                            <span class="badge bg-warning text-dark" style="background-color: #f59e0b; color: #1e293b; padding: 6px 12px; font-size: 12px; border-radius: 12px; font-weight: 600;">Chờ duyệt</span>
+                        }
+                        else if (product.Status == "rejected")
+                        {
+                            <span class="badge bg-danger" style="background-color: #ef4444; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 12px; font-weight: 600;">Bị từ chối</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success" style="background-color: #10b981; color: #fff; padding: 6px 12px; font-size: 12px; border-radius: 12px; font-weight: 600;">Đang bán</span>
+                        }
+                    </td>
+                    <td class="text-center text-nowrap align-middle">
+                        @if (!product.IsSold && product.Status != "sold" && product.Stock > 0)
+                        {
+                            <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-primary btn-sm">Sửa</a>
+                        }
+                        <a asp-action="ProductDetails" asp-route-id="@product.Id" class="btn btn-info btn-sm text-white">Chi tiết</a>
+                        <a asp-action="DeleteProduct" asp-route-id="@product.Id" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">Xóa</a>
                     </td>
                 </tr>
             }

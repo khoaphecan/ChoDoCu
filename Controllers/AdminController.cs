@@ -411,6 +411,14 @@ namespace ThriftShop.Controllers
         {
             var product = await _db.Products.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
             if (product == null) return NotFound();
+
+            if (product.IsSold || product.Status == "sold" || product.Stock <= 0)
+            {
+                TempData["Error"] = "Sản phẩm đã bán, không thể chỉnh sửa!";
+                TempData["ErrorMessage"] = "Sản phẩm đã bán, không thể chỉnh sửa!";
+                return RedirectToAction(nameof(Products));
+            }
+
             ViewBag.Categories = _db.Categories.ToList();
             return View(product);
         }
@@ -420,10 +428,18 @@ namespace ThriftShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProduct(Product product)
         {
+            var existing = await _db.Products.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == product.Id);
+            if (existing == null) return NotFound();
+
+            if (existing.IsSold || existing.Status == "sold" || existing.Stock <= 0)
+            {
+                TempData["Error"] = "Sản phẩm đã bán, không thể chỉnh sửa!";
+                TempData["ErrorMessage"] = "Sản phẩm đã bán, không thể chỉnh sửa!";
+                return RedirectToAction(nameof(Products));
+            }
+
             if (ModelState.IsValid)
             {
-                var existing = await _db.Products.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == product.Id);
-                if (existing == null) return NotFound();
 
                 existing.Name = product.Name;
                 existing.CategoryId = product.CategoryId;
