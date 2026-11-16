@@ -62,9 +62,14 @@ namespace ThriftShop.Filters
             }
 
             // 2. Đã đăng nhập nhưng không phải Admin
-            bool isAdmin = user.IsInRole("admin") 
+            string? roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
+            string? sessionRole = session.GetString(ThriftSession.SessionRoleKey);
+            bool isExplicitCustomer = (roleClaim != null && roleClaim.Equals("customer", StringComparison.OrdinalIgnoreCase))
+                                   || (sessionRole != null && sessionRole.Equals("customer", StringComparison.OrdinalIgnoreCase));
+
+            bool isAdmin = !isExplicitCustomer && (user.IsInRole("admin") 
                         || user.FindFirst(ClaimTypes.Email)?.Value == "admin@thriftshop.vn"
-                        || ThriftSession.IsAdmin(session);
+                        || ThriftSession.IsAdmin(session));
 
             if (!isAdmin)
             {

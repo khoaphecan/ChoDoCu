@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using ThriftShop.Common;
@@ -507,7 +510,11 @@ namespace ThriftShop.Controllers
                 .OrderByDescending(u => u.Id)
                 .ToList();
 
-            int currentAdminId = HttpContext.Session.GetUserId() ?? 1;
+            int currentAdminId = 1;
+            var curIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                           ?? HttpContext.Session.GetUserId()?.ToString();
+            if (int.TryParse(curIdStr, out int parsedId)) currentAdminId = parsedId;
             ViewBag.CurrentAdminId = currentAdminId;
 
             return View(users);
@@ -652,6 +659,40 @@ namespace ThriftShop.Controllers
             }
 
             await _db.SaveChangesAsync();
+
+            // Kiểm tra nếu tài khoản đang đăng nhập tự chuyển vai trò của chính mình từ admin xuống customer
+            int currentUserId = 0;
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                            ?? HttpContext.Session.GetUserId()?.ToString();
+            int.TryParse(userIdStr, out currentUserId);
+
+            if (user.Id == currentUserId && user.Role?.ToLower() != "admin")
+            {
+                // Cấp lại Cookie mới với Claim Role = "customer" và cập nhật Session
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.FullName ?? user.Name ?? "Thành viên"),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, "customer"),
+                    new Claim("Avatar", user.Avatar ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150")
+                };
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14)
+                };
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+                HttpContext.Session.SetUser(user);
+
+                TempData["Success"] = "Bạn đã chuyển vai trò của chính mình sang Khách hàng!";
+                TempData["SuccessMessage"] = "Bạn đã chuyển vai trò của chính mình sang Khách hàng!";
+                return RedirectToAction("Index", "Home");
+            }
+
             TempData["Success"] = $"Đã cập nhật thông tin tài khoản #{user.Id} thành công!";
             TempData["SuccessMessage"] = $"Đã cập nhật thông tin tài khoản #{user.Id} thành công!";
             return RedirectToAction(nameof(Users));
@@ -672,7 +713,11 @@ namespace ThriftShop.Controllers
                 return RedirectToAction(nameof(Users));
             }
 
-            int currentAdminId = HttpContext.Session.GetUserId() ?? 1;
+            int currentAdminId = 1;
+            var curIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                           ?? HttpContext.Session.GetUserId()?.ToString();
+            if (int.TryParse(curIdStr, out int parsedId)) currentAdminId = parsedId;
             // Chặn không cho phép xóa tài khoản Quản trị viên
             if (id == 1 || id == currentAdminId || user.Role?.ToLower() == "admin")
             {
