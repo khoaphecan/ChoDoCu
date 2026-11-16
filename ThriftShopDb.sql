@@ -1,4 +1,4 @@
--- =======================================================================================
+﻿-- =======================================================================================
 -- ThriftShop Database Setup & Initial Seed Script
 -- Nền tảng Trao Đổi & Bán Đồ Cũ Secondhand (C2C E-Commerce)
 -- Công nghệ: ASP.NET Core MVC 8.0 + Entity Framework Core + SQL Server
