@@ -609,67 +609,51 @@ namespace ThriftShop.Controllers
         // POST: /Admin/EditUser/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditUser(int id, User model, string? newPassword)
+        public async Task<IActionResult> EditUser(int id, User model, string? NewPassword)
         {
             var user = await _db.Users.FindAsync(id);
-            if (user == null)
+            if (user == null) return NotFound();
+
+            // Loại bỏ validation của các trường không bắt buộc khi Edit
+            ModelState.Remove("PasswordHash");
+            ModelState.Remove("Password");
+            ModelState.Remove("NewPassword");
+            ModelState.Remove("newPassword");
+
+            if (string.IsNullOrWhiteSpace(model.FullName) || string.IsNullOrWhiteSpace(model.Email))
             {
-                TempData["ErrorMessage"] = "Không tìm thấy người dùng #" + id;
-                return RedirectToAction(nameof(Users));
+                ViewBag.Error = "Họ tên và Email không được để trống!";
+                return View(user);
             }
 
-            if (string.IsNullOrWhiteSpace(model.FullName))
+            // Kiểm tra trùng Email với tài khoản khác
+            var emailExists = await _db.Users.AnyAsync(u => u.Email.ToLower() == model.Email.Trim().ToLower() && u.Id != id);
+            if (emailExists)
             {
-                ModelState.AddModelError("FullName", "Vui lòng nhập họ và tên.");
-            }
-            if (string.IsNullOrWhiteSpace(model.Email))
-            {
-                ModelState.AddModelError("Email", "Vui lòng nhập địa chỉ email.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(model.Email))
-            {
-                bool emailExists = await _db.Users.AnyAsync(u => u.Id != id && u.Email.ToLower() == model.Email.Trim().ToLower());
-                if (emailExists)
-                {
-                    ModelState.AddModelError("Email", "Địa chỉ email này đã được sử dụng bởi tài khoản khác.");
-                }
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return View(model);
+                ViewBag.Error = "Email này đã được sử dụng bởi tài khoản khác!";
+                return View(user);
             }
 
             user.FullName = model.FullName.Trim();
-            user.Email = model.Email.Trim().ToLower();
+            user.Email = model.Email.Trim();
             user.Phone = model.Phone?.Trim();
             user.Address = model.Address?.Trim();
-            user.Bio = model.Bio?.Trim();
-            if (!string.IsNullOrWhiteSpace(model.Avatar))
-            {
-                user.Avatar = model.Avatar.Trim();
-            }
+            user.Role = string.IsNullOrWhiteSpace(model.Role) ? user.Role : model.Role.Trim();
 
-            if (!string.IsNullOrWhiteSpace(model.Role))
+            // Chỉ cập nhật mật khẩu nếu Admin có nhập mật khẩu mới
+            if (!string.IsNullOrWhiteSpace(NewPassword))
             {
-                string role = model.Role.Trim().ToLower();
-                user.Role = (role == "admin") ? "admin" : "customer";
-            }
-
-            if (!string.IsNullOrWhiteSpace(newPassword))
-            {
-                if (newPassword.Length < 4)
+                if (NewPassword.Trim().Length < 4)
                 {
-                    ModelState.AddModelError("Password", "Mật khẩu mới tối thiểu 4 ký tự.");
-                    return View(model);
+                    ViewBag.Error = "Mật khẩu mới phải có ít nhất 4 ký tự!";
+                    return View(user);
                 }
-                user.PasswordHash = HashPassword(newPassword);
+                user.PasswordHash = HashPassword(NewPassword.Trim());
             }
 
             await _db.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = $"Đã cập nhật thông tin tài khoản #{id} ({user.FullName}) thành công!";
+            TempData["Success"] = $"Đã cập nhật thông tin tài khoản #{user.Id} thành công!";
+            TempData["SuccessMessage"] = $"Đã cập nhật thông tin tài khoản #{user.Id} thành công!";
             return RedirectToAction(nameof(Users));
         }
 

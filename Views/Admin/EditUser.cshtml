@@ -7,14 +7,29 @@
 <h2 class="bg-success">CHỈNH SỬA TÀI KHOẢN #@Model.Id</h2>
 
 <div class="card p-4 border" style="max-width: 750px;">
-    <form asp-controller="Admin" asp-action="EditUser" asp-route-id="@Model.Id" method="post">
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger font-weight-bold mb-3">
+            <i class="fas fa-exclamation-triangle mr-1"></i> @ViewBag.Error
+        </div>
+    }
+    @if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger font-weight-bold mb-3">
+            <i class="fas fa-exclamation-triangle mr-1"></i> @(TempData["Error"] ?? TempData["ErrorMessage"])
+        </div>
+    }
+
+    <form method="post" asp-controller="Admin" asp-action="EditUser" asp-route-id="@Model.Id">
         @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3 font-weight-bold"></div>
 
         <div class="form-group row">
             <label asp-for="FullName" class="col-sm-3 col-form-label font-weight-bold">Họ và Tên *</label>
             <div class="col-sm-9">
-                <input asp-for="FullName" class="form-control" required />
+                <input asp-for="FullName" name="FullName" class="form-control" required />
                 <span asp-validation-for="FullName" class="text-danger"></span>
             </div>
         </div>
@@ -22,7 +37,7 @@
         <div class="form-group row">
             <label asp-for="Email" class="col-sm-3 col-form-label font-weight-bold">Email Đăng Nhập *</label>
             <div class="col-sm-9">
-                <input asp-for="Email" type="email" class="form-control" required />
+                <input asp-for="Email" name="Email" type="email" class="form-control" required />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
         </div>
@@ -30,7 +45,7 @@
         <div class="form-group row">
             <label class="col-sm-3 col-form-label font-weight-bold">Đổi Mật Khẩu</label>
             <div class="col-sm-9">
-                <input name="newPassword" type="password" class="form-control" placeholder="Để trống nếu muốn giữ nguyên mật khẩu cũ" />
+                <input name="NewPassword" id="NewPassword" type="password" class="form-control" placeholder="Để trống nếu muốn giữ nguyên mật khẩu cũ" />
                 <span class="text-muted small">Chỉ nhập khi muốn thay đổi mật khẩu của tài khoản này (tối thiểu 4 ký tự).</span>
             </div>
         </div>
@@ -38,7 +53,7 @@
         <div class="form-group row">
             <label asp-for="Phone" class="col-sm-3 col-form-label font-weight-bold">Số Điện Thoại</label>
             <div class="col-sm-9">
-                <input asp-for="Phone" class="form-control" />
+                <input asp-for="Phone" name="Phone" class="form-control" />
                 <span asp-validation-for="Phone" class="text-danger"></span>
             </div>
         </div>
@@ -46,7 +61,7 @@
         <div class="form-group row">
             <label asp-for="Address" class="col-sm-3 col-form-label font-weight-bold">Địa Chỉ</label>
             <div class="col-sm-9">
-                <input asp-for="Address" class="form-control" />
+                <input asp-for="Address" name="Address" class="form-control" />
                 <span asp-validation-for="Address" class="text-danger"></span>
             </div>
         </div>
@@ -54,7 +69,7 @@
         <div class="form-group row">
             <label asp-for="Role" class="col-sm-3 col-form-label font-weight-bold">Vai Trò *</label>
             <div class="col-sm-9">
-                <select asp-for="Role" class="form-control custom-select">
+                <select asp-for="Role" name="Role" class="form-control custom-select">
                     <option value="customer" selected="@(Model.Role?.ToLower() == "customer")">Khách hàng (Customer)</option>
                     <option value="admin" selected="@(Model.Role?.ToLower() == "admin")">Quản trị viên (Admin)</option>
                 </select>
