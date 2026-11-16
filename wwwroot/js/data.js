@@ -714,93 +714,8 @@ const DEFAULT_PRODUCTS = [
   }
 ];
 
-// Dữ liệu mẫu TIN ĐĂNG BÁN ĐỒ CŨ DO NGƯỜI DÙNG GỬI LÊN (Chờ Admin duyệt hoặc đã duyệt/từ chối)
-const DEFAULT_PENDING_POSTS = [
-  {
-    id: 201,
-    name: "Máy chơi game Sony PlayStation 4 Slim 500GB kèm 2 tay cầm",
-    categoryId: 1,
-    categoryName: "Đồ điện tử",
-    price: 3200000,
-    originalPrice: 7500000,
-    condition: "93% - Rất tốt",
-    conditionPercent: 93,
-    sellerId: 2,
-    sellerName: "Trần Nhật Hào (Bạn)",
-    sellerPhone: "0909123456",
-    sellerAddress: "123 Nguyễn Huệ, Quận 1, TP.HCM",
-    stock: 1,
-    image: "https://images.unsplash.com/photo-1507457379470-08b800bebc67?w=600&q=80",
-    description: "Máy PS4 Slim 500GB mua chính hãng Sony VN, đã nâng cấp firmware mới nhất. Ít chơi do đi làm bận, máy chạy êm mát không kêu to.",
-    conditionDetails: "Kèm 2 tay cầm DualShock 4 không trôi cần analog, cáp nguồn, cáp HDMI, tặng kèm đĩa game God of War.",
-    status: "pending", // 'pending' | 'approved' | 'rejected'
-    rejectReason: "",
-    createdAt: "2026-10-12 08:30"
-  },
-  {
-    id: 202,
-    name: "Bàn phím cơ không dây Keychron K2 V2 nhôm Hot-swap RGB",
-    categoryId: 1,
-    categoryName: "Đồ điện tử",
-    price: 1150000,
-    originalPrice: 2150000,
-    condition: "97% - Như mới",
-    conditionPercent: 97,
-    sellerId: 20,
-    sellerName: "Lê Quốc Bảo",
-    sellerPhone: "0912345678",
-    sellerAddress: "Quận Tân Bình, TP.HCM",
-    stock: 1,
-    image: "https://images.unsplash.com/photo-1595225476474-87563907a212?w=600&q=80",
-    description: "Keychron K2 V2 bản viền nhôm cao cấp, switch Gateron Brown gõ nảy đầm tay. Dùng được cả Bluetooth và cắm dây.",
-    conditionDetails: "Fullbox đầy đủ phụ kiện keycap cho cả Mac/Windows, cáp Type-C, gắp phím.",
-    status: "pending",
-    rejectReason: "",
-    createdAt: "2026-10-12 09:10"
-  },
-  {
-    id: 203,
-    name: "Túi đeo chéo da bò mộc Handmade Secondhand",
-    categoryId: 4,
-    categoryName: "Thời trang",
-    price: 390000,
-    originalPrice: 950000,
-    condition: "90% - Tốt",
-    conditionPercent: 90,
-    sellerId: 21,
-    sellerName: "Ngô Mai Phương",
-    sellerPhone: "0988776655",
-    sellerAddress: "Quận 7, TP.HCM",
-    stock: 1,
-    image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80",
-    description: "Túi da bò thật may tay thủ công đựng vừa iPad 11 inch và sổ tay. Màu nâu sáp lên màu patina vintage rất đẹp theo thời gian.",
-    conditionDetails: "Khóa đồng sáng bóng, quai đeo êm chắc chắn, không trầy rách sâu.",
-    status: "pending",
-    rejectReason: "",
-    createdAt: "2026-10-11 20:15"
-  },
-  {
-    id: 204,
-    name: "Bộ 10 đĩa than Vinyl Nhạc Jazz Cổ Điển US",
-    categoryId: 5,
-    categoryName: "Khác",
-    price: 1200000,
-    originalPrice: 2800000,
-    condition: "85% - Khá",
-    conditionPercent: 85,
-    sellerId: 22,
-    sellerName: "Phan Văn Hưng",
-    sellerPhone: "0933221100",
-    sellerAddress: "Quận Bình Thạnh, TP.HCM",
-    stock: 1,
-    image: "https://images.unsplash.com/photo-1539185441755-769473a23570?w=600&q=80",
-    description: "Bộ sưu tập 10 đĩa than nhạc Jazz thập niên 60-70 xách tay từ Mỹ gồm Miles Davis, John Coltrane, Bill Evans.",
-    conditionDetails: "Vỏ giấy hơi ố theo thời gian, bề mặt đĩa sạch, nghe mượt mà có tiếng lách tách đặc trưng của đĩa than.",
-    status: "pending",
-    rejectReason: "",
-    createdAt: "2026-10-11 18:40"
-  }
-];
+// Danh sách TIN ĐĂNG BÁN ĐỒ CŨ (Khởi tạo mảng rỗng để không bị chèn tin ảo cho tài khoản mới)
+const DEFAULT_PENDING_POSTS = [];
 
 // Dữ liệu mẫu Danh sách Đơn hàng (Dùng cho cả Khách hàng và Admin)
 const DEFAULT_ORDERS = [
@@ -1031,7 +946,7 @@ function initThriftData() {
   if (!savedCats.length) {
     localStorage.setItem("thrift_categories", JSON.stringify(DEFAULT_CATEGORIES));
     localStorage.setItem("thrift_products", JSON.stringify(DEFAULT_PRODUCTS));
-    localStorage.setItem("thrift_pending_posts", JSON.stringify(DEFAULT_PENDING_POSTS));
+    localStorage.setItem("thrift_pending_posts", JSON.stringify([]));
   }
 
   // Tự động đồng bộ danh mục mới nhất từ Database SQL Server
@@ -1075,10 +990,9 @@ function initThriftData() {
     }
   }
 
-  // Đồng bộ tin chờ duyệt nếu chưa có
-  const existingPending = JSON.parse(localStorage.getItem("thrift_pending_posts") || "[]");
-  if (!existingPending.length) {
-    localStorage.setItem("thrift_pending_posts", JSON.stringify(DEFAULT_PENDING_POSTS));
+  // Khởi tạo mảng tin chờ duyệt rỗng nếu chưa có
+  if (!localStorage.getItem("thrift_pending_posts")) {
+    localStorage.setItem("thrift_pending_posts", JSON.stringify([]));
   }
 
   if (!localStorage.getItem("thrift_orders")) {
@@ -1160,7 +1074,7 @@ const ThriftDB = {
 
   // Quản lý tin đồ cũ chờ duyệt
   getPendingPosts() {
-    return JSON.parse(localStorage.getItem("thrift_pending_posts")) || DEFAULT_PENDING_POSTS;
+    return JSON.parse(localStorage.getItem("thrift_pending_posts") || "[]");
   },
   savePendingPosts(posts) {
     localStorage.setItem("thrift_pending_posts", JSON.stringify(posts));

@@ -236,111 +236,33 @@ BEGIN
 END
 GO
 
--- 2. SEED TÀI KHOẢN NGƯỜI DÙNG (Admin & Người bán/mua mẫu)
+-- 2. SEED TÀI KHOẢN NGƯỜI DÙNG (Admin)
 IF NOT EXISTS (SELECT * FROM [dbo].[Users] WHERE [Email] = 'admin@thriftshop.vn')
 BEGIN
     SET IDENTITY_INSERT [dbo].[Users] ON;
     INSERT INTO [dbo].[Users] ([Id], [FullName], [Email], [PasswordHash], [Phone], [Address], [Avatar], [Bio], [Role], [CreatedAt]) VALUES
-    (1, N'Ban Quản Trị ThriftShop', 'admin@thriftshop.vn', 'admin', '19006868', N'TP. Hồ Chí Minh', '/images/avatars/avatar_1_639301642064879045.webp', N'Ban Quản Trị & Kiểm Duyệt Sàn Đồ Cũ ThriftShop', 'admin', '2026-11-13T08:00:00'),
-    (2, N'Nguyễn Văn A', 'nguyenvana@gmail.com', '123456', '0901234567', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', N'Người yêu đồ vintage & secondhand cổ điển', 'customer', '2026-11-13T08:30:00'),
-    (3, N'Trần Thị B', 'tranthib@gmail.com', '123456', '0912345678', N'Quận 3, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', N'Thanh lý đồ gia dụng và thời trang secondhand', 'customer', '2026-11-13T09:00:00');
+    (1, N'Ban Quản Trị ThriftShop', 'admin@thriftshop.vn', 'admin', '19006868', N'TP. Hồ Chí Minh', '/images/avatars/avatar_1_639301642064879045.webp', N'Ban Quản Trị & Kiểm Duyệt Sàn Đồ Cũ ThriftShop', 'admin', '2026-11-13T08:00:00');
     SET IDENTITY_INSERT [dbo].[Users] OFF;
 END
 GO
 
--- 3. SEED BẢNG PENDINGPOSTS (Các tin đăng bán đã duyệt và chờ duyệt)
-IF NOT EXISTS (SELECT * FROM [dbo].[PendingPosts])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[PendingPosts] ON;
-    INSERT INTO [dbo].[PendingPosts] ([Id], [Name], [CategoryId], [CategoryName], [Price], [OriginalPrice], [Description], [Image], [ImagesJson], [VideosJson], [Stock], [SellerId], [SellerName], [SellerPhone], [SellerEmail], [SellerAddress], [SellerAvatar], [Status], [IsSold], [RejectReason], [CreatedAt], [UpdatedAt], [Deleted]) VALUES
-    (1, N'Máy ảnh Film Polaroid Impulse AF Auto Focus (1992)', 1, N'Đồ điện tử', 1850000.00, 3200000.00, N'Máy ảnh film lấy liền Polaroid Impulse AF cổ điển sản xuất tại Vương Quốc Anh năm 1992. Thấu kính Sonar Auto Focus cực nét, đèn flash đánh nhạy, cơ cuốn film mượt mà. Kèm hộp zin và dây đeo da.', 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600', '["https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600","https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600","https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600"]', NULL, 1, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 'approved', 0, NULL, '2026-11-13T10:00:00', '2026-11-13T11:00:00', 0),
-    (2, N'Áo khoác Denim Levi''s Vintage Trucker Jacket 70505', 4, N'Thời trang', 650000.00, 2100000.00, N'Áo khoác jeans Levi''s chính hãng form vintage thập niên 90. Chất vải denim dày dặn đã ngả màu wash tự nhiên cực đẹp, cúc đồng nguyên bản dập chìm logo Levi Strauss.', 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600', '["https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600","https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600","https://images.unsplash.com/photo-1548883354-7622d03aca27?w=600"]', NULL, 1, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 'approved', 0, NULL, '2026-11-13T10:30:00', '2026-11-13T11:30:00', 0),
-    (3, N'Bàn làm việc gỗ sồi tự nhiên phong cách Bắc Âu (Scandinavian)', 2, N'Đồ gia dụng', 1200000.00, 3500000.00, N'Bàn làm việc gỗ sồi tự nhiên còn mới 95%, kích thước 120x60x75cm. Thiết kế tối giản 2 ngăn kéo tiện lợi, bề mặt phủ sơn mờ chống trầy xước, tháo lắp dễ dàng.', 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600', '["https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600","https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=600"]', NULL, 1, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 'approved', 0, NULL, '2026-11-13T11:00:00', '2026-11-13T12:00:00', 0),
-    (4, N'Bàn phím cơ không dây Keychron K2 V2 khung nhôm Gateron Brown', 1, N'Đồ điện tử', 950000.00, 2250000.00, N'Bàn phím cơ Keychron K2 V2 Bluetooth kết nối cùng lúc 3 thiết bị (Mac/Win/iOS). Switch Gateron Brown gõ êm mượt, LED đơn trắng tinh tế, pin trâu 4000mAh. Kèm dây type-C bọc dù và keycap puller.', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600', '["https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600","https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600"]', NULL, 1, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 'approved', 0, NULL, '2026-11-13T11:30:00', '2026-11-13T12:30:00', 0),
-    (5, N'Combo Trọn Bộ Truyện Tranh Dragon Ball Siêu Cấp 20 Tập', 3, N'Văn phòng phẩm', 380000.00, 800000.00, N'Bộ truyện tranh Dragon Ball Super từ tập 1 đến tập 20 bản quyền Kim Đồng, giấy đẹp không quăn mép, bảo quản kỹ trong bọc chống ẩm.', 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600', '["https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600","https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600"]', NULL, 1, 3, N'Trần Thị B', '0912345678', 'tranthib@gmail.com', N'Quận 3, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'approved', 0, NULL, '2026-11-13T12:00:00', '2026-11-13T13:00:00', 0),
-    (6, N'Đồng hồ cơ cổ điển Seiko 5 Automatic Vintage 1980s', 5, N'Khác', 1450000.00, 3500000.00, N'Đồng hồ cổ Seiko 5 cơ tự động lên cót sản xuất tại Nhật Bản thập niên 80. Mặt số chải tia màu vàng champange, dây thép đúc nguyên bản, hoạt động chính xác giữ giờ tốt.', 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600', '["https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600","https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600"]', NULL, 1, 3, N'Trần Thị B', '0912345678', 'tranthib@gmail.com', N'Quận 3, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'approved', 0, NULL, '2026-11-13T12:30:00', '2026-11-13T13:30:00', 0),
-    (7, N'Tai nghe kiểm âm Sony MDR-7506 chuyên phòng thu', 1, N'Đồ điện tử', 1350000.00, 2600000.00, N'Tai nghe studio huyền thoại Sony MDR-7506, dải âm trung thực, đệm tai còn mới tinh kèm jack chuyển 6.3mm mạ vàng.', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600', '["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600","https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600"]', NULL, 1, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 'pending', 0, NULL, '2026-11-14T08:00:00', NULL, 0),
-    (8, N'Ghế công thái học Ergonomic Sihoo M57 nguyên bản', 2, N'Đồ gia dụng', 1850000.00, 3800000.00, N'Ghế Sihoo M57 lưới toàn thân thoáng mát, đỡ thắt lưng tùy chỉnh 3 hướng, piston và chân nhôm sáng bóng chịu lực tốt.', 'https://images.unsplash.com/photo-1580481077195-c22ae2499d07?w=600', '["https://images.unsplash.com/photo-1580481077195-c22ae2499d07?w=600","https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=600"]', NULL, 1, 3, N'Trần Thị B', '0912345678', 'tranthib@gmail.com', N'Quận 3, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'pending', 0, NULL, '2026-11-14T08:30:00', NULL, 0);
-    SET IDENTITY_INSERT [dbo].[PendingPosts] OFF;
-END
-GO
-
--- 4. SEED BẢNG PRODUCTS (Các sản phẩm đã duyệt mở bán hiển thị ở Trang chủ & Cửa hàng)
-IF NOT EXISTS (SELECT * FROM [dbo].[Products])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[Products] ON;
-    INSERT INTO [dbo].[Products] ([Id], [Name], [CategoryId], [CategoryName], [Price], [OriginalPrice], [Description], [Image], [ImagesJson], [VideosJson], [Stock], [SoldCount], [SellerId], [SellerName], [SellerPhone], [SellerEmail], [SellerAddress], [SellerAvatar], [Featured], [Status], [IsSold], [Deleted], [PendingPostId], [CreatedAt]) VALUES
-    (1, N'Máy ảnh Film Polaroid Impulse AF Auto Focus (1992)', 1, N'Đồ điện tử', 1850000.00, 3200000.00, N'Máy ảnh film lấy liền Polaroid Impulse AF cổ điển sản xuất tại Vương Quốc Anh năm 1992. Thấu kính Sonar Auto Focus cực nét, đèn flash đánh nhạy, cơ cuốn film mượt mà. Kèm hộp zin và dây đeo da.', 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600', '["https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600","https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600","https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600"]', NULL, 1, 0, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 1, 'approved', 0, 0, 1, '2026-11-13T11:00:00'),
-    (2, N'Áo khoác Denim Levi''s Vintage Trucker Jacket 70505', 4, N'Thời trang', 650000.00, 2100000.00, N'Áo khoác jeans Levi''s chính hãng form vintage thập niên 90. Chất vải denim dày dặn đã ngả màu wash tự nhiên cực đẹp, cúc đồng nguyên bản dập chìm logo Levi Strauss.', 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600', '["https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600","https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600","https://images.unsplash.com/photo-1548883354-7622d03aca27?w=600"]', NULL, 1, 0, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 1, 'approved', 0, 0, 2, '2026-11-13T11:30:00'),
-    (3, N'Bàn làm việc gỗ sồi tự nhiên phong cách Bắc Âu (Scandinavian)', 2, N'Đồ gia dụng', 1200000.00, 3500000.00, N'Bàn làm việc gỗ sồi tự nhiên còn mới 95%, kích thước 120x60x75cm. Thiết kế tối giản 2 ngăn kéo tiện lợi, bề mặt phủ sơn mờ chống trầy xước, tháo lắp dễ dàng.', 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600', '["https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600","https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=600"]', NULL, 1, 0, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 0, 'approved', 0, 0, 3, '2026-11-13T12:00:00'),
-    (4, N'Bàn phím cơ không dây Keychron K2 V2 khung nhôm Gateron Brown', 1, N'Đồ điện tử', 950000.00, 2250000.00, N'Bàn phím cơ Keychron K2 V2 Bluetooth kết nối cùng lúc 3 thiết bị (Mac/Win/iOS). Switch Gateron Brown gõ êm mượt, LED đơn trắng tinh tế, pin trâu 4000mAh. Kèm dây type-C bọc dù và keycap puller.', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600', '["https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600","https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600"]', NULL, 1, 0, 2, N'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', N'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 1, 'approved', 0, 0, 4, '2026-11-13T12:30:00'),
-    (5, N'Combo Trọn Bộ Truyện Tranh Dragon Ball Siêu Cấp 20 Tập', 3, N'Văn phòng phẩm', 380000.00, 800000.00, N'Bộ truyện tranh Dragon Ball Super từ tập 1 đến tập 20 bản quyền Kim Đồng, giấy đẹp không quăn mép, bảo quản kỹ trong bọc chống ẩm.', 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600', '["https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600","https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600"]', NULL, 1, 0, 3, N'Trần Thị B', '0912345678', 'tranthib@gmail.com', N'Quận 3, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 1, 'approved', 0, 0, 5, '2026-11-13T13:00:00'),
-    (6, N'Đồng hồ cơ cổ điển Seiko 5 Automatic Vintage 1980s', 5, N'Khác', 1450000.00, 3500000.00, N'Đồng hồ cổ Seiko 5 cơ tự động lên cót sản xuất tại Nhật Bản thập niên 80. Mặt số chải tia màu vàng champange, dây thép đúc nguyên bản, hoạt động chính xác giữ giờ tốt.', 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600', '["https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600","https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600"]', NULL, 1, 0, 3, N'Trần Thị B', '0912345678', 'tranthib@gmail.com', N'Quận 3, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 0, 'approved', 0, 0, 6, '2026-11-13T13:30:00');
-    SET IDENTITY_INSERT [dbo].[Products] OFF;
-END
-GO
-
--- 5. SEED BẢNG CONVERSATIONS (Cuộc hội thoại mẫu giữa Người mua và Người bán)
-IF NOT EXISTS (SELECT * FROM [dbo].[Conversations])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[Conversations] ON;
-    INSERT INTO [dbo].[Conversations] ([Id], [ProductId], [BuyerId], [SellerId], [BuyerClearedAt], [SellerClearedAt], [CreatedAt], [UpdatedAt]) VALUES
-    (1, 1, 3, 2, NULL, NULL, '2026-11-13T14:00:00', '2026-11-13T14:15:00');
-    SET IDENTITY_INSERT [dbo].[Conversations] OFF;
-END
-GO
-
--- 6. SEED BẢNG CHATMESSAGES (Tin nhắn trao đổi trong hội thoại mẫu)
-IF NOT EXISTS (SELECT * FROM [dbo].[ChatMessages])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[ChatMessages] ON;
-    INSERT INTO [dbo].[ChatMessages] ([Id], [ProductId], [SenderId], [SenderName], [SenderAvatar], [ReceiverId], [ReceiverName], [ReceiverAvatar], [Message], [SentAt], [CreatedAt], [IsRead], [ConversationId], [ImageUrl]) VALUES
-    (1, 1, 3, N'Trần Thị B', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 2, N'Nguyễn Văn A', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', N'Chào bạn, máy ảnh Polaroid này ống kính còn trong và cơ cuốn film ổn định không bạn?', '2026-11-13T14:00:00', '2026-11-13T14:00:00', 1, 1, NULL),
-    (2, 1, 2, N'Nguyễn Văn A', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', 3, N'Trần Thị B', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', N'Chào bạn! Thấu kính Sonar bắt nét rất chuẩn, cơ hoàn toàn êm ái nhé, bạn có thể kiểm tra trực tiếp khi nhận hàng ạ!', '2026-11-13T14:15:00', '2026-11-13T14:15:00', 1, 1, NULL);
-    SET IDENTITY_INSERT [dbo].[ChatMessages] OFF;
-END
-GO
-
--- 7. SEED BẢNG ORDERS & ORDERITEMS (Đơn hàng mẫu kiểm tra chức năng đặt hàng)
-IF NOT EXISTS (SELECT * FROM [dbo].[Orders])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[Orders] ON;
-    INSERT INTO [dbo].[Orders] ([Id], [CustName], [CustPhone], [CustEmail], [CustAddress], [PaymentMethod], [Notes], [TotalAmount], [Status], [OrderDate], [CreatedAt], [UserId]) VALUES
-    (1, N'Trần Thị B', '0912345678', 'tranthib@gmail.com', N'123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM', N'COD - Thanh toán khi nhận hàng', N'Giao giờ hành chính giúp em', 1850000.00, 'pending', '2026-11-13T15:00:00', '2026-11-13T15:00:00', 3);
-    SET IDENTITY_INSERT [dbo].[Orders] OFF;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM [dbo].[OrderItems])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[OrderItems] ON;
-    INSERT INTO [dbo].[OrderItems] ([Id], [OrderId], [ProductId], [ProductName], [Price], [Quantity], [Subtotal], [Image]) VALUES
-    (1, 1, 1, N'Máy ảnh Film Polaroid Impulse AF Auto Focus (1992)', 1850000.00, 1, 1850000.00, 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600');
-    SET IDENTITY_INSERT [dbo].[OrderItems] OFF;
-END
-GO
-
--- 8. SEED BẢNG FAVORITES (Danh sách yêu thích mẫu)
-IF NOT EXISTS (SELECT * FROM [dbo].[Favorites])
-BEGIN
-    SET IDENTITY_INSERT [dbo].[Favorites] ON;
-    INSERT INTO [dbo].[Favorites] ([Id], [UserId], [ProductId], [CreatedAt]) VALUES
-    (1, 3, 2, '2026-11-13T15:30:00'),
-    (2, 2, 5, '2026-11-13T16:00:00');
-    SET IDENTITY_INSERT [dbo].[Favorites] OFF;
-END
-GO
+-- 3. BẢNG PENDINGPOSTS (Khởi tạo rỗng, người dùng đăng tin bán đồ cũ)
+-- 4. BẢNG PRODUCTS (Khởi tạo rỗng, hiển thị sau khi Quản trị viên duyệt tin)
+-- 5. BẢNG CONVERSATIONS (Khởi tạo rỗng, tạo khi Người mua nhắn tin cho Người bán)
+-- 6. BẢNG CHATMESSAGES (Khởi tạo rỗng)
+-- 7. BẢNG ORDERS & ORDERITEMS (Khởi tạo rỗng)
+-- 8. BẢNG FAVORITES (Khởi tạo rỗng)
 
 -- RESEED IDENTITY COUNTERS ĐẢM BẢO DỮ LIỆU TỰ ĐỘNG TĂNG BẮT ĐẦU CHÍNH XÁC
 DBCC CHECKIDENT ('Categories', RESEED, 5);
-DBCC CHECKIDENT ('Users', RESEED, 3);
-DBCC CHECKIDENT ('PendingPosts', RESEED, 8);
-DBCC CHECKIDENT ('Products', RESEED, 6);
-DBCC CHECKIDENT ('Conversations', RESEED, 1);
-DBCC CHECKIDENT ('ChatMessages', RESEED, 2);
-DBCC CHECKIDENT ('Orders', RESEED, 1);
-DBCC CHECKIDENT ('OrderItems', RESEED, 1);
-DBCC CHECKIDENT ('Favorites', RESEED, 2);
+DBCC CHECKIDENT ('Users', RESEED, 1);
+DBCC CHECKIDENT ('PendingPosts', RESEED, 0);
+DBCC CHECKIDENT ('Products', RESEED, 0);
+DBCC CHECKIDENT ('Conversations', RESEED, 0);
+DBCC CHECKIDENT ('ChatMessages', RESEED, 0);
+DBCC CHECKIDENT ('Orders', RESEED, 0);
+DBCC CHECKIDENT ('OrderItems', RESEED, 0);
+DBCC CHECKIDENT ('Favorites', RESEED, 0);
 GO
 
 PRINT '=======================================================================';

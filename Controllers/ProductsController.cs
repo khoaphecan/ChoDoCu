@@ -242,59 +242,70 @@ namespace ThriftShop.Controllers
 
         // GET: /Products/MyListings
         [UserAuthorize]
-        public IActionResult MyListings()
+        public async Task<IActionResult> MyListings()
         {
-            var userId = HttpContext.Session.GetUserId();
-            var userEmail = HttpContext.Session.GetUserEmail();
+            int currentUserId = 0;
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                            ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                            ?? HttpContext.Session.GetUserId()?.ToString();
+            int.TryParse(userIdStr, out currentUserId);
 
-            if (!userId.HasValue)
-            {
-                var idClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (int.TryParse(idClaim, out int uid))
-                {
-                    userId = uid;
-                    HttpContext.Session.SetInt32(ThriftShop.Common.SessionExtensions.SessionIdKey, uid);
-                    var u = _db.Users.Find(uid);
-                    if (u != null)
-                    {
-                        HttpContext.Session.SetUser(u);
-                        userEmail = u.Email;
-                    }
-                }
-            }
-
-            if (!userId.HasValue)
+            if (currentUserId <= 0)
             {
                 TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem danh sách tin đăng của bạn!";
                 return RedirectToAction("Login", "Account", new { returnUrl = "/Products/MyListings" });
             }
 
-            var myListings = _db.PendingPosts.AsNoTracking()
-                .Where(p => (p.SellerId == userId.Value ||
-                           (p.SellerEmail != null && userEmail != null && p.SellerEmail.ToLower() == userEmail.ToLower()))
-                           && p.Status != "deleted")
+            // 1. Lấy danh sách tin đang chờ duyệt / bị từ chối của chính user đó từ bảng PendingPosts
+            var myPending = await _db.PendingPosts.IgnoreQueryFilters().AsNoTracking()
+                .Where(pp => pp.SellerId == currentUserId && !pp.Deleted && (pp.Status == "pending" || pp.Status == "rejected"))
+                .OrderByDescending(pp => pp.Id)
+                .ToListAsync();
+
+            // 2. Lấy danh sách sản phẩm đã duyệt / đang bán / đã bán / bị admin xóa mềm của chính user đó từ bảng Products
+            var myProducts = await _db.Products.IgnoreQueryFilters().AsNoTracking()
+                .Where(p => p.SellerId == currentUserId && p.Status != "deleted")
                 .OrderByDescending(p => p.Id)
-                .ToList();
+                .ToListAsync();
 
-            // Đồng bộ trạng thái Deleted từ bảng Products (nếu Admin đã xóa mềm sản phẩm liên kết)
-            var deletedPostIds = _db.Products.IgnoreQueryFilters().AsNoTracking()
-                .Where(p => p.Deleted && (p.SellerId == userId.Value || (p.SellerEmail != null && userEmail != null && p.SellerEmail.ToLower() == userEmail.ToLower())))
-                .Select(p => p.PendingPostId ?? p.Id)
-                .ToHashSet();
+            var myListings = new List<PendingPost>();
 
-            foreach (var p in myListings)
+            // Nạp các tin từ myPending trước
+            myListings.AddRange(myPending);
+
+            // Nạp các sản phẩm từ myProducts (nếu chưa có trong myListings)
+            var existingPendingIds = myPending.Select(p => p.Id).ToHashSet();
+            foreach (var prod in myProducts)
             {
-                if (deletedPostIds.Contains(p.Id))
+                int keyId = prod.PendingPostId ?? prod.Id;
+                if (!existingPendingIds.Contains(keyId))
                 {
-                    p.Deleted = true;
+                    myListings.Add(new PendingPost
+                    {
+                        Id = keyId,
+                        Name = prod.Name,
+                        CategoryId = prod.CategoryId,
+                        CategoryName = prod.CategoryName ?? "Đồ cũ",
+                        Price = prod.Price,
+                        OriginalPrice = prod.OriginalPrice,
+                        Image = prod.DisplayImage,
+                        Description = prod.Description ?? "",
+                        Status = prod.Status,
+                        IsSold = prod.IsSold,
+                        Deleted = prod.Deleted,
+                        SellerId = prod.SellerId,
+                        SellerName = prod.SellerName,
+                        SellerEmail = prod.SellerEmail,
+                        SellerAddress = prod.SellerAddress,
+                        SellerPhone = prod.SellerPhone,
+                        CreatedAt = prod.CreatedAt
+                    });
                 }
             }
 
+            myListings = myListings.OrderByDescending(p => p.Id).ToList();
+
             // Cập nhật lại các biến đếm thống kê trên 4 thẻ đầu trang theo đúng logic:
-            // PendingCount: !p.Deleted && !p.IsSold && p.Status == "pending"
-            // ApprovedCount: !p.Deleted && !p.IsSold && p.Status == "approved" (KHÔNG đếm tin đã bị xóa p.Deleted == true)
-            // SoldCount: !p.Deleted && p.IsSold
-            // RejectedCount: !p.Deleted && p.Status == "rejected"
             ViewBag.PendingCount = myListings.Count(p => !p.Deleted && !p.IsSold && p.Status == "pending");
             ViewBag.ApprovedCount = myListings.Count(p => !p.Deleted && !p.IsSold && p.Status == "approved");
             ViewBag.SoldCount = myListings.Count(p => !p.Deleted && (p.IsSold || p.Status == "sold"));
@@ -306,12 +317,12 @@ namespace ThriftShop.Controllers
         // GET: /Products/MyPosts (Alias)
         [UserAuthorize]
         [HttpGet]
-        public IActionResult MyPosts() => MyListings();
+        public async Task<IActionResult> MyPosts() => await MyListings();
 
         // GET: /Products/MyProducts (Alias)
         [UserAuthorize]
         [HttpGet]
-        public IActionResult MyProducts() => MyListings();
+        public async Task<IActionResult> MyProducts() => await MyListings();
 
         // POST: /Products/MarkSold?id=123
         [HttpPost]

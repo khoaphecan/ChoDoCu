@@ -146,7 +146,12 @@
                     }
                     else
                     {
-                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: #71717a;">Bạn chưa có tin đăng bán đồ cũ nào.</td></tr>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 45px 20px; color: #71717a; font-size: 14px;">
+                                <i class="fas fa-box-open" style="font-size: 32px; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
+                                Bạn chưa có tin đăng bán nào. Hãy bấm <strong>"+ Đăng Thêm Món Đồ Mới"</strong> để bắt đầu!
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -160,7 +165,7 @@
 
     function renderMyListings() {
         const body = document.getElementById('listingsBody');
-        let posts = serverMyPosts && serverMyPosts.length > 0
+        let posts = (serverMyPosts && Array.isArray(serverMyPosts))
             ? serverMyPosts.map(p => ({
                 id: p.Id || p.id,
                 name: p.Name || p.name,
@@ -175,7 +180,7 @@
                 rejectReason: p.RejectReason || p.rejectReason,
                 createdAt: p.CreatedAt || p.createdAt
             }))
-            : ((typeof ThriftDB !== 'undefined') ? ThriftDB.getPendingPosts() : []);
+            : [];
 
         let pendingCount = 0;
         let approvedCount = 0;
@@ -207,7 +212,7 @@
         if (rejectedEl) rejectedEl.textContent = rejectedCount;
 
         if (posts.length === 0) {
-            body.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #71717a;">Bạn chưa có tin đăng bán đồ cũ nào.</td></tr>';
+            body.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 45px 20px; color: #71717a; font-size: 14px;"><i class="fas fa-box-open" style="font-size: 32px; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>Bạn chưa có tin đăng bán nào. Hãy bấm <strong>"+ Đăng Thêm Món Đồ Mới"</strong> để bắt đầu!</td></tr>';
             return;
         }
 
