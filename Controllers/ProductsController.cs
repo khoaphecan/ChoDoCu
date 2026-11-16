@@ -122,7 +122,7 @@ namespace ThriftShop.Controllers
                 return RedirectToAction("Login", "Account", new { returnUrl = "/Products/PostItem" });
             }
 
-            ViewBag.Categories = _db.Categories.AsNoTracking().ToList();
+            ViewBag.Categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
             return View(new PendingPost());
         }
 
@@ -153,7 +153,7 @@ namespace ThriftShop.Controllers
                 if (validImages.Count < 3)
                 {
                     ModelState.AddModelError("Image", "Yêu cầu bắt buộc: Phải đăng tối thiểu ít nhất 3 hình ảnh thực tế của món đồ (hiện có " + validImages.Count + " ảnh)!");
-                    ViewBag.Categories = _db.Categories.AsNoTracking().ToList();
+                    ViewBag.Categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
                     return View(new PendingPost
                     {
                         Name = dto.Name,
@@ -168,7 +168,7 @@ namespace ThriftShop.Controllers
 
                 if (!ModelState.IsValid)
                 {
-                    ViewBag.Categories = _db.Categories.AsNoTracking().ToList();
+                    ViewBag.Categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
                     return View(new PendingPost
                     {
                         Name = dto.Name,
@@ -221,7 +221,7 @@ namespace ThriftShop.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.Categories = _db.Categories.AsNoTracking().ToList();
+                ViewBag.Categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
                 ModelState.AddModelError(string.Empty, "Lỗi máy chủ khi đăng tin: " + ex.Message);
                 return View(new PendingPost());
             }

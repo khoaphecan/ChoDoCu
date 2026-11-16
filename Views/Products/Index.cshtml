@@ -1,9 +1,12 @@
+@inject ThriftShop.Data.ThriftDbContext _dbCtx
 @{
     ViewData["Title"] = "Kho Hàng Đồ Cũ Secondhand - ThriftShop";
     int currentUserId = 0;
     var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
                        ?? Context.Session.GetInt32("UserId")?.ToString();
     int.TryParse(userIdClaim, out currentUserId);
+    var categories = (ViewBag.Categories as IEnumerable<ThriftShop.Models.Category>) 
+                     ?? _dbCtx.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
 }
 
 <div class="shop-layout-container" style="margin-top: 35px;">
@@ -11,29 +14,19 @@
     <aside class="shop-filter-sidebar">
         <h3 class="filter-main-title">Bộ lọc 2nd</h3>
 
-        <!-- NHÓM 1: DANH MỤC (5 DANH MỤC CHUẨN) -->
+        <!-- NHÓM 1: DANH MỤC (RENDER ĐỘNG TỪ DATABASE) -->
         <div class="filter-group-title">Danh mục</div>
         <div class="filter-checkbox-list">
-            <label class="filter-checkbox-item">
-                <input type="checkbox" name="catFilter" value="1" onchange="onFilterChange()">
-                <span>Đồ điện tử</span>
-            </label>
-            <label class="filter-checkbox-item">
-                <input type="checkbox" name="catFilter" value="2" onchange="onFilterChange()">
-                <span>Đồ gia dụng</span>
-            </label>
-            <label class="filter-checkbox-item">
-                <input type="checkbox" name="catFilter" value="3" onchange="onFilterChange()">
-                <span>Văn phòng phẩm</span>
-            </label>
-            <label class="filter-checkbox-item">
-                <input type="checkbox" name="catFilter" value="4" onchange="onFilterChange()">
-                <span>Thời trang</span>
-            </label>
-            <label class="filter-checkbox-item">
-                <input type="checkbox" name="catFilter" value="5" onchange="onFilterChange()">
-                <span>Khác</span>
-            </label>
+            @if (categories != null && categories.Any())
+            {
+                foreach (var cat in categories)
+                {
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox" name="catFilter" value="@cat.Id" onchange="onFilterChange()">
+                        <span>@cat.Name</span>
+                    </label>
+                }
+            }
         </div>
 
         <hr class="filter-divider">

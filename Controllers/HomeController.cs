@@ -67,7 +67,8 @@ namespace ThriftShop.Controllers
                 .Take(pageSize)
                 .ToList();
 
-            var categories = _db.Categories.AsNoTracking().ToList();
+            var categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
+            ViewBag.Categories = categories;
 
             var viewModel = new HomeViewModel
             {
@@ -84,6 +85,22 @@ namespace ThriftShop.Controllers
             };
 
             return View(viewModel);
+        }
+
+        // GET: /api/categories (API đồng bộ danh mục động từ Database cho Client-side JS)
+        [HttpGet("/api/categories")]
+        public IActionResult GetCategories()
+        {
+            var categories = _db.Categories.AsNoTracking().OrderBy(c => c.Id)
+                .Select(c => new
+                {
+                    id = c.Id,
+                    name = c.Name,
+                    icon = c.Icon,
+                    description = c.Description
+                })
+                .ToList();
+            return Json(categories);
         }
 
         // GET: /Home/Warranty (Chính sách bảo đảm đồ cũ uy tín)

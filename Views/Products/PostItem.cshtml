@@ -1,6 +1,9 @@
 @model ThriftShop.Models.PendingPost
+@inject ThriftShop.Data.ThriftDbContext _dbCtx
 @{
     ViewData["Title"] = "Đăng Bán Đồ Cũ (Chờ Admin Duyệt) - ThriftShop";
+    var categories = (ViewBag.Categories as IEnumerable<ThriftShop.Models.Category>) 
+                     ?? _dbCtx.Categories.AsNoTracking().OrderBy(c => c.Id).ToList();
 }
 
 <div class="main-wrapper" style="margin-top: 30px;">
@@ -51,11 +54,21 @@
             <div class="form-group">
                 <label asp-for="CategoryId">Danh mục sản phẩm (*)</label>
                 <select asp-for="CategoryId" id="postCategory" required>
-                    <option value="1">Đồ điện tử</option>
-                    <option value="2">Đồ gia dụng</option>
-                    <option value="3">Văn phòng phẩm</option>
-                    <option value="4">Thời trang</option>
-                    <option value="5">Khác</option>
+                    @if (categories != null && categories.Any())
+                    {
+                        foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="1">Đồ điện tử</option>
+                        <option value="2">Đồ gia dụng</option>
+                        <option value="3">Văn phòng phẩm</option>
+                        <option value="4">Thời trang</option>
+                        <option value="5">Khác</option>
+                    }
                 </select>
             </div>
 

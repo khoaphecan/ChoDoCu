@@ -1027,11 +1027,23 @@ const DEFAULT_USERS = [
 // KHỞI TẠO LOCALSTORAGE
 function initThriftData() {
   const savedCats = JSON.parse(localStorage.getItem("thrift_categories") || "[]");
-  // Kiểm tra nếu danh mục chưa đúng 5 danh mục chuẩn thì thiết lập lại và đồng bộ sản phẩm
-  if (!savedCats.length || savedCats.length !== 5 || savedCats[0].name !== "Đồ điện tử") {
+  // Khởi tạo danh mục mặc định nếu chưa từng có trong localStorage
+  if (!savedCats.length) {
     localStorage.setItem("thrift_categories", JSON.stringify(DEFAULT_CATEGORIES));
     localStorage.setItem("thrift_products", JSON.stringify(DEFAULT_PRODUCTS));
     localStorage.setItem("thrift_pending_posts", JSON.stringify(DEFAULT_PENDING_POSTS));
+  }
+
+  // Tự động đồng bộ danh mục mới nhất từ Database SQL Server
+  if (typeof fetch === "function") {
+    fetch("/api/categories")
+      .then(res => { if (res.ok) return res.json(); })
+      .then(cats => {
+        if (cats && Array.isArray(cats) && cats.length > 0) {
+          localStorage.setItem("thrift_categories", JSON.stringify(cats));
+        }
+      })
+      .catch(() => {});
   }
 
   // Tự động hợp nhất sản phẩm mặc định và đồng bộ chính xác ảnh đại diện người bán

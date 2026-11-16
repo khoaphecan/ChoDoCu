@@ -325,6 +325,7 @@ function initHeaderSearch() {
   // Load danh mục vào dropdown tìm kiếm header nếu có
   const catSelect = $("#header-search-category");
   if (catSelect.length) {
+    catSelect.find("option:not(:first)").remove();
     const cats = ThriftDB.getCategories();
     cats.forEach(c => {
       catSelect.append(`<option value="${c.id}">${c.name}</option>`);
