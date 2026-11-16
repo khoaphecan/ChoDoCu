@@ -47,6 +47,22 @@
                 <input type="hidden" asp-for="Stock" value="1" />
             </div>
 
+            <div class="form-row mb-3">
+                <div class="form-group col-md-6">
+                    <label class="font-weight-bold">Số điện thoại liên hệ *</label>
+                    <input type="text" name="SellerPhone" class="form-control" value="@(Model?.SellerPhone ?? ViewBag.DefaultPhone)" placeholder="Nhập SĐT liên hệ..." required />
+                    <small class="form-text text-muted">SĐT hotline liên hệ mua hoặc xem món đồ.</small>
+                </div>
+                <div class="form-group col-md-6">
+                    <label class="font-weight-bold">Địa chỉ xem hàng *</label>
+                    <input type="text" name="SellerAddress" class="form-control" value="@(Model?.SellerAddress ?? ViewBag.DefaultAddress)" placeholder="Nhập địa chỉ xem đồ..." required />
+                    <small class="form-text text-muted">Địa chỉ để người mua trực tiếp đến kiểm tra hàng.</small>
+                </div>
+                <div class="col-12">
+                    <small class="text-muted"><i class="fas fa-info-circle mr-1"></i> <em>Người bán mặc định: Tài khoản Quản trị viên đang đăng nhập</em></small>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label asp-for="Image">Link hình ảnh (URL)</label>
                 <input asp-for="Image" type="text" class="form-control" placeholder="https://... (hoặc để trống để dùng ảnh mặc định)" />

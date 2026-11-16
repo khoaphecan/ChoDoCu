@@ -350,10 +350,35 @@ namespace ThriftShop.Controllers
         }
 
         // GET: /Admin/CreateProduct
-        public IActionResult CreateProduct()
+        public async Task<IActionResult> CreateProduct()
         {
-            ViewBag.Categories = _db.Categories.ToList();
-            return View(new Product { Stock = 1 });
+            ViewBag.Categories = await _db.Categories.ToListAsync();
+
+            int currentAdminId = 1;
+            var curIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                           ?? HttpContext.Session.GetUserId()?.ToString();
+            if (int.TryParse(curIdStr, out int parsedId)) currentAdminId = parsedId;
+
+            var admin = await _db.Users.FindAsync(currentAdminId)
+                        ?? await _db.Users.FirstOrDefaultAsync(u => u.Role == "admin")
+                        ?? new User { Id = 1, FullName = "Ban Quản Trị ThriftShop", Phone = "19006868", Address = "TP. Hồ Chí Minh" };
+
+            ViewBag.DefaultPhone = admin.Phone ?? "19006868";
+            ViewBag.DefaultAddress = admin.Address ?? "TP. Hồ Chí Minh";
+
+            var model = new Product
+            {
+                Stock = 1,
+                SellerId = admin.Id,
+                SellerName = admin.FullName,
+                SellerEmail = admin.Email,
+                SellerAvatar = admin.Avatar,
+                SellerPhone = admin.Phone ?? "19006868",
+                SellerAddress = admin.Address ?? "TP. Hồ Chí Minh"
+            };
+
+            return View(model);
         }
 
         // POST: /Admin/CreateProduct
@@ -361,11 +386,36 @@ namespace ThriftShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateProduct(Product product)
         {
+            int currentAdminId = 1;
+            var curIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                           ?? HttpContext.Session.GetUserId()?.ToString();
+            if (int.TryParse(curIdStr, out int parsedId)) currentAdminId = parsedId;
+
+            var admin = await _db.Users.FindAsync(currentAdminId)
+                        ?? await _db.Users.FirstOrDefaultAsync(u => u.Role == "admin")
+                        ?? new User { Id = 1, FullName = "Ban Quản Trị ThriftShop", Email = "admin@thriftshop.vn", Phone = "19006868", Address = "TP. Hồ Chí Minh" };
+
+            ModelState.Remove("SellerId");
+            ModelState.Remove("SellerName");
+            ModelState.Remove("SellerEmail");
+            ModelState.Remove("SellerAvatar");
+            ModelState.Remove("CategoryName");
+
             if (ModelState.IsValid)
             {
                 var cat = await _db.Categories.FindAsync(product.CategoryId);
                 product.CategoryName = cat?.Name ?? "Đồ cũ";
-                if (string.IsNullOrEmpty(product.Status)) product.Status = "approved";
+                product.SellerId = admin.Id;
+                product.SellerName = admin.FullName;
+                product.SellerEmail = admin.Email;
+                product.SellerAvatar = admin.Avatar;
+                product.SellerPhone = !string.IsNullOrWhiteSpace(product.SellerPhone) ? product.SellerPhone.Trim() : (admin.Phone ?? "19006868");
+                product.SellerAddress = !string.IsNullOrWhiteSpace(product.SellerAddress) ? product.SellerAddress.Trim() : (admin.Address ?? "TP. Hồ Chí Minh");
+                product.Status = "approved";
+                product.IsSold = false;
+                product.Stock = product.Stock > 0 ? product.Stock : 1;
+                product.CreatedAt = DateTime.Now;
                 
                 // Giải mã và lưu file ảnh đĩa thay cho chuỗi Base64
                 if (!string.IsNullOrWhiteSpace(product.Image))
@@ -391,18 +441,15 @@ namespace ThriftShop.Controllers
                     catch { }
                 }
 
-                if (product.SellerId == 0)
-                {
-                    var adminUser = await _db.Users.FirstOrDefaultAsync(u => u.Role == "admin");
-                    product.SellerId = adminUser?.Id ?? 1;
-                    product.SellerName = adminUser?.FullName ?? "Admin";
-                }
                 _db.Products.Add(product);
                 await _db.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Thêm sản phẩm mới thành công!";
                 return RedirectToAction("Products");
             }
-            ViewBag.Categories = _db.Categories.ToList();
+
+            ViewBag.Categories = await _db.Categories.ToListAsync();
+            ViewBag.DefaultPhone = admin.Phone ?? "19006868";
+            ViewBag.DefaultAddress = admin.Address ?? "TP. Hồ Chí Minh";
             return View(product);
         }
 
@@ -419,7 +466,18 @@ namespace ThriftShop.Controllers
                 return RedirectToAction(nameof(Products));
             }
 
-            ViewBag.Categories = _db.Categories.ToList();
+            int currentAdminId = 1;
+            var curIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                           ?? HttpContext.Session.GetUserId()?.ToString();
+            if (int.TryParse(curIdStr, out int parsedId)) currentAdminId = parsedId;
+
+            var admin = await _db.Users.FindAsync(currentAdminId)
+                        ?? await _db.Users.FirstOrDefaultAsync(u => u.Role == "admin");
+            ViewBag.DefaultPhone = admin?.Phone ?? "19006868";
+            ViewBag.DefaultAddress = admin?.Address ?? "TP. Hồ Chí Minh";
+
+            ViewBag.Categories = await _db.Categories.ToListAsync();
             return View(product);
         }
 
@@ -438,6 +496,12 @@ namespace ThriftShop.Controllers
                 return RedirectToAction(nameof(Products));
             }
 
+            ModelState.Remove("SellerId");
+            ModelState.Remove("SellerName");
+            ModelState.Remove("SellerEmail");
+            ModelState.Remove("SellerAvatar");
+            ModelState.Remove("CategoryName");
+
             if (ModelState.IsValid)
             {
 
@@ -449,6 +513,14 @@ namespace ThriftShop.Controllers
                 existing.OriginalPrice = product.OriginalPrice;
                 existing.Stock = product.Stock;
                 existing.Description = product.Description;
+                if (!string.IsNullOrWhiteSpace(product.SellerPhone))
+                {
+                    existing.SellerPhone = product.SellerPhone.Trim();
+                }
+                if (!string.IsNullOrWhiteSpace(product.SellerAddress))
+                {
+                    existing.SellerAddress = product.SellerAddress.Trim();
+                }
                 if (!string.IsNullOrWhiteSpace(product.Image))
                 {
                     existing.Image = ImageHelper.SaveBase64OrUrl(product.Image);
@@ -482,7 +554,15 @@ namespace ThriftShop.Controllers
                 TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
                 return RedirectToAction("Products");
             }
-            ViewBag.Categories = _db.Categories.ToList();
+            ViewBag.Categories = await _db.Categories.ToListAsync();
+            int curId = 1;
+            var cIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? HttpContext.Session.GetInt32("UserId")?.ToString()
+                         ?? HttpContext.Session.GetUserId()?.ToString();
+            if (int.TryParse(cIdStr, out int pId)) curId = pId;
+            var adminU = await _db.Users.FindAsync(curId);
+            ViewBag.DefaultPhone = adminU?.Phone ?? "19006868";
+            ViewBag.DefaultAddress = adminU?.Address ?? "TP. Hồ Chí Minh";
             return View(product);
         }
 

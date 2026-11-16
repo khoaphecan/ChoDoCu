@@ -46,13 +46,26 @@
                 <input type="hidden" asp-for="Stock" />
             </div>
 
+            <div class="form-row mb-3">
+                <div class="form-group col-md-6">
+                    <label class="font-weight-bold">Số điện thoại liên hệ *</label>
+                    <input type="text" name="SellerPhone" class="form-control" value="@(Model?.SellerPhone ?? ViewBag.DefaultPhone)" placeholder="Nhập SĐT liên hệ..." required />
+                    <small class="form-text text-muted">SĐT hotline liên hệ mua hoặc xem món đồ.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="font-weight-bold">Địa chỉ xem hàng *</label>
+                    <input type="text" name="SellerAddress" class="form-control" value="@(Model?.SellerAddress ?? ViewBag.DefaultAddress)" placeholder="Nhập địa chỉ xem đồ..." required />
+                    <small class="form-text text-muted">Địa chỉ để người mua trực tiếp đến kiểm tra hàng.</small>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="Image">Hình ảnh sản phẩm (Link URL)</label>
                 <input type="text" name="Image" id="Image" class="form-control"
-                       value="@(Model.Image?.StartsWith("data:") == true ? "" : Model.Image)"
-                       placeholder="@(Model.Image?.StartsWith("data:") == true ? "Đang dùng ảnh thực tế người bán (để trống để giữ nguyên, hoặc dán link URL mới)" : "Nhập link URL hình ảnh mới hoặc để trống...")" />
+                       value="@(Model?.Image?.StartsWith("data:") == true ? "" : Model?.Image)"
+                       placeholder="@(Model?.Image?.StartsWith("data:") == true ? "Đang dùng ảnh thực tế người bán (để trống để giữ nguyên, hoặc dán link URL mới)" : "Nhập link URL hình ảnh mới hoặc để trống...")" />
                 <small class="form-text text-muted">
-                    @if (Model.Image?.StartsWith("data:") == true)
+                    @if (Model?.Image?.StartsWith("data:") == true)
                     {
                         <span class="text-success"><i class="fas fa-check-circle"></i> Sản phẩm đang sử dụng ảnh thực tế (Base64) do người bán đăng tải. Để trống ô trên nếu muốn tiếp tục giữ ảnh này.</span>
                     }
@@ -61,11 +74,11 @@
                         <span>Dán link ảnh URL mới hoặc để trống nếu muốn giữ nguyên ảnh hiện tại.</span>
                     }
                 </small>
-                @if (!string.IsNullOrEmpty(Model.DisplayImage))
+                @if (!string.IsNullOrEmpty(Model?.DisplayImage))
                 {
                     <div class="mt-2 p-2 border rounded bg-light d-inline-block">
                         <div class="small font-weight-bold mb-1 text-secondary">Ảnh hiện tại:</div>
-                        <img src="@Model.DisplayImage" style="max-height: 120px; max-width: 200px; object-fit: contain; border-radius: 4px;" alt="Preview" />
+                        <img src="@Model?.DisplayImage" style="max-height: 120px; max-width: 200px; object-fit: contain; border-radius: 4px;" alt="Preview" />
                     </div>
                 }
             </div>
